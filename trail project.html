@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="gu">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gokul Plastic - ઓર્ડર, લેજર અને ઓટો ચલાન સિસ્ટમ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <style>
+        @media print {
+            body * { visibility: hidden; }
+            #challan-modal, #challan-modal * { visibility: visible; }
+            #challan-modal { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 font-sans min-h-screen">
+
+    <nav class="bg-blue-600 text-white shadow-lg p-4 sticky top-0 z-50 no-print">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold"><i class="fa-solid fa-file-invoice mr-2"></i> Gokul Plastic </h1>
+            <div class="flex items-center space-x-3">
+                <span id="firebase-status-badge" class="text-[11px] bg-red-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold">
+                    <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                    <span>Local Mode (ઑફલાઇન સેવિંગ)</span>
+                </span>
+                <button onclick="openSettings()" class="hover:bg-blue-700 p-2 rounded-lg transition duration-200" title="Firebase ઓનલાઇન સેટિંગ્સ">
+                    <i class="fa-solid fa-gear text-lg animate-pulse hover:animate-spin"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto p-4 space-y-6 no-print">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <p class="text-gray-500 text-sm font-semibold">કુલ સેલ્સ (Sales)</p>
+                <p id="dash-sales" class="text-2xl font-bold text-gray-800">₹0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500">
+                <p class="text-gray-500 text-sm font-semibold">કુલ ખરીદી (Buying)</p>
+                <p id="dash-buying" class="text-2xl font-bold text-gray-800">₹0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                <p class="text-gray-500 text-sm font-semibold">મળેલ પેમેન્ટ (Received)</p>
+                <p id="dash-received" class="text-2xl font-bold text-green-600">₹0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
+                <p class="text-gray-500 text-sm font-semibold">કુલ બાકી લેણાં (Total Due)</p>
+                <p id="dash-due" class="text-2xl font-bold text-red-600">₹0</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white p-5 rounded-xl shadow-sm">
+                <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-cart-plus mr-2 text-blue-500"></i>નવો ઓર્ડર ઉમેરો (માહિતી સેવ થશે)</h2>
+                <form id="order-form" class="space-y-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">પ્રકાર</label>
+                            <select id="ord-type" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                                <option value="Sales">Sales (વેચાણ)</option>
+                                <option value="Buying">Buying (ખરીદી)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">તારીખ</label>
+                            <input type="date" id="ord-date" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">પાર્ટીનું નામ</label>
+                            <input type="text" id="ord-party" placeholder="પાર્ટીનું નામ" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">મોબાઈલ નં (WhatsApp માટે)</label>
+                            <input type="number" id="ord-phone" placeholder="દા.ત. 9898XXXXXX" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600">આઇટમ વિગત</label>
+                        <input type="text" id="ord-item" placeholder="વસ્તુનું નામ લખો" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">ક્વોન્ટિટી (Qty)</label>
+                            <input type="number" id="ord-qty" placeholder="0" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">ભાવ (Price)</label>
+                            <input type="number" id="ord-price" placeholder="0" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">ઓર્ડર સ્ટેટસ</label>
+                            <select id="ord-status" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
+                                <option value="Pending">Pending (બાકી છે)</option>
+                                <option value="Complete">Complete (પૂરો થયો)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow">ઓર્ડર સેવ કરો 💾</button>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"><i class="fa-solid fa-money-bill-wave mr-2 text-green-500"></i>પેમેન્ટની એન્ટ્રી (Payment In / Out)</h2>
+                    <form id="payment-form" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600">પેમેન્ટ પ્રકાર</label>
+                                <select id="pay-type" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                                    <option value="Received">Received (પાર્ટીએ આપ્યા)</option>
+                                    <option value="Paid">Paid (આપણે આપ્યા)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600">તારીખ</label>
+                                <input type="date" id="pay-date" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">પાર્ટીનું નામ</label>
+                            <input type="text" id="pay-party" placeholder="પાર્ટીનું નામ લખો" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600">રકમ (Amount)</label>
+                            <input type="number" id="pay-amount" placeholder="0" required class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition shadow">પેમેન્ટ જમા કરો 💾</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white p-4 rounded-xl shadow-sm lg:col-span-1">
+                <h2 class="text-md font-bold text-gray-700 mb-3"><i class="fa-solid fa-users text-blue-500 mr-2"></i>બધી પાર્ટીઓનું લિસ્ટ</h2>
+                <input type="text" id="party-search" oninput="renderParties()" placeholder="પાર્ટી સર્ચ કરો..." class="w-full p-2 mb-3 border rounded-lg text-sm outline-none">
+                <div id="party-list-box" class="space-y-2 max-h-[400px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm lg:col-span-2">
+                <div class="flex justify-between items-center border-b pb-3 mb-4">
+                    <h2 class="text-xl font-bold text-blue-600" id="selected-party-title">કૃપા કરીને PARTY પસંદ કરો</h2>
+                    <div class="text-right text-sm">
+                        <span class="font-semibold text-gray-600">બાકી હિસાબ: </span>
+                        <span id="selected-party-due" class="font-bold text-lg text-gray-800">₹0</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="border rounded-xl p-3 bg-gray-50">
+                        <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm text-blue-600"><i class="fa-solid fa-boxes-stacked mr-1"></i> ઓર્ડર રેકોર્ડ</h3>
+                        <div id="party-orders-table" class="space-y-2 max-h-[350px] overflow-y-auto text-xs"></div>
+                    </div>
+                    <div class="border rounded-xl p-3 bg-gray-50">
+                        <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm text-green-600"><i class="fa-solid fa-receipt mr-1"></i> પેમેન્ટ હિસાબ</h3>
+                        <div id="party-payments-table" class="space-y-2 max-h-[350px] overflow-y-auto text-xs"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="challan-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-2 overflow-y-auto z-50 print:p-0 print:bg-white print:static">
+        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 space-y-6 print:shadow-none print:p-0 print:w-full">
+            <div class="flex justify-between items-center border-b pb-2 no-print">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-copy text-blue-500 mr-2"></i>ડબલ ચલાન</h3>
+                <button onclick="closeChallan()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+            </div>
+            <div class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
+                <div class="border-2 border-gray-800 p-6 rounded-lg bg-white relative flex-1 flex flex-col justify-between min-h-[44vh]">
+                    <div>
+                        <div class="absolute top-2 right-2 border border-gray-800 text-[9px] font-bold px-2 py-0.5 bg-gray-100 tracking-wider">ORIGINAL COPY</div>
+                        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-2">
+                            <div>
+                                <h2 class="text-2xl font-black text-gray-800 tracking-wide">GOKUL PLASTIC</h2>
+                                <p class="text-xs font-bold text-gray-600">Phone: 9428344742</p>
+                            </div>
+                            <div class="text-right pt-4"><span class="text-sm font-black text-gray-800 block border-b pb-0.5">DELIVERY CHALLAN</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
+                            <div><p class="font-bold text-gray-800">To: <span id="ch1-party" class="text-sm font-black text-gray-900"></span></p></div>
+                            <div class="text-right font-medium"><p>તારીખ: <span id="ch1-date" class="font-bold text-gray-900"></span> | ચલાન નં: <span id="ch1-num" class="font-black text-red-600 text-sm"></span></p></div>
+                        </div>
+                        <table class="w-full text-xs border-collapse mt-3 border border-gray-400 table-fixed">
+                            <thead>
+                                <tr class="bg-gray-800 text-white font-bold">
+                                    <th class="p-2 border border-gray-400 text-left w-1/2">વસ્તુ નું નામ</th>
+                                    <th class="p-2 text-center w-16 border border-gray-400">જથ્થો</th>
+                                    <th class="p-2 text-right w-24 border border-gray-400">ભાવ</th>
+                                    <th class="p-2 text-right w-28 border border-gray-400">ટોટલ રકમ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="p-4 border border-gray-400 font-bold text-sm whitespace-pre-wrap break-words" id="ch1-item"></td>
+                                    <td class="p-4 text-center border border-gray-400 text-sm font-semibold" id="ch1-qty"></td>
+                                    <td class="p-4 text-right border border-gray-400 text-sm font-semibold" id="ch1-price"></td>
+                                    <td class="p-4 text-right font-black border border-gray-400 text-sm bg-gray-50" id="ch1-total"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-between items-end pt-4 text-[11px] border-t border-dashed mt-4">
+                        <span class="text-gray-400 italic">આ માલ બિન-જીએસટી ચલાનથી મોકલેલ છે.</span>
+                        <div class="flex space-x-12 text-center font-bold text-gray-700">
+                            <div class="w-28 border-t border-gray-800 pt-1">માલ મેળવનારની સહી</div>
+                            <div class="w-32 border-t border-gray-800 pt-1">GOKUL PLASTIC માટે</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t-2 border-dashed border-gray-400 text-center text-xs text-gray-400 no-print my-1">✂️ Cutting Line ✂️</div>
+                <div class="border-2 border-gray-800 p-6 rounded-lg bg-white relative flex-1 flex flex-col justify-between min-h-[44vh]">
+                    <div>
+                        <div class="absolute top-2 right-2 border border-gray-800 text-[9px] font-bold px-2 py-0.5 bg-gray-100 tracking-wider">OFFICE COPY</div>
+                        <div class="flex justify-between items-start border-b-2 border-gray-800 pb-2">
+                            <div>
+                                <h2 class="text-2xl font-black text-gray-800 tracking-wide">GOKUL PLASTIC</h2>
+                                <p class="text-xs font-bold text-gray-600">Phone: 9428344742</p>
+                            </div>
+                            <div class="text-right pt-4"><span class="text-sm font-black text-gray-800 block border-b pb-0.5">DELIVERY CHALLAN</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
+                            <div><p class="font-bold text-gray-800">To: <span id="ch2-party" class="text-sm font-black text-gray-900"></span></p></div>
+                            <div class="text-right font-medium"><p>તારીખ: <span id="ch2-date" class="font-bold text-gray-900"></span> | ચલાન નં: <span id="ch2-num" class="font-black text-red-600 text-sm"></span></p></div>
+                        </div>
+                        <table class="w-full text-xs border-collapse mt-3 border border-gray-400 table-fixed">
+                            <thead>
+                                <tr class="bg-gray-800 text-white font-bold">
+                                    <th class="p-2 border border-gray-400 text-left w-1/2">વસ્તુ નું નામ</th>
+                                    <th class="p-2 text-center w-16 border border-gray-400">જથ્થો</th>
+                                    <th class="p-2 text-right w-24 border border-gray-400">ભાવ</th>
+                                    <th class="p-2 text-right w-28 border border-gray-400">ટોટલ રકમ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="p-4 border border-gray-400 font-bold text-sm whitespace-pre-wrap break-words" id="ch2-item"></td>
+                                    <td class="p-4 text-center border border-gray-400 text-sm font-semibold" id="ch2-qty"></td>
+                                    <td class="p-4 text-right border border-gray-400 text-sm font-semibold" id="ch2-price"></td>
+                                    <td class="p-4 text-right font-black border border-gray-400 text-sm bg-gray-50" id="ch2-total"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex justify-between items-end pt-4 text-[11px] border-t border-dashed mt-4">
+                        <span class="text-gray-400 italic">ગ્રાહકની સહી કરાવી પરત લેવું.</span>
+                        <div class="flex space-x-12 text-center font-bold text-gray-700">
+                            <div class="w-28 border-t border-gray-800 pt-1 text-red-600">ગ્રાહકની સહી</div>
+                            <div class="w-32 border-t border-gray-800 pt-1">GOKUL PLASTIC માટે</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 no-print pt-2">
+                <button onclick="window.print()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg text-md shadow"><i class="fa-solid fa-print mr-2"></i>પ્રિન્ટ કરો</button>
+                <button id="wp-share-btn" class="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-lg text-md shadow"><i class="fa-brands fa-whatsapp text-lg mr-2"></i>WhatsApp શેર</button>
+                <button onclick="closeChallan()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3 rounded-lg text-md">બંધ કરો</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="firebase-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 overflow-y-auto z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-cloud mr-2 text-blue-500"></i>Firebase ઓનલાઇન ક્લાઉડ સેટિંગ્સ</h3>
+                <button onclick="closeSettings()" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+            </div>
+            <form id="firebase-config-form" class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600">Config JSON</label>
+                    <textarea id="fb-config-json" rows="6" placeholder='{"apiKey": "..."}' required class="w-full mt-1 p-2 border rounded-lg text-xs font-mono bg-gray-50 outline-none"></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm transition">લિંક અને ઓનલાઈન સેવ કરો</button>
+                    <button type="button" onclick="disconnectFirebase()" id="fb-disconnect-btn" class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition">ડિસ્કનેક્ટ</button>
+                </div>
+            </form>
+            <div id="migration-box" class="hidden border-t pt-3">
+                <button onclick="migrateLocalDataToFirebase()" id="fb-migrate-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-xs flex justify-center items-center gap-1.5 shadow">
+                    લોકલ સ્ટોર થયેલો ડેટા ઓનલાઇન ક્લાઉડ પર મોકલો
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let db = JSON.parse(localStorage.getItem('biz_db_v4')) || { orders: [], payments: [] };
+        if(!db.orders) db.orders = [];
+        if(!db.payments) db.payments = [];
+        
+        let activeParty = "";
+        let firestoreDb = null;
+        let unsubOrders = null;
+        let unsubPayments = null;
+        let isFirebaseConnected = false;
+
+        function saveData() {
+            localStorage.setItem('biz_db_v4', JSON.stringify(db));
+            calculateDashboard();
+            renderParties();
+            if (activeParty) showPartyDetails(activeParty);
+        }
+
+        function initFirebase() {
+            const savedConfigStr = localStorage.getItem('firebase_config');
+            const statusBadge = document.getElementById('firebase-status-badge');
+            const disconnectBtn = document.getElementById('fb-disconnect-btn');
+            const migrationBox = document.getElementById('migration-box');
+
+            if (unsubOrders) { unsubOrders(); unsubOrders = null; }
+            if (unsubPayments) { unsubPayments(); unsubPayments = null; }
+
+            if (!savedConfigStr || typeof firebase === 'undefined') {
+                isFirebaseConnected = false;
+                firestoreDb = null;
+                if(statusBadge) {
+                    statusBadge.className = "text-[11px] bg-red-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
+                    statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span><span>Local Mode (ઑફલાઇન સેવિંગ 💾)</span>`;
+                }
+                calculateDashboard();
+                renderParties();
+                return;
+            }
+
+            try {
+                const config = JSON.parse(savedConfigStr);
+                let app = !firebase.apps.length ? firebase.initializeApp(config) : firebase.app();
+                firestoreDb = app.firestore();
+                isFirebaseConnected = true;
+
+                if(statusBadge) {
+                    statusBadge.className = "text-[11px] bg-green-600 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
+                    statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-green-400 rounded-full"></span><span>Firebase Cloud Live 🟢</span>`;
+                }
+                if(disconnectBtn) disconnectBtn.classList.remove('hidden');
+                if(migrationBox) migrationBox.classList.remove('hidden');
+
+                listenFirebaseData();
+            } catch (err) {
+                console.error(err);
+                isFirebaseConnected = false;
+            }
+        }
+
+        function listenFirebaseData() {
+            if (!firestoreDb) return;
+            unsubOrders = firestoreDb.collection('orders').onSnapshot(snapshot => {
+                let orders = [];
+                snapshot.forEach(doc => orders.push(doc.data()));
+                db.orders = orders.sort((a, b) => a.id - b.id);
+                localStorage.setItem('biz_db_v4', JSON.stringify(db));
+                calculateDashboard();
+                renderParties();
+                if (activeParty) showPartyDetails(activeParty);
+            });
+
+            unsubPayments = firestoreDb.collection('payments').onSnapshot(snapshot => {
+                let payments = [];
+                snapshot.forEach(doc => payments.push(doc.data()));
+                db.payments = payments.sort((a, b) => a.id - b.id);
+                localStorage.setItem('biz_db_v4', JSON.stringify(db));
+                calculateDashboard();
+                renderParties();
+                if (activeParty) showPartyDetails(activeParty);
+            });
+        }
+
+        function openSettings() {
+            const savedConfig = localStorage.getItem('firebase_config');
+            document.getElementById('fb-config-json').value = savedConfig ? JSON.stringify(JSON.parse(savedConfig), null, 2) : "";
+            document.getElementById('firebase-modal').classList.remove('hidden');
+        }
+
+        function closeSettings() { document.getElementById('firebase-modal').classList.add('hidden'); }
+
+        function disconnectFirebase() {
+            if (confirm("શું ઓનલાઈન કનેક્શન બંધ કરવું છે?")) {
+                localStorage.removeItem('firebase_config');
+                initFirebase();
+                closeSettings();
+            }
+        }
+
+        async function migrateLocalDataToFirebase() {
+            if (!isFirebaseConnected || !firestoreDb) return;
+            if (confirm("બધો જ ઓફલાઇન ડેટા ફાયરબેઝ સર્વર પર ટ્રાન્સફર કરવો છે?")) {
+                let batch = firestoreDb.batch();
+                db.orders.forEach(o => batch.set(firestoreDb.collection('orders').doc(o.id.toString()), o));
+                db.payments.forEach(p => batch.set(firestoreDb.collection('payments').doc(p.id.toString()), p));
+                await batch.commit();
+                alert("ડેટા ઓનલાઇન સર્વર પર સફળતાપૂર્વક અપલોડ થઈ ગયો છે!");
+            }
+        }
+
+        document.getElementById('firebase-config-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            localStorage.setItem('firebase_config', document.getElementById('fb-config-json').value.trim());
+            initFirebase();
+            closeSettings();
+        });
+
+        // ઓર્ડર ફોર્મ ડેટા સેવિંગ પ્રોસેસ
+        document.getElementById('order-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            let partyName = document.getElementById('ord-party').value.trim();
+            let existingPhone = document.getElementById('ord-phone').value.trim();
+            if(!existingPhone){
+                let found = db.orders.find(o => o.party === partyName && o.phone);
+                if(found) existingPhone = found.phone;
+            }
+
+            let newOrder = {
+                id: Date.now(),
+                type: document.getElementById('ord-type').value,
+                date: document.getElementById('ord-date').value,
+                party: partyName,
+                phone: existingPhone,
+                item: document.getElementById('ord-item').value,
+                qty: parseFloat(document.getElementById('ord-qty').value),
+                price: parseFloat(document.getElementById('ord-price').value),
+                status: document.getElementById('ord-status').value
+            };
+            newOrder.amount = newOrder.qty * newOrder.price;
+
+            if (isFirebaseConnected && firestoreDb) {
+                firestoreDb.collection('orders').doc(newOrder.id.toString()).set(newOrder).then(() => {
+                    alert("ઓર્ડર ઓનલાઇન ફાયરબેઝ ક્લાઉડ પર સુરક્ષિત સેવ થઈ ગયો છે! 🟢");
+                });
+            } else {
+                db.orders.push(newOrder);
+                saveData();
+                alert("ઓર્ડર બ્રાઉઝર લોકલ સ્ટોરેજમાં સેવ થઈ ગયો છે! 💾");
+            }
+            activeParty = newOrder.party;
+            this.reset();
+            setDefaultDates();
+        });
+
+        // પેમેન્ટ ફોર્મ ડેટા સેવિંગ પ્રોસેસ
+        document.getElementById('payment-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            let newPayment = {
+                id: Date.now(),
+                type: document.getElementById('pay-type').value,
+                date: document.getElementById('pay-date').value,
+                party: document.getElementById('pay-party').value.trim(),
+                amount: parseFloat(document.getElementById('pay-amount').value)
+            };
+
+            if (isFirebaseConnected && firestoreDb) {
+                firestoreDb.collection('payments').doc(newPayment.id.toString()).set(newPayment).then(() => {
+                    alert("પેમેન્ટ ઓનલાઇન ફાયરબેઝ ક્લાઉડ પર સુરક્ષિત જમા થઈ ગયું છે! 🟢");
+                });
+            } else {
+                db.payments.push(newPayment);
+                saveData();
+                alert("પેમેન્ટ બ્રાઉઝર લોકલ સ્ટોરેજમાં જમા થઈ ગયું છે! 💾");
+            }
+            activeParty = newPayment.party;
+            this.reset();
+            setDefaultDates();
+        });
+
+        function setDefaultDates() {
+            let today = new Date().toISOString().split('T')[0];
+            document.getElementById('ord-date').value = today;
+            document.getElementById('pay-date').value = today;
+        }
+
+        function calculateDashboard() {
+            let totalSales = db.orders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
+            let totalBuying = db.orders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
+            let totalReceived = db.payments.filter(p => p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
+            let totalPaid = db.payments.filter(p => p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
+            document.getElementById('dash-sales').innerText = "₹" + totalSales.toLocaleString('en-IN');
+            document.getElementById('dash-buying').innerText = "₹" + totalBuying.toLocaleString('en-IN');
+            document.getElementById('dash-received').innerText = "₹" + totalReceived.toLocaleString('en-IN');
+            document.getElementById('dash-due').innerText = "₹" + ((totalSales - totalReceived) - (totalBuying - totalPaid)).toLocaleString('en-IN');
+        }
+
+        function getUniqueParties() {
+            let parties = new Set();
+            db.orders.forEach(o => parties.add(o.party));
+            db.payments.forEach(p => parties.add(p.party));
+            return Array.from(parties);
+        }
+
+        function renderParties() {
+            let parties = getUniqueParties();
+            let search = document.getElementById('party-search').value.toLowerCase();
+            let box = document.getElementById('party-list-box');
+            box.innerHTML = "";
+
+            parties.forEach(party => {
+                if (party.toLowerCase().includes(search)) {
+                    let pSales = db.orders.filter(o => o.party === party && o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
+                    let pBuying = db.orders.filter(o => o.party === party && o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
+                    let pRec = db.payments.filter(p => p.party === party && p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
+                    let pPaid = db.payments.filter(p => p.party === party && p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
+                    let pDue = (pSales - pRec) - (pBuying - pPaid);
+
+                    let activeClass = (party === activeParty) ? 'bg-blue-50 border-blue-500' : 'bg-gray-50';
+                    let lastWithPhone = db.orders.find(o => o.party === party && o.phone);
+                    let currentPhone = lastWithPhone ? lastWithPhone.phone : "નથી";
+
+                    box.innerHTML += `
+                        <div onclick="showPartyDetails('${party}')" class="p-3 border rounded-xl cursor-pointer flex justify-between items-center ${activeClass}">
+                            <div>
+                                <p class="font-bold text-gray-800 text-sm">${party}</p>
+                                <p class="text-[10px] text-gray-500">📞 ${currentPhone} <button onclick="event.stopPropagation(); editPartyPhone('${party}', '${currentPhone === 'નથી' ? '' : currentPhone}')" class="text-blue-600 underline ml-1 font-semibold">✏️ સુધારો</button></p>
+                            </div>
+                            <div class="text-right"><p class="text-xs font-semibold ${pDue >= 0 ? 'text-red-500' : 'text-green-500'}">બાકી: ₹${pDue}</p></div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        async function editPartyPhone(partyName, existingPhone) {
+            let newPhone = prompt(`"${partyName}" માટે નવો મોબાઇલ નંબર લખો:`, existingPhone);
+            if (newPhone === null) return;
+            newPhone = newPhone.trim();
+
+            if (isFirebaseConnected && firestoreDb) {
+                let batch = firestoreDb.batch();
+                let snapshot = await firestoreDb.collection('orders').where('party', '==', partyName).get();
+                snapshot.forEach(doc => batch.update(doc.ref, { phone: newPhone }));
+                await batch.commit();
+            } else {
+                db.orders.forEach(o => { if (o.party === partyName) o.phone = newPhone; });
+                saveData();
+            }
+        }
+
+        function toggleStatus(orderId) {
+            let order = db.orders.find(o => o.id === orderId);
+            if (order) {
+                let newStatus = order.status === 'Pending' ? 'Complete' : 'Pending';
+                if (isFirebaseConnected && firestoreDb) {
+                    firestoreDb.collection('orders').doc(orderId.toString()).update({ status: newStatus });
+                } else {
+                    order.status = newStatus;
+                    saveData();
+                }
+            }
+        }
+
+        function getChallanSequenceNumber(orderId) {
+            let salesOrders = db.orders.filter(o => o.type === 'Sales').sort((a, b) => a.id - b.id);
+            let index = salesOrders.findIndex(o => o.id === orderId);
+            return index !== -1 ? (index + 1) : 1;
+        }
+
+        function showPartyDetails(party) {
+            activeParty = party;
+            document.getElementById('selected-party-title').innerText = "👤 " + party;
+
+            let partyOrders = db.orders.filter(o => o.party === party);
+            let partyPayments = db.payments.filter(p => p.party === party);
+
+            let pSales = partyOrders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
+            let pBuying = partyOrders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
+            let pRec = partyPayments.filter(p => p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
+            let pPaid = partyPayments.filter(p => p.party === 'Paid').reduce((sum, p) => sum + p.amount, 0);
+            let netPartyDue = (pSales - pRec) - (pBuying - pPaid);
+
+            let dueText = document.getElementById('selected-party-due');
+            dueText.innerText = "₹" + netPartyDue;
+            dueText.className = netPartyDue >= 0 ? "font-bold text-lg text-red-600" : "font-bold text-lg text-green-600";
+
+            let orderTable = document.getElementById('party-orders-table');
+            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-gray-400 text-center py-4">કોઈ ઓર્ડર નથી</p>` : "";
+            
+            partyOrders.forEach(o => {
+                let badgeColor = o.type === 'Sales' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700';
+                let statusClass = o.status === 'Complete' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                let challanBtn = o.status === 'Complete' ? `<button onclick="generateChallan(${o.id})" class="text-[11px] bg-white border border-blue-500 text-blue-600 px-2 py-0.5 rounded hover:bg-blue-50"><i class="fa-solid fa-print mr-1"></i>Challan</button>` : '';
+
+                orderTable.innerHTML += `
+                    <div class="bg-white p-3 rounded-lg border shadow-xs space-y-2 relative">
+                        <button onclick="deleteItem('orders', ${o.id})" class="absolute top-2 right-2 text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 font-bold px-2 py-1 rounded border border-red-200 text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> ડીલીટ
+                        </button>
+                        <div class="flex justify-between">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${o.type}</span>
+                            <span class="text-gray-400 mr-20">${o.date}</span>
+                        </div>
+                        <p class="font-semibold text-gray-800 text-sm">${o.item} (${o.qty} x ₹${o.price})</p>
+                        <div class="flex justify-between items-center pt-1 border-t border-dashed">
+                            <span class="font-bold text-gray-700">ટોટલ: ₹${o.amount}</span>
+                            <div class="flex space-x-2 items-center">
+                                ${challanBtn}
+                                <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 rounded text-[10px] font-semibold ${statusClass}">${o.status} <i class="fa-solid fa-rotate ml-1"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            let paymentTable = document.getElementById('party-payments-table');
+            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-gray-400 text-center py-4">કોઈ ટ્રાન્ઝેક્શન નથી</p>` : "";
+            
+            partyPayments.forEach(p => {
+                let badgeColor = p.type === 'Received' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                paymentTable.innerHTML += `
+                    <div class="bg-white p-2 rounded-lg border shadow-xs flex justify-between items-center relative">
+                        <div>
+                            <div class="flex items-center space-x-2">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${p.type}</span>
+                                <span class="text-gray-400 text-[11px]">${p.date}</span>
+                            </div>
+                            <p class="font-bold text-gray-800 text-sm mt-1">રકમ: ₹${p.amount}</p>
+                        </div>
+                        <button onclick="deleteItem('payments', ${p.id})" class="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 font-bold px-2 py-1 rounded border border-red-200 text-xs flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> ડીલીટ
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        function generateChallan(orderId) {
+            let order = db.orders.find(o => o.id === orderId);
+            if (order) {
+                let autoNo = getChallanSequenceNumber(order.id);
+                for(let i=1; i<=2; i++) {
+                    document.getElementById(`ch${i}-party`).innerText = order.party;
+                    document.getElementById(`ch${i}-date`).innerText = order.date;
+                    document.getElementById(`ch${i}-num`).innerText = autoNo;
+                    document.getElementById(`ch${i}-item`).innerText = order.item;
+                    document.getElementById(`ch${i}-qty`).innerText = order.qty;
+                    document.getElementById(`ch${i}-price`).innerText = "₹" + order.price.toLocaleString('en-IN');
+                    document.getElementById(`ch${i}-total`).innerText = "₹" + order.amount.toLocaleString('en-IN');
+                }
+                document.getElementById('wp-share-btn').onclick = function () {
+                    if (!order.phone) return alert("મોબાઈલ નંબર નથી!");
+                    let msg = `*નમસ્તે ${order.party},*\n\n*GOKUL PLASTIC* તરફથી ચલાન:\n🔹 ચલાન નં: ${autoNo}\n🔹 વસ્તુ: ${order.item}\n🔹 જથ્થો: ${order.qty}\n🔹 ટોટલ: ₹${order.amount.toLocaleString('en-IN')}`;
+                    window.open(`https://api.whatsapp.com/send?phone=91${order.phone}&text=${encodeURIComponent(msg)}`, '_blank');
+                };
+                document.getElementById('challan-modal').classList.remove('hidden');
+            }
+        }
+
+        function closeChallan() { document.getElementById('challan-modal').classList.add('hidden'); }
+
+        function deleteItem(target, id) {
+            if (confirm("શું તમે આ એન્ટ્રી હંમેશા માટે ડીલીટ કરવા માંગો છો?")) {
+                if (isFirebaseConnected && firestoreDb) {
+                    firestoreDb.collection(target).doc(id.toString()).delete().then(() => {
+                        alert("એન્ટ્રી ઓનલાઇન સર્વર પરથી ડીલીટ કરી દેવામાં આવી છે. 🗑️");
+                    });
+                } else {
+                    db[target] = db[target].filter(item => item.id !== id);
+                    saveData();
+                    alert("એન્ટ્રી બ્રાઉઝરમાંથી ડીલીટ થઈ ગઈ છે. 🗑️");
+                }
+            }
+        }
+
+        setDefaultDates();
+        initFirebase();
+    </script>
+</body>
+
+</html>
