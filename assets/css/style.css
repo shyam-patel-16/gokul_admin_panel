@@ -1,0 +1,146 @@
+
+        /* Print Styles */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            #challan-modal,
+            #challan-modal * {
+                visibility: visible;
+            }
+
+            #challan-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* ═══════════════════════════════════════════
+           COLLAPSIBLE SIDEBAR — OVERLAP FIX
+        ═══════════════════════════════════════════ */
+        #sidebar {
+            width: 256px;
+            min-width: 256px;
+            transition: width 0.3s cubic-bezier(.4, 0, .2, 1),
+                        min-width 0.3s cubic-bezier(.4, 0, .2, 1);
+            overflow: hidden;
+        }
+
+        #sidebar.collapsed {
+            width: 72px;
+            min-width: 72px;
+        }
+
+        /* Sidebar header — normal state */
+        #sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            gap: 8px;
+            min-width: 0;
+            border-bottom: 1px solid #1e293b;
+            transition: padding 0.3s cubic-bezier(.4,0,.2,1), justify-content 0.1s;
+        }
+
+        /* Sidebar header — COLLAPSED: stack icon + toggle centered */
+        #sidebar.collapsed #sidebar-header {
+            flex-direction: column-reverse;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 8px;
+            gap: 6px;
+        }
+
+        /* The inner flex div holding icon + brand text */
+        #sidebar-header > div:first-child {
+            transition: flex 0.3s;
+            min-width: 0;
+        }
+        #sidebar.collapsed #sidebar-header > div:first-child {
+            flex: none;
+        }
+
+        /* sidebar-label: nav text labels, logout text etc. */
+        #sidebar .sidebar-label {
+            transition: opacity 0.15s ease, max-width 0.3s cubic-bezier(.4, 0, .2, 1);
+            opacity: 1;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            display: inline-block;
+        }
+
+        #sidebar.collapsed .sidebar-label {
+            opacity: 0;
+            max-width: 0;
+            pointer-events: none;
+        }
+
+        /* sidebar-brand-text: "Gokul Plastic" heading + dropdown */
+        #sidebar .sidebar-brand-text {
+            transition: opacity 0.15s ease, max-width 0.3s cubic-bezier(.4, 0, .2, 1), padding 0.3s;
+            opacity: 1;
+            max-width: 200px;
+            overflow: hidden;
+            white-space: nowrap;
+            flex-shrink: 1;
+        }
+
+        #sidebar.collapsed .sidebar-brand-text {
+            opacity: 0;
+            max-width: 0;
+            overflow: hidden;
+            pointer-events: none;
+            padding: 0;
+        }
+
+        /* Firebase status footer row */
+        #sidebar .sidebar-status {
+            transition: opacity 0.2s;
+        }
+
+        #sidebar.collapsed .sidebar-status {
+            opacity: 0;
+            pointer-events: none;
+            height: 0;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        #main-content {
+            margin-left: 256px;
+            transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        #main-content.sidebar-collapsed {
+            margin-left: 72px;
+        }
+    
