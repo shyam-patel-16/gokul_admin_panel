@@ -16,6 +16,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- Environment variables -->
+    <script src="assets/js/env.js"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -32,106 +36,7 @@
             }
         }
     </script>
-    <style>
-        /* Print Styles */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-
-            #challan-modal,
-            #challan-modal * {
-                visibility: visible;
-            }
-
-            #challan-modal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-        }
-
-        /* Custom Scrollbars */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 6px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-
-        /* Collapsible Sidebar */
-        #sidebar {
-            width: 256px;
-            transition: width 0.3s cubic-bezier(.4, 0, .2, 1);
-            overflow: hidden;
-        }
-
-        #sidebar.collapsed {
-            width: 72px;
-        }
-
-        #sidebar .sidebar-label {
-            transition: opacity 0.2s, width 0.2s;
-            opacity: 1;
-            white-space: nowrap;
-            overflow: hidden;
-        }
-
-        #sidebar.collapsed .sidebar-label {
-            opacity: 0;
-            width: 0;
-            pointer-events: none;
-        }
-
-        #sidebar .sidebar-brand-text {
-            transition: opacity 0.2s;
-            opacity: 1;
-        }
-
-        #sidebar.collapsed .sidebar-brand-text {
-            opacity: 0;
-            width: 0;
-            overflow: hidden;
-        }
-
-        #sidebar .sidebar-status {
-            transition: opacity 0.2s;
-        }
-
-        #sidebar.collapsed .sidebar-status {
-            opacity: 0;
-            pointer-events: none;
-            height: 0;
-            overflow: hidden;
-            padding: 0;
-        }
-
-        #main-content {
-            margin-left: 256px;
-            transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
-        }
-
-        #main-content.sidebar-collapsed {
-            margin-left: 72px;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col md:flex-row antialiased">
@@ -188,26 +93,42 @@
             </div>
         </div>
     </div>
+
+    <!-- BUSINESS SELECTION SCREEN -->
+    <div id="business-selection-screen" class="hidden fixed inset-0 z-[9998] items-center justify-center bg-slate-100" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);">
+        <div class="bg-white rounded-3xl shadow-xl w-full max-w-lg mx-4 overflow-hidden border border-slate-200">
+            <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center relative">
+                <!-- Add Logout Button Here to allow user to logout from selection screen -->
+                <button onclick="logoutUser()" class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-lg bg-black/10 hover:bg-black/20 transition"><i class="fa-solid fa-power-off"></i></button>
+                <h2 class="text-white font-black text-2xl tracking-wide">Select Business</h2>
+                <p class="text-indigo-200 text-sm mt-1 font-medium">તમારે કયા વિભાગમાં કામ કરવું છે?</p>
+            </div>
+            <div id="business-selection-grid" class="px-8 py-10 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto">
+                <!-- Loaded dynamically by renderCompaniesUI() -->
+            </div>
+        </div>
+    </div>
     <!-- DESKTOP SIDEBAR (Collapsible) -->
     <aside id="sidebar"
         class="no-print hidden md:flex flex-col bg-primary text-slate-200 fixed top-0 bottom-0 left-0 z-30 shadow-xl border-r border-slate-900">
 
         <!-- Header: Logo + Collapse Toggle -->
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between gap-2 min-w-0">
-            <div class="flex items-center gap-3 min-w-0">
+        <div id="sidebar-header" class="p-4 border-b border-slate-800 flex items-center justify-between gap-2 min-w-0">
+            <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div
                     class="w-10 h-10 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white text-lg shadow-lg">
                     <i class="fa-solid fa-industry"></i>
                 </div>
-                <div class="sidebar-brand-text min-w-0">
+                <div class="sidebar-brand-text min-w-0 sidebar-label" style="overflow:hidden;">
                     <h2 class="text-white font-extrabold text-sm tracking-wide whitespace-nowrap">Gokul Plastic</h2>
-                    <p class="text-slate-400 text-[10px] tracking-wider uppercase font-semibold whitespace-nowrap">
-                        Ahmedabad</p>
+                    <select id="sidebar-business-select" onchange="selectBusiness(this.value)" class="text-[10px] mt-1 tracking-wider uppercase font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded cursor-pointer outline-none w-full px-1.5 py-0.5">
+                        <!-- Loaded dynamically -->
+                    </select>
                 </div>
             </div>
             <!-- Toggle Button -->
             <button onclick="toggleSidebar()" id="sidebar-toggle-btn"
-                class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-800 hover:bg-accent text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200 ml-auto"
+                class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-800 hover:bg-accent text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200"
                 title="Sidebar Toggle">
                 <i id="sidebar-toggle-icon" class="fa-solid fa-chevron-left text-xs"></i>
             </button>
@@ -271,23 +192,25 @@
 
     <!-- MOBILE TOP BAR -->
     <header
-        class="no-print flex md:hidden bg-primary text-white p-4 justify-between items-center sticky top-0 z-30 shadow-md">
-        <div class="flex items-center gap-2">
-            <div class="w-8 h-8 rounded-lg bg-accent flex items-center justify-center text-white text-sm">
+        class="no-print flex md:hidden bg-primary text-white p-3 sm:p-4 justify-between items-center sticky top-0 z-30 shadow-md gap-3">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+            <div class="w-8 h-8 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white shadow-lg">
                 <i class="fa-solid fa-industry"></i>
             </div>
-            <h1 class="font-extrabold text-sm tracking-wide">Gokul Plastic</h1>
+            <select id="mobile-business-select" onchange="selectBusiness(this.value)" class="flex-1 min-w-0 text-xs font-bold tracking-wider uppercase text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded cursor-pointer outline-none px-2 py-1.5 shadow-sm text-ellipsis overflow-hidden whitespace-nowrap">
+                <!-- Loaded dynamically -->
+            </select>
         </div>
-        <div class="flex items-center gap-2.5">
-            <span id="mobile-firebase-status-dot" class="w-2.5 h-2.5 bg-red-500 rounded-full"
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <span id="mobile-firebase-status-dot" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"
                 title="Firebase Status"></span>
             <button onclick="logoutUser()"
-                class="text-red-400 hover:text-red-300 p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                class="text-red-400 hover:text-red-300 w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0"
                 title="Logout">
                 <i class="fa-solid fa-power-off text-sm"></i>
             </button>
             <button onclick="switchPage('settings')"
-                class="text-slate-300 hover:text-white p-1.5 rounded-lg bg-slate-800/80 flex items-center justify-center"
+                class="text-slate-300 hover:text-white w-8 h-8 rounded-lg bg-slate-800/80 flex items-center justify-center flex-shrink-0"
                 title="Settings">
                 <i class="fa-solid fa-gear text-sm"></i>
             </button>
@@ -295,7 +218,7 @@
     </header>
 
     <!-- MOBILE BOTTOM NAVIGATION -->
-    <nav
+    <nav id="mobile-bottom-nav"
         class="no-print md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex py-2.5 z-40 text-[10px] font-bold text-slate-500 shadow-xl overflow-x-auto whitespace-nowrap px-2 gap-4 hide-scrollbar">
         <button id="mobile-nav-dashboard" onclick="switchPage('dashboard')"
             class="mobile-nav-link flex flex-col items-center gap-1 text-accent px-2">
@@ -412,6 +335,52 @@
                 </div>
             </div>
 
+            <!-- Business Analytics Chart Section -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                    <div>
+                        <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-accent"></i>
+                            <span>વ્યાપાર વિશ્લેષણ (Business Analytics)</span>
+                        </h3>
+                        <p id="chart-subtitle" class="text-[10px] text-slate-400 mt-0.5">છેલ્લા 7 દિવસ — Sales, Buying અને Received</p>
+                    </div>
+                    <!-- Period Toggle Tabs -->
+                    <div class="flex gap-1.5 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+                        <button id="chart-btn-weekly" onclick="switchChartPeriod('weekly')"
+                            class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 bg-white text-slate-800 shadow-sm">
+                            <i class="fa-solid fa-calendar-week mr-1"></i>વઠ
+                        </button>
+                        <button id="chart-btn-monthly" onclick="switchChartPeriod('monthly')"
+                            class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800">
+                            <i class="fa-solid fa-calendar-days mr-1"></i>મહ
+                        </button>
+                        <button id="chart-btn-yearly" onclick="switchChartPeriod('yearly')"
+                            class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800">
+                            <i class="fa-solid fa-calendar mr-1"></i>વર્ષ
+                        </button>
+                    </div>
+                </div>
+                <div class="relative" style="height:240px;">
+                    <canvas id="business-chart"></canvas>
+                </div>
+                <!-- Chart Legend Badges -->
+                <div class="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100">
+                    <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                        <span class="w-3 h-3 rounded-sm" style="background:#818cf8"></span> Sales (સેલ્સ)
+                    </span>
+                    <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                        <span class="w-3 h-3 rounded-sm" style="background:#94a3b8"></span> Buying (ખરીદી)
+                    </span>
+                    <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                        <span class="w-3 h-3 rounded-sm" style="background:#34d399"></span> Received (મળ્યું)
+                    </span>
+                    <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
+                        <span class="w-3 h-3 rounded-sm" style="background:#f87171"></span> Paid (ચૂકવ્યું)
+                    </span>
+                </div>
+            </div>
+
             <!-- Quick Action Cards Panel -->
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <h3 class="font-extrabold text-slate-700 text-sm flex items-center gap-2">
@@ -419,13 +388,13 @@
                     <span>ક્વિક એક્શન શોર્ટકટ્સ</span>
                 </h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <button onclick="switchPage('add-entry')"
+                    <button onclick="switchPage('add-order')"
                         class="p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-100 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-cart-plus text-xl text-accent group-hover:scale-110 transition duration-150"></i>
                         <span class="text-xs font-bold text-slate-700">નવો ઓર્ડર લખો</span>
                     </button>
-                    <button onclick="switchPage('add-entry')"
+                    <button onclick="switchPage('add-payment')"
                         class="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-100 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-wallet text-xl text-emerald-500 group-hover:scale-110 transition duration-150"></i>
@@ -455,7 +424,7 @@
                             <i class="fa-solid fa-boxes-stacked text-accent"></i>
                             <span>ઓર્ડર્સ હિસ્ટ્રી (All Orders)</span>
                         </h3>
-                        <button onclick="switchPage('reports'); switchSubTab('orders')"
+                        <button onclick="switchPage('order-history')"
                             class="text-xs text-accent hover:text-accentHover font-bold">બધા જુઓ →</button>
                     </div>
                     <div id="dash-recent-orders" class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
@@ -469,7 +438,7 @@
                             <i class="fa-solid fa-handshake text-emerald-500"></i>
                             <span>પેમેન્ટ્સ હિસ્ટ્રી (All Payments)</span>
                         </h3>
-                        <button onclick="switchPage('reports'); switchSubTab('payments')"
+                        <button onclick="switchPage('payment-history')"
                             class="text-xs text-accent hover:text-accentHover font-bold">બધા જુઓ →</button>
                     </div>
                     <div id="dash-recent-payments" class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
@@ -1014,6 +983,35 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Company Management -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h3 class="text-md font-black text-slate-800 flex items-center justify-between border-b pb-3 border-slate-100">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-building text-indigo-500"></i>
+                        <span>કંપની મેનેજમેન્ટ (Manage Companies)</span>
+                    </div>
+                    <button onclick="addNewCompany()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded text-[10px] transition shadow flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> નવી કંપની ઉમેરો
+                    </button>
+                </h3>
+                <p class="text-[11px] text-slate-400">અહીંથી તમે નવી કંપનીઓ બનાવી શકો છો અને જરૂર ન હોય તેવી કંપનીઓને ડીલીટ કરી શકો છો.</p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-100">
+                        <thead>
+                            <tr class="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
+                                <th class="p-3">કંપનીનું નામ (Company Name)</th>
+                                <th class="p-3 text-center w-24">એક્શન (Action)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="companies-table-body" class="divide-y divide-slate-100 text-slate-700 font-bold">
+                            <!-- Dynamic company rows loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
         </div>
     </main>
 
@@ -1047,6 +1045,7 @@
                             <div>
                                 <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
                                 <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
+                                <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
                                 <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
                                     Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
                                 </p>
@@ -1121,6 +1120,7 @@
                             <div>
                                 <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
                                 <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
+                                <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
                                 <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
                                     Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
                                 </p>
@@ -1201,1022 +1201,7 @@
     </div>
 
     <!-- JAVASCRIPT CODE -->
-    <script>
-        // Database state setup
-        let db = JSON.parse(localStorage.getItem('biz_db_v4')) || { orders: [], payments: [] };
-        if (!db.orders) db.orders = [];
-        if (!db.payments) db.payments = [];
-
-        let activeParty = "";
-        let firestoreDb = null;
-        let unsubOrders = null;
-        let unsubPayments = null;
-        let isFirebaseConnected = false;
-        let currentTab = "dashboard";
-        let currentSubTab = "orders";
-        let auth = null;
-
-        // Save data local storage and trigger UI updates
-        function saveData() {
-            localStorage.setItem('biz_db_v4', JSON.stringify(db));
-            calculateDashboard();
-            renderDashboardRecent();
-            renderParties();
-            if (activeParty) showPartyDetails(activeParty);
-            renderAllOrders();
-            renderAllPayments();
-        }
-
-        // ══════════════════════════════════════════════════════════════
-        // HARDCODED FIREBASE CONFIG - Gokul Plastic Online Database
-        // ══════════════════════════════════════════════════════════════
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyAjpJl4uT39VabjHCPImm9S6fOTvv7GkXs",
-            authDomain: "gokul-plastic-c7812.firebaseapp.com",
-            projectId: "gokul-plastic-c7812",
-            storageBucket: "gokul-plastic-c7812.firebasestorage.app",
-            messagingSenderId: "309381683026",
-            appId: "1:309381683026:web:74015ad617240cb7df8c8b"
-        };
-
-        // Auto-save config to localStorage (settings page માં show થશે)
-        localStorage.setItem('firebase_config', JSON.stringify(FIREBASE_CONFIG));
-
-        // Initialize Firebase logic
-        function initFirebase() {
-            const statusBadge = document.getElementById('firebase-status-badge');
-            const mobileDot = document.getElementById('mobile-firebase-status-dot');
-
-            if (unsubOrders) { unsubOrders(); unsubOrders = null; }
-            if (unsubPayments) { unsubPayments(); unsubPayments = null; }
-
-            if (typeof firebase === 'undefined') {
-                isFirebaseConnected = false;
-                firestoreDb = null;
-                if (statusBadge) {
-                    statusBadge.className = "w-full text-center text-[11px] bg-red-950/40 border border-red-900 text-red-400 py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-medium";
-                    statusBadge.innerHTML = `<span class="w-2 h-2 bg-red-500 rounded-full"></span><span>Firebase SDK Load Error</span>`;
-                }
-                calculateDashboard();
-                renderDashboardRecent();
-                renderParties();
-                if (currentTab === 'settings') renderSettingsConfig();
-                return;
-            }
-
-            if (statusBadge) {
-                statusBadge.className = "w-full text-center text-[11px] bg-yellow-950/40 border border-yellow-900 text-yellow-400 py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 font-medium";
-                statusBadge.innerHTML = `<span class="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></span><span>Connecting...</span>`;
-            }
-            if (mobileDot) {
-                mobileDot.className = "w-2.5 h-2.5 bg-yellow-500 rounded-full animate-pulse";
-            }
-
-            try {
-                const config = FIREBASE_CONFIG;
-                let app = !firebase.apps.length ? firebase.initializeApp(config) : firebase.app();
-                firestoreDb = app.firestore();
-                isFirebaseConnected = true;
-                auth = firebase.auth();
-
-                // SESSION persistence:
-                // - Tab ખુલ્લો = Logged in (refresh ઠીક)
-                // - Tab/Browser બંધ = Logout (fresh login)
-                auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                    .then(() => {
-                        // onAuthStateChanged: login state track
-                        auth.onAuthStateChanged(user => {
-                            if (user) {
-                                // Logged in: login screen hide
-                                document.getElementById('login-screen').style.display = 'none';
-                            } else {
-                                // Not logged in: login form show
-                                if (typeof showLoginScreen === 'function') showLoginScreen();
-                            }
-                        });
-                    })
-                    .catch(() => {
-                        // Fallback
-                        auth.onAuthStateChanged(user => {
-                            if (user) {
-                                document.getElementById('login-screen').style.display = 'none';
-                            } else {
-                                if (typeof showLoginScreen === 'function') showLoginScreen();
-                            }
-                        });
-                    });
-
-                if (statusBadge) {
-                    statusBadge.className = "w-full text-center text-[11px] bg-emerald-950/40 border border-emerald-900 text-emerald-400 py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-medium";
-                    statusBadge.innerHTML = `<span class="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span><span>Firebase Live 🟢</span>`;
-                }
-                if (mobileDot) {
-                    mobileDot.className = "w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping";
-                }
-
-                listenFirebaseData();
-            } catch (err) {
-                console.error("Firebase Connection Error:", err);
-                isFirebaseConnected = false;
-                if (statusBadge) {
-                    statusBadge.className = "w-full text-center text-[11px] bg-red-950/40 border border-red-900 text-red-400 py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-medium";
-                    statusBadge.innerHTML = `<span class="w-2 h-2 bg-red-550 rounded-full"></span><span>Error ❌</span>`;
-                }
-                if (mobileDot) {
-                    mobileDot.className = "w-2.5 h-2.5 bg-red-500 rounded-full";
-                }
-            }
-            if (currentTab === 'settings') renderSettingsConfig();
-        }
-
-        // Live listening Firebase
-        function listenFirebaseData() {
-            if (!firestoreDb) return;
-
-            unsubOrders = firestoreDb.collection('orders').onSnapshot(snapshot => {
-                let orders = [];
-                snapshot.forEach(doc => orders.push(doc.data()));
-                db.orders = orders.sort((a, b) => a.id - b.id);
-                localStorage.setItem('biz_db_v4', JSON.stringify(db));
-                calculateDashboard();
-                renderDashboardRecent();
-                renderParties();
-                if (activeParty) showPartyDetails(activeParty);
-                renderAllOrders();
-            }, err => console.error(err));
-
-            unsubPayments = firestoreDb.collection('payments').onSnapshot(snapshot => {
-                let payments = [];
-                snapshot.forEach(doc => payments.push(doc.data()));
-                db.payments = payments.sort((a, b) => a.id - b.id);
-                localStorage.setItem('biz_db_v4', JSON.stringify(db));
-                calculateDashboard();
-                renderDashboardRecent();
-                renderParties();
-                if (activeParty) showPartyDetails(activeParty);
-                renderAllPayments();
-            }, err => console.error(err));
-        }
-
-        // Parser raw firebase config input
-        function parseFirebaseConfig(input) {
-            try {
-                return JSON.parse(input);
-            } catch (e) {
-                let config = {};
-                const keys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
-                keys.forEach(key => {
-                    const regex = new RegExp(`['"]?${key}['"]?\\s*:\\s*['"]([^'"]+)['"]`);
-                    const match = input.match(regex);
-                    if (match && match[1]) config[key] = match[1];
-                });
-                if (config.apiKey && config.projectId && config.appId) return config;
-                throw new Error("કોન્ફિગરેશન JSON અથવા ઑબ્જેક્ટનું ફોર્મેટ અયોગ્ય છે.");
-            }
-        }
-
-        // Disconnect firebase settings
-        function disconnectFirebase() {
-            if (confirm("શું તમે ફાયરબેઝ સર્વરથી કનેક્શન તોડવા માંગો છો? આનાથી ફક્ત લોકલ મોડ ચાલશે.")) {
-                localStorage.removeItem('firebase_config');
-                initFirebase();
-            }
-        }
-
-        // Migrate local storage records to Firebase Firestore cloud database
-        async function migrateLocalDataToFirebase() {
-            if (!isFirebaseConnected || !firestoreDb) return alert("કૃપા કરીને પહેલા સેટિંગ્સમાંથી ફાયરબેઝ લિંક કરો!");
-            let localDb = JSON.parse(localStorage.getItem('biz_db_v4')) || { orders: [], payments: [] };
-            if (confirm(`શું તમે બધો જ લોકલ સ્ટોરેજનો ડેટા ઓનલાઇન ફાયરબેઝ સર્વર પર અપલોડ કરવા માંગો છો?`)) {
-                try {
-                    let batch = firestoreDb.batch();
-                    localDb.orders.forEach(order => batch.set(firestoreDb.collection('orders').doc(order.id.toString()), order));
-                    localDb.payments.forEach(pay => batch.set(firestoreDb.collection('payments').doc(pay.id.toString()), pay));
-                    await batch.commit();
-                    alert("તમામ ડેટા ફાયરબેઝ પર સફળતાપૂર્વક અપલોડ થઈ ગયો છે!");
-                    initFirebase();
-                } catch (err) { alert("ભૂલ: " + err.message); }
-            }
-        }
-
-        // Export Database download offline
-        function exportDatabase() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `Gokul_Plastic_Backup_${new Date().toISOString().split('T')[0]}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-        }
-
-        // Import Database
-        function importDatabase(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                try {
-                    const importedDb = JSON.parse(e.target.result);
-                    if (importedDb.orders && importedDb.payments) {
-                        if (confirm("શું તમે ખરેખર આ બેકઅપ ફાઈલ લોડ કરવા માંગો છો? તમારા બ્રાઉઝરમાં સાચવેલો જૂનો ડેટા રદ થઈ જશે.")) {
-                            db = importedDb;
-                            saveData();
-                            alert("ડેટા સફળતાપૂર્વક ઈમ્પોર્ટ થઈ ગયો છે!");
-                        }
-                    } else {
-                        alert("અમાન્ય બેકઅપ ફાઈલ ફોર્મેટ! આમાં ઓર્ડર અને પેમેન્ટની માહિતી હોવી જરૂરી છે.");
-                    }
-                } catch (err) {
-                    alert("ફાઈલ વાંચવામાં કંઈક ભૂલ થઈ: " + err.message);
-                }
-            };
-            reader.readAsText(file);
-        }
-
-        // Navigation Page Swapping Switcher
-        function switchPage(pageId) {
-            currentTab = pageId;
-
-            // Hide all pages
-            document.querySelectorAll('.page-view').forEach(view => {
-                view.classList.add('hidden');
-            });
-
-            // Show active page view
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-
-            // Update desktop link classes
-            document.querySelectorAll('.nav-link').forEach(link => {
-                link.className = "nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-850 hover:text-white";
-            });
-            const activeLink = document.getElementById(`nav-${pageId}`);
-            if (activeLink) {
-                activeLink.className = "nav-link w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-accent text-white shadow-md shadow-accent/20";
-            }
-
-            // Update mobile link classes
-            document.querySelectorAll('.mobile-nav-link').forEach(link => {
-                link.className = "mobile-nav-link flex flex-col items-center gap-1 flex-1 text-slate-500";
-            });
-            const activeMobileLink = document.getElementById(`mobile-nav-${pageId}`);
-            if (activeMobileLink) {
-                activeMobileLink.className = "mobile-nav-link flex flex-col items-center gap-1 flex-1 text-accent";
-            }
-
-            // Load triggers based on page
-            if (pageId === 'dashboard') {
-                renderDashboardRecent();
-            } else if (pageId === 'parties') {
-                renderParties();
-                // Desktop detail ledger auto show/hide logic
-                if (activeParty) {
-                    showPartyDetails(activeParty);
-                } else {
-                    document.getElementById('ledger-content-area').classList.add('hidden');
-                    document.getElementById('ledger-empty-state').classList.remove('hidden');
-                }
-            } else if (pageId === 'order-history') {
-                renderAllOrders();
-            } else if (pageId === 'payment-history') {
-                renderAllPayments();
-            } else if (pageId === 'settings') {
-                renderSettingsConfig();
-            }
-        }
-
-        // Subtab Toggle
-        function switchSubTab(subTabId) {
-            currentSubTab = subTabId;
-            if (subTabId === 'orders') {
-                document.getElementById('subtab-view-orders').classList.remove('hidden');
-                document.getElementById('subtab-view-payments').classList.add('hidden');
-
-                document.getElementById('btn-subtab-orders').className = "px-4 py-2 rounded-lg font-bold text-xs transition duration-150 bg-white text-slate-800 shadow-2xs";
-                document.getElementById('btn-subtab-payments').className = "px-4 py-2 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800";
-            } else {
-                document.getElementById('subtab-view-orders').classList.add('hidden');
-                document.getElementById('subtab-view-payments').classList.remove('hidden');
-
-                document.getElementById('btn-subtab-orders').className = "px-4 py-2 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800";
-                document.getElementById('btn-subtab-payments').className = "px-4 py-2 rounded-lg font-bold text-xs transition duration-150 bg-white text-slate-800 shadow-2xs";
-            }
-        }
-
-        // Submit Order Form
-        document.getElementById('order-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            let partyName = document.getElementById('ord-party').value.trim();
-            let existingPhone = document.getElementById('ord-phone').value.trim();
-
-            // Find existing phone number if empty
-            if (!existingPhone) {
-                let foundOrder = db.orders.find(o => o.party === partyName && o.phone);
-                if (foundOrder) existingPhone = foundOrder.phone;
-            }
-
-            let newOrder = {
-                id: Date.now(),
-                type: document.getElementById('ord-type').value,
-                date: document.getElementById('ord-date').value,
-                party: partyName,
-                phone: existingPhone,
-                item: document.getElementById('ord-item').value,
-                qty: parseFloat(document.getElementById('ord-qty').value),
-                price: parseFloat(document.getElementById('ord-price').value),
-                status: document.getElementById('ord-status').value
-            };
-            newOrder.amount = newOrder.qty * newOrder.price;
-
-            if (isFirebaseConnected && firestoreDb) {
-                firestoreDb.collection('orders').doc(newOrder.id.toString()).set(newOrder);
-            } else {
-                db.orders.push(newOrder);
-                saveData();
-            }
-
-            activeParty = newOrder.party;
-            this.reset();
-            setDefaultDates();
-
-            // Redirect user to the party's ledger automatically
-            switchPage('parties');
-            showPartyDetails(activeParty);
-        });
-
-        // Submit Payment Form
-        document.getElementById('payment-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-
-            let partyName = document.getElementById('pay-party').value.trim();
-            let selectedMode = document.querySelector('input[name="pay-mode"]:checked');
-            let payMode = selectedMode ? selectedMode.value : 'Cash';
-            let chequeNo = payMode === 'Cheque' ? (document.getElementById('pay-cheque-no').value.trim() || '') : '';
-
-            let newPayment = {
-                id: Date.now(),
-                type: document.getElementById('pay-type').value,
-                date: document.getElementById('pay-date').value,
-                party: partyName,
-                amount: parseFloat(document.getElementById('pay-amount').value),
-                mode: payMode,
-                chequeNo: chequeNo
-            };
-
-            if (isFirebaseConnected && firestoreDb) {
-                firestoreDb.collection('payments').doc(newPayment.id.toString()).set(newPayment);
-            } else {
-                db.payments.push(newPayment);
-                saveData();
-            }
-
-            activeParty = newPayment.party;
-            this.reset();
-            // Reset radio to Cash and hide cheque field
-            document.getElementById('pay-mode-cash').checked = true;
-            document.getElementById('cheque-number-row').classList.add('hidden');
-            setDefaultDates();
-
-            // Redirect user to the party's ledger automatically
-            switchPage('parties');
-            showPartyDetails(activeParty);
-        });
-
-        // Show/hide cheque number field based on payment mode selection
-        document.querySelectorAll('input[name="pay-mode"]').forEach(function (radio) {
-            radio.addEventListener('change', function () {
-                const chequeRow = document.getElementById('cheque-number-row');
-                if (this.value === 'Cheque') {
-                    chequeRow.classList.remove('hidden');
-                    document.getElementById('pay-cheque-no').focus();
-                } else {
-                    chequeRow.classList.add('hidden');
-                    document.getElementById('pay-cheque-no').value = '';
-                }
-            });
-        });
-
-        // Toggle sidebar collapse/expand
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.getElementById('main-content');
-            const icon = document.getElementById('sidebar-toggle-icon');
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('sidebar-collapsed');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.classList.remove('fa-chevron-left');
-                icon.classList.add('fa-chevron-right');
-            } else {
-                icon.classList.remove('fa-chevron-right');
-                icon.classList.add('fa-chevron-left');
-            }
-        }
-
-        // Set default dates to today
-        function setDefaultDates() {
-            let today = new Date().toISOString().split('T')[0];
-            document.getElementById('ord-date').value = today;
-            document.getElementById('pay-date').value = today;
-            document.getElementById('current-date-badge').innerText = new Date().toLocaleDateString('gu-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        }
-
-        // Calculate and load dashboard metrics
-        function calculateDashboard() {
-            let totalSales = db.orders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
-            let totalBuying = db.orders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
-            let totalReceived = db.payments.filter(p => p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
-            let totalPaid = db.payments.filter(p => p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
-            let netDue = (totalSales - totalReceived) - (totalBuying - totalPaid);
-
-            document.getElementById('dash-sales').innerText = "₹" + totalSales.toLocaleString('en-IN');
-            document.getElementById('dash-buying').innerText = "₹" + totalBuying.toLocaleString('en-IN');
-            document.getElementById('dash-received').innerText = "₹" + totalReceived.toLocaleString('en-IN');
-            document.getElementById('dash-due').innerText = "₹" + netDue.toLocaleString('en-IN');
-        }
-
-        // Extract list of all unique parties
-        function getUniqueParties() {
-            let parties = new Set();
-            db.orders.forEach(o => parties.add(o.party));
-            db.payments.forEach(p => parties.add(p.party));
-            return Array.from(parties).sort();
-        }
-
-        // Render Parties List in column
-        function renderParties() {
-            let parties = getUniqueParties();
-            let search = document.getElementById('party-search').value.toLowerCase();
-            let box = document.getElementById('party-list-box');
-            box.innerHTML = "";
-
-            let count = 0;
-            parties.forEach(party => {
-                if (party.toLowerCase().includes(search)) {
-                    count++;
-                    let pSales = db.orders.filter(o => o.party === party && o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
-                    let pBuying = db.orders.filter(o => o.party === party && o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
-                    let pRec = db.payments.filter(p => p.party === party && p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
-                    let pPaid = db.payments.filter(p => p.party === party && p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
-
-                    let pDue = (pSales - pRec) - (pBuying - pPaid);
-                    let dueColor = pDue >= 0 ? 'text-red-650 bg-red-50/50 border-red-100' : 'text-emerald-650 bg-emerald-50/50 border-emerald-100';
-                    let activeClass = (party === activeParty) ? 'bg-indigo-50 border-accent shadow-2xs font-semibold' : 'bg-slate-50 border-transparent hover:bg-slate-100/50';
-
-                    let lastOrderWithPhone = db.orders.find(o => o.party === party && o.phone);
-                    let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "નથી";
-
-                    box.innerHTML += `
-                        <div onclick="showPartyDetails('${party}')" class="p-3 border rounded-xl cursor-pointer transition flex justify-between items-center ${activeClass}">
-                            <div class="space-y-1 truncate pr-2">
-                                <p class="font-bold text-slate-800 text-xs truncate">${party}</p>
-                                <p class="text-[9px] text-slate-400 font-medium flex items-center gap-1">
-                                    <i class="fa-solid fa-phone text-accent"></i> ${currentPhone}
-                                </p>
-                            </div>
-                            <div class="text-right flex-shrink-0">
-                                <p class="text-[9px] px-2 py-0.5 border rounded-lg font-bold ${dueColor}">₹${pDue.toLocaleString('en-IN')}</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-
-            if (count === 0) {
-                box.innerHTML = `<p class="text-slate-400 text-center py-6 text-xs">કોઈ પાર્ટી મળી નથી.</p>`;
-            }
-        }
-
-        // Show Party Details and active Ledger records
-        function showPartyDetails(party) {
-            activeParty = party;
-
-            document.getElementById('ledger-content-area').classList.remove('hidden');
-            document.getElementById('ledger-empty-state').classList.add('hidden');
-
-            // For Mobile View toggle
-            if (window.innerWidth < 1024) {
-                document.getElementById('party-list-container').classList.add('hidden');
-                document.getElementById('party-ledger-container').classList.remove('hidden');
-            }
-
-            document.getElementById('selected-party-title').innerHTML = `<i class="fa-solid fa-user-tie text-accent"></i> ${party}`;
-
-            let partyOrders = db.orders.filter(o => o.party === party);
-            let partyPayments = db.payments.filter(p => p.party === party);
-
-            let pSales = partyOrders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
-            let pBuying = partyOrders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
-            let pRec = partyPayments.filter(p => p.party === party && p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
-            let pPaid = partyPayments.filter(p => p.party === party && p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
-            let netPartyDue = (pSales - pRec) - (pBuying - pPaid);
-
-            let dueText = document.getElementById('selected-party-due');
-            dueText.innerText = "₹" + netPartyDue.toLocaleString('en-IN');
-            dueText.className = netPartyDue >= 0 ? "font-black text-xl text-red-600 block mt-0.5" : "font-black text-xl text-emerald-600 block mt-0.5";
-
-            let lastOrderWithPhone = db.orders.find(o => o.party === party && o.phone);
-            let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "નથી";
-            const phoneBadge = document.getElementById('selected-party-phone-badge');
-            phoneBadge.classList.remove('hidden');
-            document.getElementById('party-phone-span').innerHTML = `📞 ${currentPhone} <button onclick="editPartyPhone('${party}', '${currentPhone === 'નથી' ? '' : currentPhone}')" class="text-accent hover:text-accentHover ml-1.5 font-bold hover:underline">✏️ સુધારો</button>`;
-
-            // Orders Table
-            let orderTable = document.getElementById('party-orders-table');
-            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-slate-400 text-center py-6">કોઈ ઓર્ડર એન્ટ્રી નથી.</p>` : "";
-
-            partyOrders.forEach(o => {
-                let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
-                let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `<button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center gap-0.5 transition"><i class="fa-solid fa-print"></i>Challan</button>` : '';
-
-                orderTable.innerHTML += `
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs space-y-2 relative group">
-                        <div class="absolute top-2 right-2 flex space-x-1.5 opacity-40 group-hover:opacity-100 transition no-print">
-                            <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent" title="ઓર્ડર સુધારો"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
-                        </div>
-                        <div class="flex justify-between items-center text-[10px]">
-                            <span class="px-2 py-0.5 border rounded-lg font-bold ${badgeColor}">${o.type}</span>
-                            <span class="text-slate-400 font-medium pr-10">${o.date}</span>
-                        </div>
-                        <p class="font-bold text-slate-800 text-xs">${o.item} <span class="text-slate-400">(${o.qty} x ₹${o.price})</span></p>
-                        <div class="flex justify-between items-center pt-2 border-t border-dashed border-slate-100">
-                            <span class="font-extrabold text-slate-800">₹${o.amount.toLocaleString('en-IN')}</span>
-                            <div class="flex space-x-1.5 items-center">
-                                ${challanBtn}
-                                <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusClass}">${o.status} <i class="fa-solid fa-arrows-rotate text-[8px] ml-0.5"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // Payments Table
-            let paymentTable = document.getElementById('party-payments-table');
-            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-slate-400 text-center py-6">કોઈ ચૂકવણી રેકોર્ડ નથી.</p>` : "";
-
-            partyPayments.forEach(p => {
-                let badgeColor = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
-                paymentTable.innerHTML += `
-                    <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs flex justify-between items-center relative group">
-                        <div class="space-y-1.5">
-                            <div class="flex items-center space-x-2">
-                                <span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${badgeColor}">${p.type}</span>
-                                <span class="text-slate-400 text-[10px] font-medium">${p.date}</span>
-                            </div>
-                            <p class="font-bold text-slate-800 text-xs">રકમ: <span class="font-extrabold">₹${p.amount.toLocaleString('en-IN')}</span></p>
-                        </div>
-                        <button onclick="deleteItem('payments', ${p.id})" class="text-slate-400 hover:text-red-500 opacity-40 group-hover:opacity-100 transition no-print p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
-                    </div>
-                `;
-            });
-        }
-
-        // Back to party list toggle on mobile
-        function backToPartyList() {
-            document.getElementById('party-list-container').classList.remove('hidden');
-            document.getElementById('party-ledger-container').classList.add('hidden');
-        }
-
-        // Edit Party Phone across all orders
-        async function editPartyPhone(partyName, existingPhone) {
-            let newPhone = prompt(`"${partyName}" માટે નવો WhatsApp મોબાઈલ નંબર લખો:`, existingPhone);
-            if (newPhone === null) return;
-            newPhone = newPhone.trim();
-
-            if (newPhone && !/^\d{10}$/.test(newPhone)) {
-                alert("મહેરબાની કરીને સાચો ૧૦ આંકડાનો મોબાઈલ નંબર લખો.");
-                return;
-            }
-
-            if (isFirebaseConnected && firestoreDb) {
-                try {
-                    let batch = firestoreDb.batch();
-                    let snapshot = await firestoreDb.collection('orders').where('party', '==', partyName).get();
-                    snapshot.forEach(doc => {
-                        batch.update(doc.ref, { phone: newPhone });
-                    });
-                    await batch.commit();
-                    alert("મોબાઈલ નંબર ઓનલાઇન ફાયરબેઝ પર સફળતાપૂર્વક અપડેટ થઈ ગયો છે!");
-                } catch (err) {
-                    alert("ભૂલ: " + err.message);
-                }
-            } else {
-                db.orders.forEach(o => {
-                    if (o.party === partyName) {
-                        o.phone = newPhone;
-                    }
-                });
-                saveData();
-                alert("મોબાઈલ નંબર સ્થાનિક બેકઅપમાં અપડેટ થઈ ગયો છે!");
-            }
-        }
-
-        // Edit Order Details (Item, Qty, Price)
-        function editOrder(orderId) {
-            let order = db.orders.find(o => o.id === orderId);
-            if (!order) return;
-
-            let newItem = prompt("આઇટમ વિગત સુધારો:", order.item);
-            if (newItem === null) return;
-
-            let newQtyStr = prompt("ક્વોન્ટિટી (Qty) સુધારો:", order.qty);
-            if (newQtyStr === null) return;
-            let newQty = parseFloat(newQtyStr);
-
-            let newPriceStr = prompt("ભાવ (Price) સુધારો:", order.price);
-            if (newPriceStr === null) return;
-            let newPrice = parseFloat(newPriceStr);
-
-            if (isNaN(newQty) || isNaN(newPrice)) {
-                alert("કૃપા કરીને સાચી કિંમત અને ક્વોન્ટિટી જ આંકડામાં લખો.");
-                return;
-            }
-
-            let updatedData = {
-                item: newItem.trim(),
-                qty: newQty,
-                price: newPrice,
-                amount: newQty * newPrice
-            };
-
-            if (isFirebaseConnected && firestoreDb) {
-                firestoreDb.collection('orders').doc(orderId.toString()).update(updatedData)
-                    .then(() => alert("ઓર્ડર વિગત ફાયરબેઝ પર અપડેટ થઈ ગઈ છે!"))
-                    .catch(err => alert("ભૂલ: " + err.message));
-            } else {
-                Object.assign(order, updatedData);
-                saveData();
-                alert("ઓર્ડર વિગત સ્થાનિકમાં સેવ થઈ ગઈ છે!");
-            }
-        }
-
-        // Toggle pending status
-        function toggleStatus(orderId) {
-            let order = db.orders.find(o => o.id === orderId);
-            if (order) {
-                let newStatus = order.status === 'Pending' ? 'Complete' : 'Pending';
-                if (isFirebaseConnected && firestoreDb) {
-                    firestoreDb.collection('orders').doc(orderId.toString()).update({ status: newStatus });
-                } else {
-                    order.status = newStatus;
-                    saveData();
-                }
-            }
-        }
-
-        // Get delivery challan index
-        function getChallanSequenceNumber(orderId) {
-            let salesOrders = db.orders.filter(o => o.type === 'Sales').sort((a, b) => a.id - b.id);
-            let index = salesOrders.findIndex(o => o.id === orderId);
-            return index !== -1 ? (index + 1) : 1;
-        }
-
-        // Render Recent Activity lists on Dashboard
-        function renderDashboardRecent() {
-            const recentOrdersBox = document.getElementById('dash-recent-orders');
-            const recentPaymentsBox = document.getElementById('dash-recent-payments');
-
-            // All orders sorted by newest
-            const lastOrders = [...db.orders].sort((a, b) => b.id - a.id);
-            recentOrdersBox.innerHTML = lastOrders.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">કોઈ ઓર્ડર નથી.</p>` : "";
-            lastOrders.forEach(o => {
-                let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
-                let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
-
-                recentOrdersBox.innerHTML += `
-                    <div class="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition duration-150">
-                        <div class="space-y-1 min-w-0 pr-2">
-                            <p class="font-bold text-slate-800 text-xs truncate">${o.party}</p>
-                            <p class="text-[9px] text-slate-400 font-semibold truncate">${o.item} (${o.qty} x ₹${o.price})</p>
-                        </div>
-                        <div class="text-right space-y-1 flex-shrink-0">
-                            <p class="font-extrabold text-slate-800 text-xs">₹${o.amount.toLocaleString('en-IN')}</p>
-                            <div class="flex gap-1 justify-end">
-                                <span class="text-[8px] px-1 py-0.2 rounded border ${badgeColor} font-bold">${o.type}</span>
-                                <span class="text-[8px] px-1 py-0.2 rounded ${statusClass} font-bold">${o.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // All payments sorted by newest
-            const lastPayments = [...db.payments].sort((a, b) => b.id - a.id);
-            recentPaymentsBox.innerHTML = lastPayments.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">કોઈ પેમેન્ટ નથી.</p>` : "";
-            lastPayments.forEach(p => {
-                let badgeColor = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
-                let modeIcon = p.mode === 'Cheque' ? 'fa-file-invoice' : (p.mode === 'Online' ? 'fa-mobile-screen-button' : 'fa-money-bill');
-                let modeLabel = p.mode || 'Cash';
-
-                recentPaymentsBox.innerHTML += `
-                    <div class="flex items-center justify-between p-3 border border-slate-100 rounded-xl hover:bg-slate-50 transition duration-150">
-                        <div class="space-y-1 min-w-0 pr-2">
-                            <p class="font-bold text-slate-800 text-xs truncate">${p.party}</p>
-                            <p class="text-[9px] text-slate-400 font-semibold">${p.date} &bull; <i class="fa-solid ${modeIcon}"></i> ${modeLabel}</p>
-                        </div>
-                        <div class="text-right space-y-1 flex-shrink-0">
-                            <p class="font-extrabold text-slate-800 text-xs">₹${p.amount.toLocaleString('en-IN')}</p>
-                            <span class="text-[8px] px-1.5 py-0.2 border rounded-lg ${badgeColor} font-bold inline-block">${p.type}</span>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-
-        // Render Reports: All Orders
-        function renderAllOrders() {
-            const searchVal = document.getElementById('report-order-search').value.toLowerCase();
-            const filterType = document.getElementById('report-order-filter-type').value;
-            const filterStatus = document.getElementById('report-order-filter-status').value;
-            const tbody = document.getElementById('all-orders-table-body');
-            const emptyMsg = document.getElementById('orders-report-empty');
-
-            tbody.innerHTML = "";
-
-            let filteredOrders = [...db.orders].sort((a, b) => b.id - a.id);
-
-            if (searchVal) {
-                filteredOrders = filteredOrders.filter(o => o.party.toLowerCase().includes(searchVal) || o.item.toLowerCase().includes(searchVal));
-            }
-            if (filterType !== 'All') {
-                filteredOrders = filteredOrders.filter(o => o.type === filterType);
-            }
-            if (filterStatus !== 'All') {
-                filteredOrders = filteredOrders.filter(o => o.status === filterStatus);
-            }
-
-            if (filteredOrders.length === 0) {
-                emptyMsg.classList.remove('hidden');
-            } else {
-                emptyMsg.classList.add('hidden');
-            }
-
-            filteredOrders.forEach(o => {
-                let typeBadge = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
-                let statusBadge = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `<button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center gap-0.5 transition"><i class="fa-solid fa-print"></i>ચલાન</button>` : '';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                        <td class="p-4 font-semibold text-slate-500 whitespace-nowrap">${o.date}</td>
-                        <td class="p-4 font-bold text-slate-800 cursor-pointer hover:text-accent" onclick="switchPage('parties'); showPartyDetails('${o.party}')">${o.party}</td>
-                        <td class="p-4"><span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${typeBadge}">${o.type}</span></td>
-                        <td class="p-4 font-semibold text-slate-600 max-w-[150px] truncate" title="${o.item}">${o.item}</td>
-                        <td class="p-4 text-center font-bold text-slate-800">${o.qty}</td>
-                        <td class="p-4 text-right font-semibold text-slate-600">₹${o.price.toLocaleString('en-IN')}</td>
-                        <td class="p-4 text-right font-extrabold text-slate-800">₹${o.amount.toLocaleString('en-IN')}</td>
-                        <td class="p-4 text-center">
-                            <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge} inline-flex items-center gap-0.5 hover:shadow-xs transition">
-                                ${o.status} <i class="fa-solid fa-arrows-rotate text-[8px]"></i>
-                            </button>
-                        </td>
-                        <td class="p-4 text-center no-print flex justify-center items-center gap-2 mt-1">
-                            ${challanBtn}
-                            <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent p-1" title="સુધારો"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
-                            <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // Render Reports: All Payments
-        function renderAllPayments() {
-            const searchVal = document.getElementById('report-payment-search').value.toLowerCase();
-            const filterType = document.getElementById('report-payment-filter-type').value;
-            const tbody = document.getElementById('all-payments-table-body');
-            const emptyMsg = document.getElementById('payments-report-empty');
-
-            tbody.innerHTML = "";
-
-            let filteredPayments = [...db.payments].sort((a, b) => b.id - a.id);
-
-            if (searchVal) {
-                filteredPayments = filteredPayments.filter(p => p.party.toLowerCase().includes(searchVal));
-            }
-            if (filterType !== 'All') {
-                filteredPayments = filteredPayments.filter(p => p.type === filterType);
-            }
-
-            if (filteredPayments.length === 0) {
-                emptyMsg.classList.remove('hidden');
-            } else {
-                emptyMsg.classList.add('hidden');
-            }
-
-            filteredPayments.forEach(p => {
-                let typeBadge = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
-
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
-                        <td class="p-4 font-semibold text-slate-500 whitespace-nowrap">${p.date}</td>
-                        <td class="p-4 font-bold text-slate-800 cursor-pointer hover:text-accent" onclick="switchPage('parties'); showPartyDetails('${p.party}')">${p.party}</td>
-                        <td class="p-4"><span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${typeBadge}">${p.type}</span></td>
-                        <td class="p-4 text-right font-extrabold text-slate-900">₹${p.amount.toLocaleString('en-IN')}</td>
-                        <td class="p-4 text-center no-print">
-                            <button onclick="deleteItem('payments', ${p.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        // Render Configuration Fields in settings
-        function renderSettingsConfig() {
-            const savedConfig = localStorage.getItem('firebase_config');
-            document.getElementById('settings-fb-config-json').value = savedConfig ? JSON.stringify(JSON.parse(savedConfig), null, 2) : "";
-
-            const statusEl = document.getElementById('settings-firebase-status');
-            const disconnectBtn = document.getElementById('settings-fb-disconnect-btn');
-            const migrationBox = document.getElementById('settings-migration-box');
-
-            if (isFirebaseConnected) {
-                statusEl.className = "font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1.5";
-                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>લાઈવ કનેક્ટેડ 🟢`;
-                disconnectBtn.classList.remove('hidden');
-                migrationBox.classList.remove('hidden');
-            } else {
-                statusEl.className = "font-black text-red-600 bg-red-50 px-2.5 py-0.5 rounded border border-red-100 flex items-center gap-1.5";
-                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>ઑફલાઇન (Local Mode)`;
-                disconnectBtn.classList.add('hidden');
-                migrationBox.classList.add('hidden');
-            }
-        }
-
-        // Generate print delivery challan
-        function generateChallan(orderId) {
-            let order = db.orders.find(o => o.id === orderId);
-            if (order) {
-                let autoNo = getChallanSequenceNumber(order.id);
-                let formattedTotal = "₹" + order.amount.toLocaleString('en-IN');
-
-                for (let i = 1; i <= 2; i++) {
-                    document.getElementById(`ch${i}-party`).innerText = order.party;
-                    document.getElementById(`ch${i}-date`).innerText = order.date;
-                    document.getElementById(`ch${i}-num`).innerText = autoNo;
-                    document.getElementById(`ch${i}-item`).innerText = order.item;
-                    document.getElementById(`ch${i}-qty`).innerText = order.qty;
-                    document.getElementById(`ch${i}-price`).innerText = "₹" + order.price.toLocaleString('en-IN');
-                    document.getElementById(`ch${i}-total`).innerText = formattedTotal;
-                }
-
-                document.getElementById('wp-share-btn').onclick = function () {
-                    sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, order.qty, formattedTotal);
-                };
-
-                document.getElementById('challan-modal').classList.remove('hidden');
-            }
-        }
-
-        // Share to WhatsApp API
-        function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total) {
-            if (!phone || phone === "") return alert("મોબાઈલ નંબર ઉમેરેલો નથી! ખાતાવહીમાં જઈને સુધારો પર ક્લિક કરી પહેલા મોબાઈલ નંબર લખો.");
-            let message = `*નમસ્તે ${party},*\n\n` +
-                `*GOKUL PLASTIC* તરફથી તમારો માલ રવાના થયો છે:\n\n` +
-                `🔹 *ચલાન નંબર:* ${challanNum}\n` +
-                `🔹 *વસ્તુ:* ${item}\n` +
-                `🔹 *જથ્થો:* ${qty}\n` +
-                `🔹 *ટોટલ અમાઉન્ટ:* ${total}\n\n` +
-                `🙏 *Gokul Plastic (Ahmedabad)*`;
-            window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(message)}`, '_blank');
-        }
-
-        function closeChallan() {
-            document.getElementById('challan-modal').classList.add('hidden');
-        }
-
-        // Delete order/payment records
-        function deleteItem(target, id) {
-            if (confirm("શું તમે આ એન્ટ્રી કાયમ માટે ડીલીટ કરવા માંગો છો?")) {
-                if (isFirebaseConnected && firestoreDb) {
-                    firestoreDb.collection(target).doc(id.toString()).delete()
-                        .then(() => alert("એન્ટ્રી ફાયરબેઝ માંથી ડીલીટ કરવામાં આવી છે!"))
-                        .catch(err => alert("ડીલીટ કરવામાં ભૂલ આવી: " + err.message));
-                } else {
-                    db[target] = db[target].filter(item => item.id !== id);
-                    saveData();
-                    alert("એન્ટ્રી બ્રાઉઝર માંથી ડીલીટ થઈ ગઈ છે!");
-                }
-            }
-        }
-
-        // Connect Firebase configuration form submission
-        document.getElementById('settings-firebase-config-form').addEventListener('submit', function (e) {
-            e.preventDefault();
-            try {
-                const configStr = document.getElementById('settings-fb-config-json').value.trim();
-                const config = parseFirebaseConfig(configStr);
-                localStorage.setItem('firebase_config', JSON.stringify(config));
-                initFirebase();
-                alert("ફાયરબેઝ સેટિંગ્સ સફળતાપૂર્વક કનેક્ટ થઈ ગયા છે!");
-            } catch (err) { alert("ભૂલ: " + err.message); }
-        });
-
-        // Initialize script logic
-        setDefaultDates();
-        initFirebase();
-        switchPage('dashboard');
-
-        // ─── LOGIN / LOGOUT  ───────────────────────────────────────────────
-
-        // દર વખત page load થાય ત્યારે login screen show કરો
-        // (SESSION persistence: browser/tab બંધ થતાં logout)
-        function setupAuthPersistence() {
-            if (!auth) return;
-            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                .then(() => {
-                    // persistence set થઈ ગઈ - હવે onAuthStateChanged handle કરશે
-                })
-                .catch(() => { });
-        }
-
-        // Page load પર login screen ચોક્કસ show કરો
-        // (firebase auto-login ને allow ન કરો)
-        function showLoginScreen() {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('login-loading-container').style.display = 'none';
-            document.getElementById('login-form-container').classList.remove('hidden');
-        }
-
-        function hideLoginScreen() {
-            document.getElementById('login-screen').style.display = 'none';
-        }
-
-        // Page load: onAuthStateChanged Firebase handle કરશે
-        // SESSION persistence હોવાથી:
-        // - Same tab refresh: logged in રહે
-        // - Tab/Browser close: logout
-        // showLoginScreen() ની જરૂર નથી - Firebase auto-handle
-
-        // Enter key: email → password focus, password → login
-        document.getElementById('login-password').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') loginUser();
-        });
-        document.getElementById('login-email').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter') document.getElementById('login-password').focus();
-        });
-
-        function loginUser() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-
-            const errorEl = document.getElementById('login-error-msg');
-            const btn = document.getElementById('login-btn');
-
-            if (!email || !password) {
-                errorEl.textContent = 'કૃપા કરી Email અને Password ભરો.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            if (!auth) {
-                errorEl.textContent = 'Firebase connect નથી. Settings ચકાસો.';
-                errorEl.classList.remove('hidden');
-                return;
-            }
-
-            errorEl.classList.add('hidden');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Login...</span>';
-
-            // SESSION persistence: tab/window બંધ = logout, refresh = stay logged in
-            auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
-                .then(() => {
-                    return auth.signInWithEmailAndPassword(email, password);
-                })
-                .then(() => {
-                    hideLoginScreen();
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login કરો</span>';
-                })
-                .catch(error => {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login કરો</span>';
-                    let msg = 'Login ભૂલ: ' + error.message;
-                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                        msg = '❌ Password ખોટો છે! ફરી ચકાસો.';
-                    } else if (error.code === 'auth/user-not-found') {
-                        msg = '❌ Email ID મળ્યો નથી.';
-                    } else if (error.code === 'auth/network-request-failed') {
-                        msg = '❌ Internet connection ચકાસો.';
-                    }
-                    errorEl.textContent = msg;
-                    errorEl.classList.remove('hidden');
-                });
-        }
-
-        function logoutUser() {
-            if (auth) {
-                auth.signOut().then(() => {
-                    showLoginScreen();
-                });
-            } else {
-                showLoginScreen();
-            }
-        }
-    </script>
+    <script src="assets/js/app.js"></script>
 </body>
 
 </html>

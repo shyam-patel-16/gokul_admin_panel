@@ -215,19 +215,10 @@
         }
 
         // ══════════════════════════════════════════════════════════════
-        // HARDCODED FIREBASE CONFIG - Gokul Plastic Online Database
+        // FIREBASE CONFIGURATION (Like .env variables)
         // ══════════════════════════════════════════════════════════════
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyAjpJl4uT39VabjHCPImm9S6fOTvv7GkXs",
-            authDomain: "gokul-plastic-c7812.firebaseapp.com",
-            projectId: "gokul-plastic-c7812",
-            storageBucket: "gokul-plastic-c7812.firebasestorage.app",
-            messagingSenderId: "309381683026",
-            appId: "1:309381683026:web:74015ad617240cb7df8c8b"
-        };
-
-        // Auto-save config to localStorage (settings page માં show થશે)
-        localStorage.setItem('firebase_config', JSON.stringify(FIREBASE_CONFIG));
+        // Variables are now loaded from assets/js/env.js
+        // const ENV_FIREBASE_CONFIG = ...
 
         // Initialize Firebase logic
         function initFirebase() {
@@ -248,6 +239,10 @@
                 renderDashboardRecent();
                 renderParties();
                 if (currentTab === 'settings') renderSettingsConfig();
+
+                // Show login screen if Firebase fails to load so UI is not stuck
+                if(typeof showLoginScreen === 'function') showLoginScreen();
+
                 return;
             }
 
@@ -260,8 +255,17 @@
             }
 
             try {
-                const config = FIREBASE_CONFIG;
-                let app = !firebase.apps.length ? firebase.initializeApp(config) : firebase.app();
+                // ALWAYS use the config from env.js directly for online-only mode
+                let config = ENV_FIREBASE_CONFIG;
+
+                // Initialize Firebase App properly
+                let app;
+                if (!firebase.apps.length) {
+                    app = firebase.initializeApp(config);
+                } else {
+                    app = firebase.app();
+                }
+
                 firestoreDb = app.firestore();
                 isFirebaseConnected = true;
                 auth = firebase.auth();
@@ -282,23 +286,22 @@
                                     }
                                     showBusinessSelection();
                                 }).catch(err => {
+                                    console.error("Error fetching companies:", err);
                                     showBusinessSelection();
                                 });
                             } else {
                                 // Not logged in: login form show
                                 if(typeof showLoginScreen === 'function') showLoginScreen();
                             }
+                        }, (authError) => {
+                            console.error("Auth State Error:", authError);
+                            if(typeof showLoginScreen === 'function') showLoginScreen();
                         });
                     })
-                    .catch(() => {
+                    .catch((err) => {
+                        console.error("Persistence Error:", err);
                         // Fallback
-                        auth.onAuthStateChanged(user => {
-                            if (user) {
-                                showBusinessSelection();
-                            } else {
-                                if(typeof showLoginScreen === 'function') showLoginScreen();
-                            }
-                        });
+                        if(typeof showLoginScreen === 'function') showLoginScreen();
                     });
 
                 if (statusBadge) {
@@ -320,6 +323,8 @@
                 if (mobileDot) {
                     mobileDot.className = "w-2.5 h-2.5 bg-red-500 rounded-full";
                 }
+                // Show login screen if Firebase fails to load so UI is not stuck
+                if(typeof showLoginScreen === 'function') showLoginScreen();
             }
             if (currentTab === 'settings') renderSettingsConfig();
         }
@@ -373,12 +378,9 @@
             }
         }
 
-        // Disconnect firebase settings
+        // Disconnect firebase settings (Disabled for online-only)
         function disconnectFirebase() {
-            if (confirm("શું તમે ફાયરબેઝ સર્વરથી કનેક્શન તોડવા માંગો છો? આનાથી ફક્ત લોકલ મોડ ચાલશે.")) {
-                localStorage.removeItem('firebase_config');
-                initFirebase();
-            }
+            alert("App is in online-only mode. Cannot disconnect.");
         }
 
         // Migrate local storage records to Firebase Firestore cloud database
@@ -1224,16 +1226,10 @@
             }
         }
 
-        // Connect Firebase configuration form submission
+        // Connect Firebase configuration form submission (Disabled since we use fixed config)
         document.getElementById('settings-firebase-config-form').addEventListener('submit', function (e) {
             e.preventDefault();
-            try {
-                const configStr = document.getElementById('settings-fb-config-json').value.trim();
-                const config = parseFirebaseConfig(configStr);
-                localStorage.setItem('firebase_config', JSON.stringify(config));
-                initFirebase();
-                alert("ફાયરબેઝ સેટિંગ્સ સફળતાપૂર્વક કનેક્ટ થઈ ગયા છે!");
-            } catch (err) { alert("ભૂલ: " + err.message); }
+            alert("App is running in online-only mode. Configuration is loaded from env.js and cannot be changed here.");
         });
 
         // Initialize script logic
