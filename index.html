@@ -190,30 +190,25 @@
 
     <!-- MOBILE TOP BAR -->
     <header
-        class="no-print flex md:hidden bg-primary text-white p-4 justify-between items-center sticky top-0 z-30 shadow-md">
-        <div class="flex flex-col justify-center">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-lg bg-accent flex items-center justify-center text-white text-[10px]">
-                    <i class="fa-solid fa-industry"></i>
-                </div>
-                <h1 class="font-extrabold text-sm tracking-wide leading-none mt-1">Gokul Plastic</h1>
+        class="no-print flex md:hidden bg-primary text-white p-3 sm:p-4 justify-between items-center sticky top-0 z-30 shadow-md gap-3">
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+            <div class="w-8 h-8 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-industry"></i>
             </div>
-            <div class="pl-8 mt-1">
-                <select id="mobile-business-select" onchange="selectBusiness(this.value)" class="text-[10px] font-bold tracking-wider uppercase text-white bg-slate-900 border border-white/20 rounded px-1 appearance-none outline-none max-w-[120px] truncate">
-                    <!-- Loaded dynamically -->
-                </select>
-            </div>
+            <select id="mobile-business-select" onchange="selectBusiness(this.value)" class="flex-1 min-w-0 text-xs font-bold tracking-wider uppercase text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded cursor-pointer outline-none px-2 py-1.5 shadow-sm text-ellipsis overflow-hidden whitespace-nowrap">
+                <!-- Loaded dynamically -->
+            </select>
         </div>
-        <div class="flex items-center gap-2.5">
-            <span id="mobile-firebase-status-dot" class="w-2.5 h-2.5 bg-red-500 rounded-full"
+        <div class="flex items-center gap-2 flex-shrink-0">
+            <span id="mobile-firebase-status-dot" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"
                 title="Firebase Status"></span>
             <button onclick="logoutUser()"
-                class="text-red-400 hover:text-red-300 p-1.5 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center"
+                class="text-red-400 hover:text-red-300 w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0"
                 title="Logout">
                 <i class="fa-solid fa-power-off text-sm"></i>
             </button>
             <button onclick="switchPage('settings')"
-                class="text-slate-300 hover:text-white p-1.5 rounded-lg bg-slate-800/80 flex items-center justify-center"
+                class="text-slate-300 hover:text-white w-8 h-8 rounded-lg bg-slate-800/80 flex items-center justify-center flex-shrink-0"
                 title="Settings">
                 <i class="fa-solid fa-gear text-sm"></i>
             </button>
@@ -221,7 +216,7 @@
     </header>
 
     <!-- MOBILE BOTTOM NAVIGATION -->
-    <nav
+    <nav id="mobile-bottom-nav"
         class="no-print md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex py-2.5 z-40 text-[10px] font-bold text-slate-500 shadow-xl overflow-x-auto whitespace-nowrap px-2 gap-4 hide-scrollbar">
         <button id="mobile-nav-dashboard" onclick="switchPage('dashboard')"
             class="mobile-nav-link flex flex-col items-center gap-1 text-accent px-2">

@@ -135,12 +135,24 @@
             padding: 0;
         }
 
-        #main-content {
-            margin-left: 256px;
-            transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
+        @media (min-width: 768px) {
+            #main-content {
+                margin-left: 256px;
+                transition: margin-left 0.3s cubic-bezier(.4, 0, .2, 1);
+            }
+
+            #main-content.sidebar-collapsed {
+                margin-left: 72px;
+            }
+            
+            #mobile-bottom-nav {
+                display: none !important;
+            }
         }
 
-        #main-content.sidebar-collapsed {
-            margin-left: 72px;
+        @media (max-width: 767px) {
+            #sidebar {
+                display: none !important;
+            }
         }
     
