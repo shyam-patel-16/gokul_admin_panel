@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="gu">
+<html lang="eng">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gokul Plastic - ઓર્ડર, ખાતાવહી અને ચલાન સિસ્ટમ</title>
+    <title>Gokul Plastic - Order, Ledger and Challan System</title>
     <!-- Google Fonts: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -16,10 +16,14 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <!-- Environment variables -->
-    <script src="/assets/js/env.js"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- jsPDF Library for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+    <!-- Firebase Environment Config -->
+    <script src="assets/js/env.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -36,8 +40,7 @@
             }
         }
     </script>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css">
 </head>
 
 <body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col md:flex-row antialiased">
@@ -59,8 +62,8 @@
 
             <!-- Top brand bar -->
             <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center">
-                <div class="w-20 h-20 bg-white rounded-2xl flex items-center justify-center mx-auto mb-3 overflow-hidden shadow-md">
-                    <img src="/logo.png" alt="Gokul Plastic Logo" class="w-[90%] h-[90%] object-contain">
+                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-industry text-white text-2xl"></i>
                 </div>
                 <h1 class="text-white font-black text-xl tracking-wide">Gokul Plastic</h1>
                 <p class="text-indigo-200 text-xs mt-1 font-medium">Billing & Accounting Software</p>
@@ -68,7 +71,7 @@
 
             <!-- Form area -->
             <div class="px-8 py-7 space-y-4">
-                <p class="text-slate-500 text-xs font-semibold text-center mb-2">🔐 Login કરો - Password ફરજીયાત</p>
+                <p class="text-slate-500 text-xs font-semibold text-center mb-2">🔐 Login - Password Required</p>
 
                 <div class="space-y-1">
                     <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email ID</label>
@@ -89,7 +92,7 @@
                 <button onclick="loginUser()" id="login-btn"
                     class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white py-3.5 rounded-xl font-black text-sm shadow-lg shadow-indigo-500/25 transition-all duration-200 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-right-to-bracket"></i>
-                    <span>Login કરો</span>
+                    <span>Login</span>
                 </button>
             </div>
         </div>
@@ -102,7 +105,7 @@
                 <!-- Add Logout Button Here to allow user to logout from selection screen -->
                 <button onclick="logoutUser()" class="absolute top-4 right-4 text-white/70 hover:text-white p-2 rounded-lg bg-black/10 hover:bg-black/20 transition"><i class="fa-solid fa-power-off"></i></button>
                 <h2 class="text-white font-black text-2xl tracking-wide">Select Business</h2>
-                <p class="text-indigo-200 text-sm mt-1 font-medium">તમારે કયા વિભાગમાં કામ કરવું છે?</p>
+                <p class="text-indigo-200 text-sm mt-1 font-medium">Which department do you want to work in?</p>
             </div>
             <div id="business-selection-grid" class="px-8 py-10 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[60vh] overflow-y-auto">
                 <!-- Loaded dynamically by renderCompaniesUI() -->
@@ -117,8 +120,8 @@
         <div id="sidebar-header" class="p-4 border-b border-slate-800 flex items-center justify-between gap-2 min-w-0">
             <div class="flex items-center gap-3 min-w-0 flex-1">
                 <div
-                    class="w-10 h-10 flex-shrink-0 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden p-0.5">
-                    <img src="/logo.png" alt="Logo" class="w-[95%] h-[95%] object-contain">
+                    class="w-10 h-10 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white text-lg shadow-lg">
+                    <i class="fa-solid fa-industry"></i>
                 </div>
                 <div class="sidebar-brand-text min-w-0 sidebar-label" style="overflow:hidden;">
                     <h2 class="text-white font-extrabold text-sm tracking-wide whitespace-nowrap">Gokul Plastic</h2>
@@ -137,40 +140,40 @@
 
         <!-- Navigation Links -->
         <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
-            <button id="nav-dashboard" onclick="switchPage('dashboard')" title="ડેશબોર્ડ"
+            <button id="nav-dashboard" onclick="switchPage('dashboard')" title="Dashboard"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 bg-accent text-white shadow-md shadow-accent/20">
                 <i class="fa-solid fa-chart-pie text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">ડેશબોર્ડ (Dashboard)</span>
+                <span class="sidebar-label">Dashboard</span>
             </button>
-            <button id="nav-parties" onclick="switchPage('parties')" title="પાર્ટીઓ"
+            <button id="nav-parties" onclick="switchPage('parties')" title="Parties"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-users text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">પાર્ટીઓ અને ખાતાવહી</span>
+                <span class="sidebar-label">Parties and Ledgers</span>
             </button>
-            <button id="nav-add-order" onclick="switchPage('add-order')" title="નવો ઓર્ડર"
+            <button id="nav-add-order" onclick="switchPage('add-order')" title="New Order"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-cart-plus text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">નવો ઓર્ડર ઉમેરો</span>
+                <span class="sidebar-label">Add New Order</span>
             </button>
-            <button id="nav-add-payment" onclick="switchPage('add-payment')" title="નવું પેમેન્ટ"
+            <button id="nav-add-payment" onclick="switchPage('add-payment')" title="New Payment"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-money-bill-wave text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">નવું પેમેન્ટ ઉમેરો</span>
+                <span class="sidebar-label">Add New Payment</span>
             </button>
-            <button id="nav-order-history" onclick="switchPage('order-history')" title="ઓર્ડર હિસ્ટ્રી"
+            <button id="nav-order-history" onclick="switchPage('order-history')" title="Order History"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-list-ul text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">ઓર્ડર હિસ્ટ્રી</span>
+                <span class="sidebar-label">Order History</span>
             </button>
-            <button id="nav-payment-history" onclick="switchPage('payment-history')" title="પેમેન્ટ હિસ્ટ્રી"
+            <button id="nav-payment-history" onclick="switchPage('payment-history')" title="Payment History"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-file-invoice-dollar text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">પેમેન્ટ હિસ્ટ્રી</span>
+                <span class="sidebar-label">Payment History</span>
             </button>
-            <button id="nav-settings" onclick="switchPage('settings')" title="સેટિંગ્સ"
+            <button id="nav-settings" onclick="switchPage('settings')" title="Settings"
                 class="nav-link w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold transition-all duration-200 text-slate-300 hover:bg-slate-800/70 hover:text-white">
                 <i class="fa-solid fa-gears text-lg flex-shrink-0"></i>
-                <span class="sidebar-label">સેટિંગ્સ અને બેકઅપ</span>
+                <span class="sidebar-label">Settings and Backup</span>
             </button>
         </nav>
 
@@ -179,14 +182,14 @@
             <div id="firebase-status-badge"
                 class="w-full text-center text-[11px] bg-red-950/40 border border-red-900 text-red-400 py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-medium">
                 <span class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></span>
-                <span class="sidebar-label">Local Mode (ઑફલાઇન)</span>
+                <span class="sidebar-label">Local Mode (Offline)</span>
             </div>
 
             <!-- Logout Button (Desktop) -->
-            <button onclick="logoutUser()" title="Logout (લોગઆઉટ)"
+            <button onclick="logoutUser()" title="Logout"
                 class="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all border border-red-500/20 shadow-sm shadow-red-900/20">
                 <i class="fa-solid fa-power-off text-sm"></i>
-                <span class="sidebar-label">Logout (લોગઆઉટ)</span>
+                <span class="sidebar-label">Logout</span>
             </button>
         </div>
     </aside>
@@ -195,8 +198,8 @@
     <header
         class="no-print flex md:hidden bg-primary text-white p-3 sm:p-4 justify-between items-center sticky top-0 z-30 shadow-md gap-3">
         <div class="flex items-center gap-2 flex-1 min-w-0">
-            <div class="w-9 h-9 flex-shrink-0 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden p-0.5">
-                <img src="/logo.png" alt="Logo" class="w-[95%] h-[95%] object-contain">
+            <div class="w-8 h-8 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white shadow-lg">
+                <i class="fa-solid fa-industry"></i>
             </div>
             <select id="mobile-business-select" onchange="selectBusiness(this.value)" class="flex-1 min-w-0 text-xs font-bold tracking-wider uppercase text-white bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded cursor-pointer outline-none px-2 py-1.5 shadow-sm text-ellipsis overflow-hidden whitespace-nowrap">
                 <!-- Loaded dynamically -->
@@ -220,55 +223,60 @@
 
     <!-- MOBILE BOTTOM NAVIGATION -->
     <nav id="mobile-bottom-nav"
-        class="no-print md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex justify-around py-2 z-40 text-[10px] font-bold text-slate-500 shadow-xl px-0">
+        class="no-print md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 flex py-2.5 z-40 text-[10px] font-bold text-slate-500 shadow-xl overflow-x-auto whitespace-nowrap px-2 gap-4 hide-scrollbar">
         <button id="mobile-nav-dashboard" onclick="switchPage('dashboard')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 text-accent w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 text-accent px-2">
             <i class="fa-solid fa-chart-pie text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">ડેશબોર્ડ</span>
+            <span>Dashboard</span>
         </button>
         <button id="mobile-nav-parties" onclick="switchPage('parties')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 px-2">
             <i class="fa-solid fa-users text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">પાર્ટીઓ</span>
+            <span>Parties</span>
         </button>
         <button id="mobile-nav-add-order" onclick="switchPage('add-order')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 px-2">
             <i class="fa-solid fa-cart-plus text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">ઓર્ડર</span>
+            <span>Order</span>
         </button>
         <button id="mobile-nav-add-payment" onclick="switchPage('add-payment')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 px-2">
             <i class="fa-solid fa-money-bill-wave text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">પેમેન્ટ</span>
+            <span>Payment</span>
         </button>
         <button id="mobile-nav-order-history" onclick="switchPage('order-history')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 px-2">
             <i class="fa-solid fa-list-ul text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">ઓર્ડર<br>લિસ્ટ</span>
+            <span>Order List</span>
         </button>
         <button id="mobile-nav-payment-history" onclick="switchPage('payment-history')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 px-2">
             <i class="fa-solid fa-file-invoice-dollar text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">પેમેન્ટ<br>લિસ્ટ</span>
+            <span>Payment List</span>
         </button>
         <button id="mobile-nav-settings" onclick="switchPage('settings')"
-            class="mobile-nav-link flex flex-col items-center justify-center gap-1 w-[14%]">
+            class="mobile-nav-link flex flex-col items-center gap-1 flex-1">
             <i class="fa-solid fa-gears text-lg"></i>
-            <span class="text-[8px] leading-tight text-center">સેટિંગ્સ</span>
+            <span>Settings</span>
+        </button>
+        <button onclick="logoutUser()"
+            class="mx-3 mb-4 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">
+
+            Logout
+
         </button>
     </nav>
 
     <!-- MAIN APP CONTENT VIEW -->
-    <!-- Changed pb-24 to pb-20 so main content doesn't get hidden behind thinner bottom nav, adjusted for mobile -->
-    <main id="main-content" class="flex-1 md:ml-64 p-4 md:p-8 pb-20 md:pb-8 min-h-screen overflow-x-hidden">
+    <main id="main-content" class="flex-1 md:ml-64 p-4 md:p-8 pb-24 md:pb-8 min-h-screen overflow-x-hidden">
 
         <!-- PAGE 1: DASHBOARD VIEW -->
         <div id="page-dashboard" class="page-view space-y-6">
             <!-- Title Header -->
             <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
                 <div>
-                    <h2 class="text-2xl font-black text-slate-800">વ્યાપાર ડેશબોર્ડ</h2>
-                    <p class="text-slate-500 text-xs mt-0.5">Gokul Plastic સેલ્સ, ખરીદી અને ઉઘરાણી હિસાબ ચોપડો</p>
+                    <h2 class="text-2xl font-black text-slate-800">Business Dashboard</h2>
+                    <p class="text-slate-500 text-xs mt-0.5">Gokul Plastic Sales, Purchase and Payment Ledger</p>
                 </div>
                 <span
                     class="bg-white border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-bold shadow-2xs text-slate-600 flex items-center gap-2 self-start sm:self-auto">
@@ -283,7 +291,7 @@
                 <div
                     class="bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md text-white flex items-center justify-between hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
                     <div class="space-y-1">
-                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">કુલ સેલ્સ (Sales)</p>
+                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Total Sales</p>
                         <p id="dash-sales" class="text-2xl font-black text-white">₹0</p>
                     </div>
                     <div
@@ -295,7 +303,7 @@
                 <div
                     class="bg-gradient-to-br from-slate-700 to-slate-800 p-5 rounded-2xl shadow-md text-white flex items-center justify-between hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
                     <div class="space-y-1">
-                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">કુલ ખરીદી (Buying)</p>
+                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Total Buying</p>
                         <p id="dash-buying" class="text-2xl font-black text-white">₹0</p>
                     </div>
                     <div
@@ -307,7 +315,7 @@
                 <div
                     class="bg-gradient-to-br from-emerald-400 to-teal-600 p-5 rounded-2xl shadow-md text-white flex items-center justify-between hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
                     <div class="space-y-1">
-                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">મળેલ પેમેન્ટ (Received)
+                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Payment Received
                         </p>
                         <p id="dash-received" class="text-2xl font-black text-white">₹0</p>
                     </div>
@@ -320,7 +328,7 @@
                 <div
                     class="bg-gradient-to-br from-rose-500 to-red-600 p-5 rounded-2xl shadow-md text-white flex items-center justify-between hover:shadow-lg transition-all duration-300 group hover:-translate-y-1">
                     <div class="space-y-1">
-                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">કુલ બાકી લેણાં (Net Due)
+                        <p class="text-white/80 text-[10px] font-bold uppercase tracking-wider">Total Due
                         </p>
                         <p id="dash-due" class="text-2xl font-black text-white">₹0</p>
                     </div>
@@ -337,23 +345,23 @@
                     <div>
                         <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
                             <i class="fa-solid fa-chart-column text-accent"></i>
-                            <span>વ્યાપાર વિશ્લેષણ (Business Analytics)</span>
+                            <span>Business Analytics</span>
                         </h3>
-                        <p id="chart-subtitle" class="text-[10px] text-slate-400 mt-0.5">છેલ્લા 7 દિવસ — Sales, Buying અને Received</p>
+                        <p id="chart-subtitle" class="text-[10px] text-slate-400 mt-0.5">Last 7 Days — Sales, Buying and Received</p>
                     </div>
                     <!-- Period Toggle Tabs -->
                     <div class="flex gap-1.5 bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
                         <button id="chart-btn-weekly" onclick="switchChartPeriod('weekly')"
                             class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 bg-white text-slate-800 shadow-sm">
-                            <i class="fa-solid fa-calendar-week mr-1"></i>વઠ
+                            <i class="fa-solid fa-calendar-week mr-1"></i>Weekly
                         </button>
                         <button id="chart-btn-monthly" onclick="switchChartPeriod('monthly')"
                             class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800">
-                            <i class="fa-solid fa-calendar-days mr-1"></i>મહ
+                            <i class="fa-solid fa-calendar-days mr-1"></i>Monthly
                         </button>
                         <button id="chart-btn-yearly" onclick="switchChartPeriod('yearly')"
                             class="px-3 py-1.5 rounded-lg font-bold text-xs transition duration-150 text-slate-500 hover:text-slate-800">
-                            <i class="fa-solid fa-calendar mr-1"></i>વર્ષ
+                            <i class="fa-solid fa-calendar mr-1"></i>Yearly
                         </button>
                     </div>
                 </div>
@@ -363,16 +371,16 @@
                 <!-- Chart Legend Badges -->
                 <div class="flex flex-wrap gap-3 mt-3 pt-3 border-t border-slate-100">
                     <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                        <span class="w-3 h-3 rounded-sm" style="background:#818cf8"></span> Sales (સેલ્સ)
+                        <span class="w-3 h-3 rounded-sm" style="background:#818cf8"></span> Sales
                     </span>
                     <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                        <span class="w-3 h-3 rounded-sm" style="background:#94a3b8"></span> Buying (ખરીદી)
+                        <span class="w-3 h-3 rounded-sm" style="background:#94a3b8"></span> Buying
                     </span>
                     <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                        <span class="w-3 h-3 rounded-sm" style="background:#34d399"></span> Received (મળ્યું)
+                        <span class="w-3 h-3 rounded-sm" style="background:#34d399"></span> Received
                     </span>
                     <span class="flex items-center gap-1.5 text-[10px] font-bold text-slate-600">
-                        <span class="w-3 h-3 rounded-sm" style="background:#f87171"></span> Paid (ચૂકવ્યું)
+                        <span class="w-3 h-3 rounded-sm" style="background:#f87171"></span> Paid
                     </span>
                 </div>
             </div>
@@ -381,32 +389,32 @@
             <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-4">
                 <h3 class="font-extrabold text-slate-700 text-sm flex items-center gap-2">
                     <i class="fa-solid fa-bolt text-accent"></i>
-                    <span>ક્વિક એક્શન શોર્ટકટ્સ</span>
+                    <span>Quick Action Shortcuts</span>
                 </h3>
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <button onclick="switchPage('add-order')"
                         class="p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-100 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-cart-plus text-xl text-accent group-hover:scale-110 transition duration-150"></i>
-                        <span class="text-xs font-bold text-slate-700">નવો ઓર્ડર લખો</span>
+                        <span class="text-xs font-bold text-slate-700">Add New Order</span>
                     </button>
                     <button onclick="switchPage('add-payment')"
                         class="p-3 bg-slate-50 hover:bg-emerald-50/50 border border-slate-100 hover:border-emerald-100 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-wallet text-xl text-emerald-500 group-hover:scale-110 transition duration-150"></i>
-                        <span class="text-xs font-bold text-slate-700">નવું પેમેન્ટ જમા</span>
+                        <span class="text-xs font-bold text-slate-700">Add New Payment</span>
                     </button>
                     <button onclick="switchPage('parties')"
                         class="p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-100 hover:border-indigo-100 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-book-open text-xl text-accent group-hover:scale-110 transition duration-150"></i>
-                        <span class="text-xs font-bold text-slate-700">બધી ખાતાવહી</span>
+                        <span class="text-xs font-bold text-slate-700">All Ledgers</span>
                     </button>
                     <button onclick="switchPage('settings')"
                         class="p-3 bg-slate-50 hover:bg-slate-100 border border-slate-100 hover:border-slate-200 rounded-xl transition duration-150 flex flex-col items-center gap-2 group">
                         <i
                             class="fa-solid fa-cloud-arrow-down text-xl text-slate-500 group-hover:scale-110 transition duration-150"></i>
-                        <span class="text-xs font-bold text-slate-700">ડેટા બેકઅપ ફાઈલ</span>
+                        <span class="text-xs font-bold text-slate-700">Data Backup</span>
                     </button>
                 </div>
             </div>
@@ -418,10 +426,10 @@
                     <div class="flex justify-between items-center border-b pb-3 border-slate-100">
                         <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
                             <i class="fa-solid fa-boxes-stacked text-accent"></i>
-                            <span>ઓર્ડર્સ હિસ્ટ્રી (All Orders)</span>
+                            <span>Order History (All Orders)</span>
                         </h3>
                         <button onclick="switchPage('order-history')"
-                            class="text-xs text-accent hover:text-accentHover font-bold">બધા જુઓ →</button>
+                            class="text-xs text-accent hover:text-accentHover font-bold">View All →</button>
                     </div>
                     <div id="dash-recent-orders" class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                         <!-- Loaded dynamically -->
@@ -432,10 +440,10 @@
                     <div class="flex justify-between items-center border-b pb-3 border-slate-100">
                         <h3 class="font-extrabold text-slate-800 text-sm flex items-center gap-2">
                             <i class="fa-solid fa-handshake text-emerald-500"></i>
-                            <span>પેમેન્ટ્સ હિસ્ટ્રી (All Payments)</span>
+                            <span>Payment History (All Payments)</span>
                         </h3>
                         <button onclick="switchPage('payment-history')"
-                            class="text-xs text-accent hover:text-accentHover font-bold">બધા જુઓ →</button>
+                            class="text-xs text-accent hover:text-accentHover font-bold">View All →</button>
                     </div>
                     <div id="dash-recent-payments" class="space-y-3 max-h-[400px] overflow-y-auto pr-1">
                         <!-- Loaded dynamically -->
@@ -452,16 +460,16 @@
                 <div>
                     <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
                         <i class="fa-solid fa-address-book text-accent"></i>
-                        <span>બધી પાર્ટીઓનું લિસ્ટ</span>
+                        <span>All Parties List</span>
                     </h3>
-                    <p class="text-[10px] text-slate-400 mt-0.5">ગ્રાહકને પસંદ કરવાથી તેની ખાતાવહી વિગત જોવા મળશે.</p>
+                    <p class="text-[10px] text-slate-400 mt-0.5">Select a customer to view their ledger details.</p>
                 </div>
 
                 <div class="relative">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
                         <i class="fa-solid fa-magnifying-glass text-xs"></i>
                     </span>
-                    <input type="text" id="party-search" oninput="renderParties()" placeholder="પાર્ટી સર્ચ કરો..."
+                    <input type="text" id="party-search" oninput="renderParties()" placeholder="Search party..."
                         class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 focus:bg-white outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150">
                 </div>
 
@@ -483,7 +491,7 @@
                         <div>
                             <h2 class="text-lg font-black text-primary flex items-center gap-2"
                                 id="selected-party-title">
-                                કૃપા કરીને પાર્ટી પસંદ કરો
+                                Please select a party
                             </h2>
                             <p id="selected-party-phone-badge" class="text-xs text-slate-500 mt-1 hidden">
                                 <span id="party-phone-span"></span>
@@ -491,8 +499,8 @@
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">બાકી
-                            હિસાબ</span>
+                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Balance
+                            Due</span>
                         <span id="selected-party-due" class="font-black text-xl text-slate-800 block mt-0.5">₹0</span>
                     </div>
                 </div>
@@ -505,7 +513,7 @@
                             <h4
                                 class="font-extrabold text-accent text-xs border-b pb-2 flex items-center gap-2 border-slate-200/60">
                                 <i class="fa-solid fa-boxes-stacked"></i>
-                                <span>ઓર્ડર હિસ્ટ્રી (Orders Ledger)</span>
+                                <span>Order History (Orders Ledger)</span>
                             </h4>
                             <div id="party-orders-table" class="space-y-3 overflow-y-auto flex-1 pr-1 text-xs">
                                 <!-- Dynamic orders content -->
@@ -517,11 +525,69 @@
                             <h4
                                 class="font-extrabold text-emerald-700 text-xs border-b pb-2 flex items-center gap-2 border-slate-200/60">
                                 <i class="fa-solid fa-receipt"></i>
-                                <span>પેમેન્ટ એન્ટ્રીઓ (Payments Ledger)</span>
+                                <span>Payment Entries (Payments Ledger)</span>
                             </h4>
                             <div id="party-payments-table" class="space-y-2.5 overflow-y-auto flex-1 pr-1 text-xs">
                                 <!-- Dynamic payments content -->
                             </div>
+                        </div>
+                    </div>
+                    <!-- PDF Download Button -->
+                    <div class="flex flex-col space-y-3 pt-4 border-t border-slate-100 mt-2">
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 no-print items-end">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Starting Date</label>
+                                <input type="date" id="pdf-start-date" onchange="showPartyDetails(activeParty)" class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">End Date</label>
+                                <input type="date" id="pdf-end-date" onchange="showPartyDetails(activeParty)" class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Entry Type</label>
+                                <select id="ledger-filter-type" onchange="showPartyDetails(activeParty)" class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20 font-semibold">
+                                    <option value="All">All Transactions</option>
+                                    <option value="Sales">Sales Only</option>
+                                    <option value="Buying">Buying Only</option>
+                                    <option value="Received">Received Only</option>
+                                    <option value="Paid">Paid Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Status</label>
+                                <select id="ledger-filter-status" onchange="showPartyDetails(activeParty)" class="w-full p-2 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-accent/20 font-semibold">
+                                    <option value="All">All Status</option>
+                                    <option value="Pending">Pending Only</option>
+                                    <option value="Complete">Complete Only</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="showPartyDetails(activeParty)"
+                                class="bg-accent hover:bg-accentHover text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-accent/10 flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-filter"></i>
+                                <span>Filter Records</span>
+                            </button>
+                            <button onclick="downloadPartyLedgerPDF()" id="party-download-pdf-btn"
+                                class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-red-500/10 flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-file-pdf"></i>
+                                <span>Download PDF</span>
+                            </button>
+                            <button onclick="openPartyQrModal()" id="party-qr-btn"
+                                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-qrcode"></i>
+                                <span>Party QR</span>
+                            </button>
+                            <button onclick="sharePartyQrCode()" id="party-share-qr-btn"
+                                class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-slate-500/10 flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-share-nodes"></i>
+                                <span>Share QR</span>
+                            </button>
+                            <button onclick="document.getElementById('pdf-start-date').value=''; document.getElementById('pdf-end-date').value=''; document.getElementById('ledger-filter-type').value='All'; document.getElementById('ledger-filter-status').value='All'; showPartyDetails(activeParty)"
+                                class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Reset</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -530,7 +596,7 @@
                 <div id="ledger-empty-state"
                     class="flex-1 flex flex-col items-center justify-center text-center text-slate-400 p-8 space-y-3">
                     <i class="fa-solid fa-address-card text-5xl text-slate-200"></i>
-                    <p class="font-semibold text-xs">ખાતાવહી જોવા માટે ડાબી બાજુથી ગ્રાહક/પાર્ટીનું નામ પસંદ કરો.</p>
+                    <p class="font-semibold text-xs">Select a customer/party from the left panel to view ledger details.</p>
                 </div>
             </div>
         </div>
@@ -538,8 +604,8 @@
         <!-- PAGE 3: ADD ORDER VIEW -->
         <div id="page-add-order" class="page-view hidden space-y-6">
             <div class="border-b pb-3">
-                <h2 class="text-2xl font-black text-slate-800">નવો ઓર્ડર બુક કરો</h2>
-                <p class="text-slate-500 text-xs mt-0.5">ઓર્ડર (વેચાણ/ખરીદી) ની ડેટા એન્ટ્રી</p>
+                <h2 class="text-2xl font-black text-slate-800">Add New Order</h2>
+                <p class="text-slate-500 text-xs mt-0.5">Order (Sales/Buying) Data Entry</p>
             </div>
 
             <div class="max-w-2xl mx-auto">
@@ -547,23 +613,22 @@
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-5">
                     <h3 class="text-md font-black text-accent flex items-center gap-2 border-b pb-3 border-slate-100">
                         <i class="fa-solid fa-cart-plus"></i>
-                        <span>નવો ઓર્ડર બુક કરો (Order Form)</span>
+                        <span>Add New Order (Order Form)</span>
                     </h3>
                     <form id="order-form" class="space-y-4">
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">ઓર્ડર
-                                    પ્રકાર</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Type</label>
                                 <select id="ord-type"
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 font-bold text-slate-700 text-xs">
-                                    <option value="Sales">Sales (વેચાણ)</option>
-                                    <option value="Buying">Buying (ખરીદી)</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Buying">Buying</option>
                                 </select>
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">તારીખ</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date</label>
                                 <input type="date" id="ord-date" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 font-bold text-xs">
                             </div>
@@ -571,54 +636,51 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">પાર્ટીનું
-                                    નામ (Party Name)</label>
-                                <input type="text" id="ord-party" placeholder="પાર્ટીનું નામ લખો" required
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Party Name</label>
+                                <input type="text" id="ord-party" placeholder="Enter party name" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">મોબાઈલ
-                                    નં (WhatsApp માટે)</label>
-                                <input type="number" id="ord-phone" placeholder="૧૦ આંકડાનો નંબર લખો"
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mobile Number (For WhatsApp)</label>
+                                <input type="number" id="ord-phone" placeholder="Enter 10-digit number"
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">આઇટમ
-                                વિગત (Item Description)</label>
-                            <input type="text" id="ord-item" placeholder="વસ્તુનું નામ અથવા વિગત લખો" required
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Details (Item Description)</label>
+                            <input type="text" id="ord-item" placeholder="Enter item name or description" required
                                 class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
                         </div>
                         <div class="grid grid-cols-3 gap-3">
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">જથ્થો
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Quantity
                                     (Qty)</label>
                                 <input type="number" step="any" id="ord-qty" placeholder="0" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 font-bold text-xs">
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">ભાવ
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Price
                                     (Price)</label>
                                 <input type="number" step="any" id="ord-price" placeholder="0" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 font-bold text-xs">
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">સ્ટેટસ</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</label>
                                 <select id="ord-status"
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 font-bold text-slate-700 text-xs">
-                                    <option value="Pending">Pending (બાકી)</option>
-                                    <option value="Complete">Complete (પૂરો)</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Complete">Complete</option>
                                 </select>
                             </div>
                         </div>
                         <button type="submit"
                             class="w-full bg-accent hover:bg-accentHover text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md hover:shadow-lg shadow-accent/10 flex items-center justify-center gap-2 text-xs">
                             <i class="fa-solid fa-floppy-disk"></i>
-                            <span>ઓર્ડર સેવ કરો (Save Order)</span>
+                            <span>Save Order</span>
                         </button>
                     </form>
                 </div>
@@ -628,8 +690,8 @@
         <!-- PAGE 4: ADD PAYMENT VIEW -->
         <div id="page-add-payment" class="page-view hidden space-y-6">
             <div class="border-b pb-3">
-                <h2 class="text-2xl font-black text-slate-800">નવું પેમેન્ટ ઉમેરો</h2>
-                <p class="text-slate-500 text-xs mt-0.5">રોકડ/ચેક પેમેન્ટની ડેટા એન્ટ્રી</p>
+                <h2 class="text-2xl font-black text-slate-800">Add New Payment</h2>
+                <p class="text-slate-500 text-xs mt-0.5">Cash/Cheque Payment Data Entry</p>
             </div>
             <div class="max-w-2xl mx-auto">
                 <!-- Payment form -->
@@ -637,39 +699,36 @@
                     <h3
                         class="text-md font-black text-emerald-700 flex items-center gap-2 border-b pb-3 border-slate-100">
                         <i class="fa-solid fa-money-bill-wave"></i>
-                        <span>રોકડ/ચેક પેમેન્ટની એન્ટ્રી (Payment Form)</span>
+                        <span>Cash/Cheque Payment Entry (Payment Form)</span>
                     </h3>
                     <form id="payment-form" class="space-y-4">
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">પેમેન્ટ
-                                    પ્રકાર</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Type</label>
                                 <select id="pay-type"
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150 font-bold text-slate-700 text-xs">
-                                    <option value="Received">Received (ગ્રાહકે આપ્યા)</option>
-                                    <option value="Paid">Paid (આપણે આપ્યા)</option>
+                                    <option value="Received">Received (From Customer)</option>
+                                    <option value="Paid">Paid (To Vendor)</option>
                                 </select>
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">તારીખ</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Date</label>
                                 <input type="date" id="pay-date" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150 text-slate-700 font-bold text-xs">
                             </div>
                         </div>
                         <div>
-                            <label
-                                class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">પાર્ટીનું
-                                નામ (Party Name)</label>
-                            <input type="text" id="pay-party" placeholder="પાર્ટીનું નામ લખો" required
+                                <label
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Party Name</label>
+                            <input type="text" id="pay-party" placeholder="Enter party name" required
                                 class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150 text-slate-700 text-xs">
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">ચૂકવણી
-                                    પ્રકાર (Payment Mode)</label>
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Payment Mode</label>
                                 <div class="flex gap-2">
                                     <label class="flex-1 cursor-pointer">
                                         <input type="radio" name="pay-mode" id="pay-mode-cash" value="Cash" checked
@@ -677,7 +736,7 @@
                                         <div
                                             class="peer-checked:bg-emerald-600 peer-checked:text-white peer-checked:border-emerald-600 border border-slate-200 rounded-xl p-2.5 text-center text-xs font-bold text-slate-500 bg-slate-50 transition duration-150 flex flex-col items-center gap-1">
                                             <i class="fa-solid fa-money-bill text-sm"></i>
-                                            <span>રોકડ (Cash)</span>
+                                            <span>Cash</span>
                                         </div>
                                     </label>
                                     <label class="flex-1 cursor-pointer">
@@ -686,7 +745,7 @@
                                         <div
                                             class="peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600 border border-slate-200 rounded-xl p-2.5 text-center text-xs font-bold text-slate-500 bg-slate-50 transition duration-150 flex flex-col items-center gap-1">
                                             <i class="fa-solid fa-file-invoice text-sm"></i>
-                                            <span>ચેક (Cheque)</span>
+                                            <span>Cheque</span>
                                         </div>
                                     </label>
                                     <label class="flex-1 cursor-pointer">
@@ -695,30 +754,30 @@
                                         <div
                                             class="peer-checked:bg-violet-600 peer-checked:text-white peer-checked:border-violet-600 border border-slate-200 rounded-xl p-2.5 text-center text-xs font-bold text-slate-500 bg-slate-50 transition duration-150 flex flex-col items-center gap-1">
                                             <i class="fa-solid fa-mobile-screen-button text-sm"></i>
-                                            <span>ઓનલાઇન</span>
+                                            <span>Online</span>
                                         </div>
                                     </label>
                                 </div>
                             </div>
                             <div>
                                 <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">રકમ
+                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Amount
                                     (Amount)</label>
-                                <input type="number" step="any" id="pay-amount" placeholder="₹ રકમ લખો" required
+                                <input type="number" step="any" id="pay-amount" placeholder="₹ Enter amount" required
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition duration-150 text-slate-700 font-black text-xs">
                             </div>
                         </div>
                         <!-- Cheque Number (shows only if Cheque selected) -->
                         <div id="cheque-number-row" class="hidden">
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">ચેક
-                                નંબર (Cheque No.)</label>
-                            <input type="text" id="pay-cheque-no" placeholder="ચેક નંબર લખો"
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cheque
+                                Number</label>
+                            <input type="text" id="pay-cheque-no" placeholder="Enter cheque number"
                                 class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition duration-150 text-slate-700 text-xs font-bold">
                         </div>
                         <button type="submit"
                             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md hover:shadow-lg shadow-emerald-500/10 flex items-center justify-center gap-2 text-xs">
                             <i class="fa-solid fa-handshake-angle"></i>
-                            <span>પેમેન્ટ સેવ કરો (Save Payment)</span>
+                            <span>Save Payment</span>
                         </button>
                     </form>
                 </div>
@@ -728,8 +787,8 @@
         <!-- PAGE 5: ORDER HISTORY VIEW -->
         <div id="page-order-history" class="page-view hidden space-y-6">
             <div class="border-b pb-4">
-                <h2 class="text-2xl font-black text-slate-800">ઓર્ડર હિસ્ટ્રી રિપોર્ટ</h2>
-                <p class="text-slate-500 text-xs mt-0.5">કંપનીના તમામ ઓર્ડરની વિગતવાર હિસ્ટ્રી</p>
+                <h2 class="text-2xl font-black text-slate-800">Order History Report</h2>
+                <p class="text-slate-500 text-xs mt-0.5">Detailed History of All Orders</p>
             </div>
 
             <!-- TAB 4A: ALL ORDERS TABLE -->
@@ -742,31 +801,31 @@
                             <i class="fa-solid fa-magnifying-glass text-xs"></i>
                         </span>
                         <input type="text" id="report-order-search" oninput="renderAllOrders()"
-                            placeholder="પાર્ટીનું નામ અથવા આઇટમ થી શોધો..."
+                            placeholder="Search by party name or item..."
                             class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-accent/20 transition duration-150">
                     </div>
 
                     <div class="w-full md:w-auto flex flex-wrap gap-4 items-center">
                         <div
                             class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            <i class="fa-solid fa-filter"></i> પ્રકાર:
+                            <i class="fa-solid fa-filter"></i> Type:
                         </div>
                         <select id="report-order-filter-type" onchange="renderAllOrders()"
                             class="p-2 border border-slate-200 rounded-xl text-xs bg-slate-50 outline-none font-bold text-slate-700">
-                            <option value="All">બધા (All)</option>
-                            <option value="Sales">Sales (વેચાણ)</option>
-                            <option value="Buying">Buying (ખરીદી)</option>
+                            <option value="All">All</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Buying">Buying</option>
                         </select>
 
                         <div
                             class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            <i class="fa-solid fa-spinner"></i> સ્ટેટસ:
+                            <i class="fa-solid fa-spinner"></i> Status:
                         </div>
                         <select id="report-order-filter-status" onchange="renderAllOrders()"
                             class="p-2 border border-slate-200 rounded-xl text-xs bg-slate-50 outline-none font-bold text-slate-700">
-                            <option value="All">બધા (All)</option>
-                            <option value="Pending">Pending (બાકી)</option>
-                            <option value="Complete">Complete (પૂરો)</option>
+                            <option value="All">All</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Complete">Complete</option>
                         </select>
                     </div>
                 </div>
@@ -778,15 +837,15 @@
                             <thead>
                                 <tr
                                     class="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
-                                    <th class="p-4">તારીખ</th>
-                                    <th class="p-4">પાર્ટીનું નામ</th>
-                                    <th class="p-4">પ્રકાર</th>
-                                    <th class="p-4">વિગત</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Party Name</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Details</th>
                                     <th class="p-4 text-center">Qty</th>
-                                    <th class="p-4 text-right">ભાવ</th>
-                                    <th class="p-4 text-right">ટોટલ રકમ</th>
-                                    <th class="p-4 text-center">સ્ટેટસ</th>
-                                    <th class="p-4 text-center no-print">એક્શન</th>
+                                    <th class="p-4 text-right">Price</th>
+                                    <th class="p-4 text-right">Total Amount</th>
+                                    <th class="p-4 text-center">Status</th>
+                                    <th class="p-4 text-center no-print">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="all-orders-table-body"
@@ -797,8 +856,7 @@
                     </div>
                     <div id="orders-report-empty"
                         class="hidden p-12 text-center text-slate-450 text-xs font-bold bg-white">
-                        <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> કોઈ ઓર્ડર એન્ટ્રી
-                        મળી નથી.
+                        <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> No order entries found.
                     </div>
                 </div>
             </div>
@@ -807,8 +865,8 @@
         <!-- PAGE 6: PAYMENT HISTORY VIEW -->
         <div id="page-payment-history" class="page-view hidden space-y-6">
             <div class="border-b pb-4">
-                <h2 class="text-2xl font-black text-slate-800">પેમેન્ટ હિસ્ટ્રી રિપોર્ટ</h2>
-                <p class="text-slate-500 text-xs mt-0.5">કંપનીના તમામ પેમેન્ટની વિગતવાર હિસ્ટ્રી</p>
+                <h2 class="text-2xl font-black text-slate-800">Payment History Report</h2>
+                <p class="text-slate-500 text-xs mt-0.5">Detailed History of All Payments</p>
             </div>
 
             <!-- TAB 4B: ALL PAYMENTS TABLE -->
@@ -821,20 +879,20 @@
                             <i class="fa-solid fa-magnifying-glass text-xs"></i>
                         </span>
                         <input type="text" id="report-payment-search" oninput="renderAllPayments()"
-                            placeholder="પાર્ટીના નામ થી શોધો..."
+                            placeholder="Search by party name..."
                             class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-xs bg-slate-50 outline-none focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition duration-150">
                     </div>
 
                     <div class="w-full md:w-auto flex flex-wrap gap-4 items-center">
                         <div
                             class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                            <i class="fa-solid fa-filter"></i> પ્રકાર:
+                            <i class="fa-solid fa-filter"></i> Type:
                         </div>
                         <select id="report-payment-filter-type" onchange="renderAllPayments()"
                             class="p-2 border border-slate-200 rounded-xl text-xs bg-slate-50 outline-none font-bold text-slate-700">
-                            <option value="All">બધા (All)</option>
-                            <option value="Received">Received (પાર્ટીએ આપ્યા)</option>
-                            <option value="Paid">Paid (આપણે આપ્યા)</option>
+                            <option value="All">All</option>
+                            <option value="Received">Received (From Party)</option>
+                            <option value="Paid">Paid (We Paid)</option>
                         </select>
                     </div>
                 </div>
@@ -846,11 +904,11 @@
                             <thead>
                                 <tr
                                     class="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
-                                    <th class="p-4">તારીખ</th>
-                                    <th class="p-4">પાર્ટીનું નામ</th>
-                                    <th class="p-4">પેમેન્ટ પ્રકાર</th>
-                                    <th class="p-4 text-right">રકમ (Amount)</th>
-                                    <th class="p-4 text-center no-print">એક્શન</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Party Name</th>
+                                    <th class="p-4">Payment Type</th>
+                                    <th class="p-4 text-right">Amount</th>
+                                    <th class="p-4 text-center no-print">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="all-payments-table-body"
@@ -861,8 +919,7 @@
                     </div>
                     <div id="payments-report-empty"
                         class="hidden p-12 text-center text-slate-450 text-xs font-bold bg-white">
-                        <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> કોઈ પેમેન્ટ
-                        ટ્રાન્ઝેક્શન મળ્યું નથી.
+                        <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> No payment transactions found.
                     </div>
                 </div>
             </div>
@@ -871,8 +928,8 @@
         <!-- PAGE 5: SETTINGS & BACKUP VIEW -->
         <div id="page-settings" class="page-view hidden space-y-6">
             <div class="border-b pb-3">
-                <h2 class="text-2xl font-black text-slate-800">સેટિંગ્સ અને ડેટા સુરક્ષા</h2>
-                <p class="text-slate-500 text-xs mt-0.5">ઓનલાઇન ક્લાઉડ સેટઅપ અને લોકલ ડેટાબેઝ ફાઈલ સેવ/બેકઅપ</p>
+                <h2 class="text-2xl font-black text-slate-800">Settings and Data Security</h2>
+                <p class="text-slate-500 text-xs mt-0.5">Online Cloud Setup and Local Database File Save/Backup</p>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -883,17 +940,16 @@
                         <h3
                             class="text-md font-black text-slate-800 flex items-center gap-2 border-b pb-3 border-slate-100">
                             <i class="fa-solid fa-cloud text-accent"></i>
-                            <span>Firebase Firestore કનેક્શન સેટિંગ્સ</span>
+                            <span>Firebase Firestore Connection Settings</span>
                         </h3>
-                        <p class="text-[11px] text-slate-400 leading-relaxed mt-2">તમારા ડેટાને કાયમી સાચવવા અને બીજા
-                            મોબાઈલ/કોમ્પ્યુટર માં સિંક કરવા માટે Firebase Firestore સેટઅપ કરો.</p>
+                        <p class="text-[11px] text-slate-400 leading-relaxed mt-2">Set up Firebase Firestore to permanently save your data and sync with other mobile/computer devices.</p>
 
                         <div
                             class="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center text-xs">
-                            <span class="font-bold text-slate-500">જોડાણ સ્ટેટસ:</span>
+                            <span class="font-bold text-slate-500">Connection Status:</span>
                             <span id="settings-firebase-status"
                                 class="font-black text-red-650 bg-red-50 px-2 py-0.5 rounded border border-red-100 flex items-center gap-1">
-                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> ઑફલાઇન
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Offline
                             </span>
                         </div>
 
@@ -901,8 +957,8 @@
                             <div>
                                 <label
                                     class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Firebase
-                                    Config JSON અથવા Config Object</label>
-                                <textarea id="settings-fb-config-json" rows="6" placeholder='દા.ત. 
+                                    Config JSON or Config Object</label>
+                                <textarea id="settings-fb-config-json" rows="6" placeholder='e.g. 
 {
   "apiKey": "AIzaSy...",
   "authDomain": "gokul-plastic.firebaseapp.com",
@@ -914,11 +970,11 @@
                             <div class="flex gap-2">
                                 <button type="submit"
                                     class="flex-1 bg-accent hover:bg-accentHover text-white font-bold py-2.5 px-4 rounded-xl text-xs shadow-md shadow-accent/10 transition">
-                                    સેવ અને કનેક્ટ કરો
+                                    Save and Connect
                                 </button>
                                 <button type="button" onclick="disconnectFirebase()" id="settings-fb-disconnect-btn"
                                     class="hidden bg-red-650 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
-                                    ડિસ્કનેક્ટ
+                                    Disconnect
                                 </button>
                             </div>
                         </form>
@@ -927,13 +983,12 @@
                     <div id="settings-migration-box" class="hidden border-t pt-4 space-y-3">
                         <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1">
                             <i class="fa-solid fa-cloud-arrow-up text-emerald-500"></i>
-                            <span>ડેટા ઓનલાઇન મોકલો (Data Migration)</span>
+                            <span>Send Data Online (Data Migration)</span>
                         </h4>
-                        <p class="text-[10px] text-slate-400">જો તમારી પાસે આ બ્રાઉઝરમાં ઓર્ડર/પેમેન્ટ છે, તો તમે તેને
-                            ફાયરબેઝ ઓનલાઇન ક્લાઉડ ડેટાબેઝ પર અપલોડ કરી શકો છો.</p>
+                        <p class="text-[10px] text-slate-400">If you have orders/payments in this browser, you can upload them to the Firebase online cloud database.</p>
                         <button onclick="migrateLocalDataToFirebase()" id="settings-fb-migrate-btn"
                             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex justify-center items-center gap-1.5 shadow-md shadow-emerald-500/10 transition">
-                            લોકલ સ્ટોરેજનો ડેટા ઓનલાઇન અપલોડ કરો
+                            Upload Local Storage Data Online
                         </button>
                     </div>
                 </div>
@@ -943,21 +998,20 @@
                     <h3
                         class="text-md font-black text-slate-800 flex items-center gap-2 border-b pb-3 border-slate-100">
                         <i class="fa-solid fa-shield-halved text-orange-500"></i>
-                        <span>ઓફલાઇન બેકઅપ અને સુરક્ષા (Local Backup)</span>
+                        <span>Offline Backup and Security (Local Backup)</span>
                     </h3>
 
                     <!-- Export -->
                     <div class="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-2">
                         <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-download text-accent"></i>
-                            બેકઅપ ફાઈલ ડાઉનલોડ કરો (Export)
+                            Download Backup File (Export)
                         </h4>
-                        <p class="text-[10px] text-slate-400">તમારા તમામ ગ્રાહકોના વ્યવહારોનો સંપૂર્ણ ડેટાબેઝ એક
-                            સુરક્ષિત ફાઈલ રૂપે કમ્પ્યુટરમાં સેવ રાખવા ડાઉનલોડ કરો.</p>
+                        <p class="text-[10px] text-slate-400">Download the complete database of all your customer transactions as a secure file to save on your computer.</p>
                         <button onclick="exportDatabase()"
                             class="w-full bg-accent hover:bg-accentHover text-white font-bold py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-file-export"></i>
-                            બેકઅપ ફાઈલ (.JSON) ડાઉનલોડ કરો
+                            Download Backup File (.JSON)
                         </button>
                     </div>
 
@@ -965,15 +1019,14 @@
                     <div class="border border-slate-100 rounded-xl p-4 bg-slate-50/50 space-y-3">
                         <h4 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-upload text-emerald-500"></i>
-                            બેકઅપ ફાઈલ લોડ કરો (Import)
+                            Load Backup File (Import)
                         </h4>
-                        <p class="text-[10px] text-slate-400">પહેલા ક્યારેય સેવ કરેલી બેકઅપ JSON ફાઈલ માંથી ડેટા પાછો
-                            લાવો. (ચેતવણી: બ્રાઉઝરમાં રહેલો હાલનો ડેટા રદ થઈ જશે)</p>
+                        <p class="text-[10px] text-slate-400">Restore data from a previously saved backup JSON file. (Warning: Current data in the browser will be erased.)</p>
 
                         <label
                             class="w-full border border-dashed border-slate-200 hover:border-slate-350 cursor-pointer py-4 px-4 rounded-xl flex flex-col items-center gap-1 bg-white hover:bg-slate-50 transition text-center">
                             <i class="fa-solid fa-file-import text-xl text-slate-300"></i>
-                            <span class="text-xs font-bold text-slate-600">બેકઅપ ફાઈલ (.json) પસંદ કરો</span>
+                            <span class="text-xs font-bold text-slate-600">Select Backup File (.json)</span>
                             <input type="file" accept=".json" onchange="importDatabase(event)" class="hidden">
                         </label>
                     </div>
@@ -985,20 +1038,20 @@
                 <h3 class="text-md font-black text-slate-800 flex items-center justify-between border-b pb-3 border-slate-100">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-building text-indigo-500"></i>
-                        <span>કંપની મેનેજમેન્ટ (Manage Companies)</span>
+                        <span>Company Management (Manage Companies)</span>
                     </div>
                     <button onclick="addNewCompany()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 px-3 rounded text-[10px] transition shadow flex items-center gap-1.5">
-                        <i class="fa-solid fa-plus"></i> નવી કંપની ઉમેરો
+                        <i class="fa-solid fa-plus"></i> Add New Company
                     </button>
                 </h3>
-                <p class="text-[11px] text-slate-400">અહીંથી તમે નવી કંપનીઓ બનાવી શકો છો અને જરૂર ન હોય તેવી કંપનીઓને ડીલીટ કરી શકો છો.</p>
+                <p class="text-[11px] text-slate-400">From here you can create new companies and delete companies that are not needed.</p>
                 
                 <div class="overflow-x-auto">
                     <table class="w-full text-xs text-left border-collapse border border-slate-100">
                         <thead>
                             <tr class="bg-slate-50/70 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px]">
-                                <th class="p-3">કંપનીનું નામ (Company Name)</th>
-                                <th class="p-3 text-center w-24">એક્શન (Action)</th>
+                                <th class="p-3">Company Name</th>
+                                <th class="p-3 text-center w-24">Action</th>
                             </tr>
                         </thead>
                         <tbody id="companies-table-body" class="divide-y divide-slate-100 text-slate-700 font-bold">
@@ -1011,6 +1064,42 @@
         </div>
     </main>
 
+    <!-- PARTY QR MODAL -->
+    <div id="party-qr-modal"
+        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-100">
+            <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-qrcode text-emerald-600"></i>
+                        <span>Party Ledger QR</span>
+                    </h3>
+                    <p id="party-qr-title" class="text-xs text-slate-500 font-semibold mt-1"></p>
+                </div>
+                <button onclick="closePartyQrModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-center">
+                <img id="party-qr-image" alt="Party ledger QR code" class="w-64 h-64 object-contain bg-white p-2 border border-slate-200 rounded-lg">
+            </div>
+
+            <p id="party-qr-note" class="text-[11px] text-slate-500 font-medium leading-relaxed"></p>
+
+            <div class="flex gap-2">
+                <button onclick="sharePartyQrCode()"
+                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>Share QR</span>
+                </button>
+                <button onclick="downloadPartyQrCode()"
+                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Download</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- CHALLAN MODAL (PRINT PREVIEW) -->
     <div id="challan-modal"
         class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-2 overflow-y-auto z-50 print:p-0 print:bg-white print:static">
@@ -1020,7 +1109,7 @@
             <div class="flex justify-between items-center border-b pb-3 no-print">
                 <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
                     <i class="fa-solid fa-copy text-accent"></i>
-                    <span>ડબલ ડિલિવરી ચલાન</span>
+                    <span>Double Delivery Challan</span>
                 </h3>
                 <button onclick="closeChallan()"
                     class="text-slate-400 hover:text-slate-650 text-2xl font-bold p-1">&times;</button>
@@ -1035,7 +1124,7 @@
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
-                            ORIGINAL COPY (પાર્ટી માટે)
+                            ORIGINAL COPY (For Party)
                         </div>
                         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
                             <div>
@@ -1054,12 +1143,12 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
                             <div>
-                                <p class="text-slate-500">ગ્રાહક (To): <span id="ch1-party"
+                                <p class="text-slate-500">Customer (To): <span id="ch1-party"
                                         class="text-sm font-black text-slate-900 block mt-0.5"></span></p>
                             </div>
                             <div class="text-right font-medium">
-                                <p>તારીખ: <span id="ch1-date" class="font-bold text-slate-950"></span></p>
-                                <p class="mt-0.5">ચલાન નં: <span id="ch1-num"
+                                <p>Date: <span id="ch1-date" class="font-bold text-slate-950"></span></p>
+                                <p class="mt-0.5">Challan No: <span id="ch1-num"
                                         class="font-black text-red-650 text-sm"></span></p>
                             </div>
                         </div>
@@ -1067,11 +1156,11 @@
                         <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
                             <thead>
                                 <tr class="bg-slate-850 text-white font-bold">
-                                    <th class="p-2 border border-slate-800 text-left w-1/2">વસ્તુ નું નામ (Item
+                                    <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
                                         Description)</th>
-                                    <th class="p-2 text-center w-20 border border-slate-800">જથ્થો (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-slate-800">ભાવ (Price)</th>
-                                    <th class="p-2 text-right w-28 border border-slate-800">ટોટલ રકમ (Amount)</th>
+                                    <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
+                                    <th class="p-2 text-right w-24 border border-slate-800">Price</th>
+                                    <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1091,17 +1180,17 @@
 
                     <div
                         class="flex justify-between items-end pt-4 text-[10px] border-t border-dashed border-slate-400 mt-4">
-                        <span class="text-slate-400 italic">આ માલ બિન-જીએસટી ચલાનથી મોકલેલ છે.</span>
+                        <span class="text-slate-400 italic">This goods is sent via non-GST challan.</span>
                         <div class="flex space-x-12 text-center font-bold text-slate-700">
-                            <div class="w-28 border-t border-slate-800 pt-1">માલ મેળવનારની સહી</div>
-                            <div class="w-32 border-t border-slate-800 pt-1">GOKUL PLASTIC માટે</div>
+                            <div class="w-28 border-t border-slate-800 pt-1">Receiver's Signature</div>
+                            <div class="w-32 border-t border-slate-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
                 </div>
 
                 <div
                     class="border-t border-dashed border-slate-400 text-center text-[10px] text-slate-400 no-print my-1">
-                    ✂️ પ્રિન્ટ કર્યા પછી અહીંથી કટ કરવું (Cutting Line) ✂️
+                    ✂️ Cut here after printing (Cutting Line) ✂️
                 </div>
 
                 <!-- COPY 2: OFFICE -->
@@ -1110,7 +1199,7 @@
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
-                            OFFICE COPY (પરત લાવવાની નકલ)
+                            OFFICE COPY (Copy to be returned)
                         </div>
                         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
                             <div>
@@ -1129,12 +1218,12 @@
                         </div>
                         <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
                             <div>
-                                <p class="text-slate-500">ગ્રાહક (To): <span id="ch2-party"
+                                <p class="text-slate-500">Customer (To): <span id="ch2-party"
                                         class="text-sm font-black text-slate-900 block mt-0.5"></span></p>
                             </div>
                             <div class="text-right font-medium">
-                                <p>તારીખ: <span id="ch2-date" class="font-bold text-slate-950"></span></p>
-                                <p class="mt-0.5">ચલાન નં: <span id="ch2-num"
+                                <p>Date: <span id="ch2-date" class="font-bold text-slate-950"></span></p>
+                                <p class="mt-0.5">Challan No: <span id="ch2-num"
                                         class="font-black text-red-655 text-sm"></span></p>
                             </div>
                         </div>
@@ -1142,11 +1231,11 @@
                         <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
                             <thead>
                                 <tr class="bg-slate-850 text-white font-bold">
-                                    <th class="p-2 border border-slate-800 text-left w-1/2">વસ્તુ નું નામ (Item
+                                    <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
                                         Description)</th>
-                                    <th class="p-2 text-center w-20 border border-slate-800">જથ્થો (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-slate-800">ભાવ (Price)</th>
-                                    <th class="p-2 text-right w-28 border border-slate-800">ટોટલ રકમ (Amount)</th>
+                                    <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
+                                    <th class="p-2 text-right w-24 border border-slate-800">Price</th>
+                                    <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1166,11 +1255,10 @@
 
                     <div
                         class="flex justify-between items-end pt-4 text-[10px] border-t border-dashed border-slate-400 mt-4">
-                        <span class="text-slate-400 italic">માલ સહી-સલામત મળ્યો છે તેની ખાતરી માટે ગ્રાહકની સહી કરાવી
-                            પરત લેવું.</span>
+                        <span class="text-slate-400 italic">Get customer's signature as confirmation that goods have been received safely and return.</span>
                         <div class="flex space-x-12 text-center font-bold text-slate-700">
-                            <div class="w-28 border-t border-slate-800 pt-1 text-red-600">ગ્રાહકની સહી (ફરજીયાત)</div>
-                            <div class="w-32 border-t border-slate-800 pt-1">GOKUL PLASTIC માટે</div>
+                            <div class="w-28 border-t border-slate-800 pt-1 text-red-600">Customer's Signature (Mandatory)</div>
+                            <div class="w-32 border-t border-slate-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
                 </div>
@@ -1181,23 +1269,23 @@
                 <button onclick="window.print()"
                     class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 transition duration-150">
                     <i class="fa-solid fa-print"></i>
-                    <span>એકસાથે બંને ચલાન પ્રિન્ટ કરો</span>
+                    <span>Print Both Challans Together</span>
                 </button>
                 <button id="wp-share-btn"
                     class="flex-1 bg-teal-500 hover:bg-teal-650 text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-teal-500/10 flex items-center justify-center gap-2 transition duration-150">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
-                    <span>WhatsApp પર ચલાન મોકલો</span>
+                    <span>Send Challan on WhatsApp</span>
                 </button>
                 <button onclick="closeChallan()"
                     class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3 rounded-xl text-xs transition duration-150">
-                    બંધ કરો
+                    Close
                 </button>
             </div>
         </div>
     </div>
 
     <!-- JAVASCRIPT CODE -->
-    <script src="/assets/js/app.js"></script>
+    <script src="assets/js/app.js"></script>
 </body>
 
 </html>

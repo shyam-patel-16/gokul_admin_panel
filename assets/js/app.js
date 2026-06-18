@@ -1,12 +1,13 @@
 
         // Database state setup
-        let db = { orders: [], payments: [] };
+        let db = { orders: [], payments: [], parties: [] };
         let activeBusiness = null;
         let companiesList = JSON.parse(localStorage.getItem('biz_companies_list')) || ['ABS', 'PP'];
         let activeParty = "";
         let firestoreDb = null;
         let unsubOrders = null;
         let unsubPayments = null;
+        let unsubParties = null;
         let isFirebaseConnected = false;
         let currentTab = "dashboard";
         let currentSubTab = "orders";
@@ -58,9 +59,89 @@
             return (a.timestamp || a.id || 0) - (b.timestamp || b.id || 0);
         }
 
+        function normalizePartyName(partyName) {
+            return String(partyName || '').trim().replace(/\s+/g, ' ');
+        }
+
+        function getPartyMetaByName(partyName) {
+            const normalized = normalizePartyName(partyName).toLowerCase();
+            return (db.parties || []).find(p => normalizePartyName(p.name).toLowerCase() === normalized) || null;
+        }
+
+        function getPartyMetaById(partyId) {
+            return (db.parties || []).find(p => p.partyId === partyId) || null;
+        }
+
+        function getNextPartyId() {
+            const maxId = (db.parties || []).reduce((max, party) => {
+                const match = String(party.partyId || '').match(/^PARTY_(\d+)$/);
+                return match ? Math.max(max, Number(match[1])) : max;
+            }, 1000);
+
+            return `PARTY_${maxId + 1}`;
+        }
+
+        function getPartyQrPayload(partyId) {
+            return JSON.stringify({ partyId });
+        }
+
+        function getPartyQrScanUrl(partyId) {
+            const baseUrl = `${window.location.origin}${window.location.pathname}`;
+            return `${baseUrl}?partyId=${encodeURIComponent(partyId)}`;
+        }
+
+        function ensureDbShape() {
+            if (!db.orders) db.orders = [];
+            if (!db.payments) db.payments = [];
+            if (!db.parties) db.parties = [];
+
+            const names = new Set();
+            db.orders.forEach(o => { if (o.party) names.add(normalizePartyName(o.party)); });
+            db.payments.forEach(p => { if (p.party) names.add(normalizePartyName(p.party)); });
+            names.forEach(name => ensurePartyMeta(name, { persist: false }));
+        }
+
+        function savePartyMetaToFirebase(partyMeta) {
+            if (!isFirebaseConnected || !firestoreDb || !activeBusiness || !partyMeta) return;
+
+            const partiesCol = activeBusiness === 'ABS' ? 'parties' : activeBusiness + '_parties';
+            firestoreDb.collection(partiesCol).doc(partyMeta.partyId).set(partyMeta, { merge: true })
+                .catch(err => console.error('Party QR save error:', err));
+        }
+
+        function ensurePartyMeta(partyName, options = {}) {
+            const persist = options.persist !== false;
+            const normalizedName = normalizePartyName(partyName);
+            if (!normalizedName) return null;
+
+            if (!db.parties) db.parties = [];
+            let partyMeta = getPartyMetaByName(normalizedName);
+            if (partyMeta) return partyMeta;
+
+            const partyId = getNextPartyId();
+            const qrPayload = getPartyQrPayload(partyId);
+            partyMeta = {
+                partyId,
+                name: normalizedName,
+                qrPayload,
+                qrScanUrl: getPartyQrScanUrl(partyId),
+                createdAt: Date.now()
+            };
+
+            db.parties.push(partyMeta);
+
+            if (persist) {
+                localStorage.setItem(`biz_db_${activeBusiness}`, JSON.stringify(db));
+                savePartyMetaToFirebase(partyMeta);
+            }
+
+            return partyMeta;
+        }
+
         // Save data local storage and trigger UI updates
         function saveData() {
             if (activeBusiness) {
+                ensureDbShape();
                 // Ensure data is ALWAYS saved in date-wise (chronological) order
                 db.orders.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
                 db.payments.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
@@ -282,8 +363,8 @@
         function selectBusiness(business) {
             activeBusiness = business;
             db = JSON.parse(localStorage.getItem(`biz_db_${activeBusiness}`)) || { orders: [], payments: [] };
-            if (!db.orders) db.orders = [];
-            if (!db.payments) db.payments = [];
+            ensureDbShape();
+            localStorage.setItem(`biz_db_${activeBusiness}`, JSON.stringify(db));
             
             document.getElementById('business-selection-screen').classList.add('hidden');
             document.getElementById('business-selection-screen').classList.remove('flex');
