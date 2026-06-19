@@ -20,6 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <!-- jsPDF Library for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- QR Code Generator -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <!-- Firebase Environment Config -->
@@ -573,16 +574,6 @@
                                 <i class="fa-solid fa-file-pdf"></i>
                                 <span>Download PDF</span>
                             </button>
-                            <button onclick="openPartyQrModal()" id="party-qr-btn"
-                                class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-emerald-500/10 flex items-center justify-center gap-2 transition">
-                                <i class="fa-solid fa-qrcode"></i>
-                                <span>Party QR</span>
-                            </button>
-                            <button onclick="sharePartyQrCode()" id="party-share-qr-btn"
-                                class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-slate-500/10 flex items-center justify-center gap-2 transition">
-                                <i class="fa-solid fa-share-nodes"></i>
-                                <span>Share QR</span>
-                            </button>
                             <button onclick="document.getElementById('pdf-start-date').value=''; document.getElementById('pdf-end-date').value=''; document.getElementById('ledger-filter-type').value='All'; document.getElementById('ledger-filter-status').value='All'; showPartyDetails(activeParty)"
                                 class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition">
                                 <i class="fa-solid fa-rotate-left"></i>
@@ -1063,42 +1054,6 @@
             
         </div>
     </main>
-
-    <!-- PARTY QR MODAL -->
-    <div id="party-qr-modal"
-        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-5 space-y-4 border border-slate-100">
-            <div class="flex justify-between items-start border-b border-slate-100 pb-3">
-                <div>
-                    <h3 class="text-lg font-black text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-qrcode text-emerald-600"></i>
-                        <span>Party Ledger QR</span>
-                    </h3>
-                    <p id="party-qr-title" class="text-xs text-slate-500 font-semibold mt-1"></p>
-                </div>
-                <button onclick="closePartyQrModal()" class="text-slate-400 hover:text-slate-700 text-2xl font-bold">&times;</button>
-            </div>
-
-            <div class="bg-slate-50 border border-slate-100 rounded-xl p-4 flex items-center justify-center">
-                <img id="party-qr-image" alt="Party ledger QR code" class="w-64 h-64 object-contain bg-white p-2 border border-slate-200 rounded-lg">
-            </div>
-
-            <p id="party-qr-note" class="text-[11px] text-slate-500 font-medium leading-relaxed"></p>
-
-            <div class="flex gap-2">
-                <button onclick="sharePartyQrCode()"
-                    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-share-nodes"></i>
-                    <span>Share QR</span>
-                </button>
-                <button onclick="downloadPartyQrCode()"
-                    class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs flex items-center justify-center gap-2 transition">
-                    <i class="fa-solid fa-download"></i>
-                    <span>Download</span>
-                </button>
-            </div>
-        </div>
-    </div>
 
     <!-- CHALLAN MODAL (PRINT PREVIEW) -->
     <div id="challan-modal"

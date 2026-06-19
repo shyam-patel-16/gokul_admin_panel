@@ -161,9 +161,10 @@
             let partyOrders = db.orders.filter(o => o.party === party);
             let partyPayments = db.payments.filter(p => p.party === party);
 
-            const selectedRange = getSelectedLedgerDateRange();
-            const startDate = selectedRange.startDate;
-            const endDate = selectedRange.endDate;
+            const startInput = document.getElementById('pdf-start-date');
+            const endInput = document.getElementById('pdf-end-date');
+            const startDate = startInput ? startInput.value : '';
+            const endDate = endInput ? endInput.value : '';
             const filterType = document.getElementById('ledger-filter-type')?.value || 'All';
             const filterStatus = document.getElementById('ledger-filter-status')?.value || 'All';
 
@@ -1472,12 +1473,12 @@
 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800">
-                        <td class="p-2 border-r border-slate-800">${t.displayDate}</td>
-                        <td class="p-2 border-r border-slate-800">${t.particulars}</td>
-                        <td class="p-2 border-r border-slate-800 text-center text-[10px]">${t.type}</td>
-                        <td class="p-2 border-r border-slate-800 text-right">${t.debit > 0 ? '₹'+t.debit.toLocaleString('en-IN') : '-'}</td>
-                        <td class="p-2 border-r border-slate-800 text-right">${t.credit > 0 ? '₹'+t.credit.toLocaleString('en-IN') : '-'}</td>
-                        <td class="p-2 text-right bg-slate-50 ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${balType}</td>
+                        <td class="p-2 border-r border-slate-800 text-[10.5px]">${t.displayDate}</td>
+                        <td class="p-2 border-r border-slate-800 text-[10.5px]">${t.particulars}</td>
+                        <td class="p-2 border-r border-slate-800 text-center text-[9.5px] uppercase">${t.type}</td>
+                        <td class="p-2 border-r border-slate-800 text-right text-[10.5px]">${t.debit > 0 ? '₹' + t.debit.toLocaleString('en-IN') : '-'}</td>
+                        <td class="p-2 border-r border-slate-800 text-right text-[10.5px]">${t.credit > 0 ? '₹' + t.credit.toLocaleString('en-IN') : '-'}</td>
+                        <td class="p-2 text-right bg-slate-50 text-[10.5px] ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${balType}</td>
                     </tr>
                 `;
             });
@@ -1485,7 +1486,8 @@
             // Summary row
             document.getElementById('lp-total-debit').innerText = "₹" + totalDebit.toLocaleString('en-IN');
             document.getElementById('lp-total-credit').innerText = "₹" + totalCredit.toLocaleString('en-IN');
-            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN') + (runningBalance >= 0 ? " Dr" : " Cr");
+            const finalBalType = runningBalance >= 0 ? "Dr" : "Cr";
+            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN') + " " + finalBalType;
 
             document.getElementById('lp-closing-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN');
             document.getElementById('lp-closing-balance').className = runningBalance >= 0 ? "text-2xl font-black text-red-600" : "text-2xl font-black text-emerald-600";
@@ -1497,144 +1499,6 @@
 
         function closeLedgerPrint() {
             document.getElementById('ledger-print-modal').classList.add('hidden');
-        }
-
-        function getPartyLedgerQrPayload(partyName) {
-            const partyOrders = db.orders.filter(o => o.party === partyName);
-            const partyPayments = db.payments.filter(p => p.party === partyName);
-            const rows = [];
-
-            partyOrders.forEach(o => {
-                rows.push({
-                    date: o.date,
-                    timestamp: o.timestamp || o.id,
-                    type: o.type,
-                    detail: o.item ? `${o.item} ${o.qty || ''}x${o.price || ''}`.trim() : 'Order',
-                    debit: o.type === 'Sales' ? o.amount : 0,
-                    credit: o.type === 'Buying' ? o.amount : 0
-                });
-            });
-
-            partyPayments.forEach(p => {
-                rows.push({
-                    date: p.date,
-                    timestamp: p.timestamp || p.id,
-                    type: p.type,
-                    detail: `Payment ${p.mode || 'Cash'}${p.chequeNo ? ' #' + p.chequeNo : ''}`,
-                    debit: p.type === 'Paid' ? p.amount : 0,
-                    credit: p.type === 'Received' ? p.amount : 0
-                });
-            });
-
-            rows.sort(compareLedgerRecords);
-
-            let balance = 0;
-            let totalDebit = 0;
-            let totalCredit = 0;
-            const lines = [
-                'GOKUL PLASTIC',
-                `Party: ${partyName}`,
-                `Generated: ${formatShortBusinessDate(new Date().toISOString().split('T')[0])}`,
-                'Date | Type | Detail | Dr | Cr | Bal'
-            ];
-
-            rows.forEach(row => {
-                balance += row.debit - row.credit;
-                totalDebit += row.debit;
-                totalCredit += row.credit;
-                const balType = balance >= 0 ? 'Dr' : 'Cr';
-                lines.push([
-                    formatShortBusinessDate(row.date),
-                    row.type,
-                    row.detail.replace(/\s+/g, ' '),
-                    row.debit ? row.debit : '-',
-                    row.credit ? row.credit : '-',
-                    `${Math.abs(balance)} ${balType}`
-                ].join(' | '));
-            });
-
-            lines.push(`Total Dr: ${totalDebit}`);
-            lines.push(`Total Cr: ${totalCredit}`);
-            lines.push(`Closing: ${Math.abs(balance)} ${balance >= 0 ? 'Dr' : 'Cr'}`);
-
-            return { payload: lines.join('\n'), recordCount: rows.length };
-        }
-
-        function createPartyQrDataUrl(partyName) {
-            if (typeof qrcode === 'undefined') {
-                alert('QR library load નથી થઈ. Internet connection ચકાસો અને page refresh કરો.');
-                return null;
-            }
-
-            const { payload, recordCount } = getPartyLedgerQrPayload(partyName);
-
-            try {
-                const qr = qrcode(0, 'L');
-                qr.addData(payload);
-                qr.make();
-                return {
-                    dataUrl: qr.createDataURL(6, 8),
-                    payload,
-                    recordCount
-                };
-            } catch (error) {
-                alert('આ partyના records QR codeમાં સમાઈ રહ્યા નથી. Records વધારે છે, માટે PDF share કરવું વધારે સારું રહેશે.');
-                return null;
-            }
-        }
-
-        function openPartyQrModal() {
-            if (!activeParty) return alert('Please select a party first.');
-
-            const qrResult = createPartyQrDataUrl(activeParty);
-            if (!qrResult) return;
-
-            document.getElementById('party-qr-title').innerText = activeParty;
-            document.getElementById('party-qr-image').src = qrResult.dataUrl;
-            document.getElementById('party-qr-note').innerText = `${qrResult.recordCount} ledger records included for this party. Scan this QR to read the party-wise ledger text.`;
-            document.getElementById('party-qr-modal').classList.remove('hidden');
-        }
-
-        function closePartyQrModal() {
-            document.getElementById('party-qr-modal').classList.add('hidden');
-        }
-
-        async function sharePartyQrCode() {
-            if (!activeParty) return alert('Please select a party first.');
-
-            const qrResult = createPartyQrDataUrl(activeParty);
-            if (!qrResult) return;
-
-            const response = await fetch(qrResult.dataUrl);
-            const blob = await response.blob();
-            const extension = blob.type.includes('gif') ? 'gif' : 'png';
-            const fileName = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.${extension}`;
-            const file = new File([blob], fileName, { type: blob.type || 'image/gif' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: `${activeParty} Ledger QR`,
-                    text: `Gokul Plastic ledger QR for ${activeParty}`,
-                    files: [file]
-                });
-                return;
-            }
-
-            downloadPartyQrCode(qrResult.dataUrl);
-            alert('આ browser direct share support કરતું નથી, એટલે QR image download કરી છે.');
-        }
-
-        function downloadPartyQrCode(existingDataUrl) {
-            if (!activeParty) return alert('Please select a party first.');
-            const dataUrl = existingDataUrl || createPartyQrDataUrl(activeParty)?.dataUrl;
-            if (!dataUrl) return;
-
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.gif`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
         }
 
         function generateChallan(orderId) {
@@ -1800,35 +1664,7 @@
                 return;
             }
 
-            const selectedRange = getSelectedLedgerDateRange();
-            let startDate = selectedRange.startDate;
-            let endDate = selectedRange.endDate;
-            let filterType = document.getElementById('ledger-filter-type').value;
-            let filterStatus = document.getElementById('ledger-filter-status').value;
-
-            let partyOrders = db.orders.filter(o => o.party === activeParty);
-            let partyPayments = db.payments.filter(p => p.party === activeParty);
-
-            // Apply Filters (Same as Live View)
-            if (startDate) {
-                partyOrders = partyOrders.filter(o => o.date >= startDate);
-                partyPayments = partyPayments.filter(p => p.date >= startDate);
-            }
-            if (endDate) {
-                partyOrders = partyOrders.filter(o => o.date <= endDate);
-                partyPayments = partyPayments.filter(p => p.date <= endDate);
-            }
-            if (filterType !== 'All') {
-                partyOrders = partyOrders.filter(o => o.type === filterType);
-                partyPayments = partyPayments.filter(p => p.type === filterType);
-            }
-            if (filterStatus !== 'All') {
-                partyOrders = partyOrders.filter(o => o.status === filterStatus);
-                partyPayments = [];
-            }
-
-            // The user wants exactly what is filtered on screen in the PDF.
-            // Let's ensure calculations use these filtered arrays.
+            const { partyOrders, partyPayments } = getFilteredPartyRecords(activeParty);
 
             // Also sort PDF data chronologically (Oldest first for Ledger format)
             partyOrders.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
@@ -1856,11 +1692,11 @@
                     let particular = r.item ? `${r.item} (${r.qty} x Rs. ${Number(r.price || 0).toLocaleString('en-IN')})` : `Payment ${r.mode ? 'via ' + r.mode : ''}`;
                     return `
                         <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 9px 10px; font-size: 10.5px; color: #334155; white-space: nowrap;">${formatShortBusinessDate(r.date)}</td>
-                            <td style="padding: 9px 10px; font-size: 10.5px; color: #0f172a;">${particular}</td>
-                            <td style="padding: 9px 10px; text-align: center; font-size: 9.5px; color: #475569; font-weight: 700;">${r.type}</td>
-                            <td style="padding: 9px 10px; text-align: right; font-size: 10.5px; color: ${debit > 0 ? '#991b1b' : '#64748b'};">${debit > 0 ? 'Rs. ' + debit.toLocaleString('en-IN') : '-'}</td>
-                            <td style="padding: 9px 10px; text-align: right; font-size: 10.5px; color: ${credit > 0 ? '#047857' : '#64748b'};">${credit > 0 ? 'Rs. ' + credit.toLocaleString('en-IN') : '-'}</td>
+                            <td style="padding: 12px 10px; font-size: 11px; color: #334155; white-space: nowrap; vertical-align: middle; width: 20%; text-align: center;">${formatShortBusinessDate(r.date)}</td>
+                            <td style="padding: 12px 10px; font-size: 11px; color: #0f172a; vertical-align: middle; width: 20%; text-align: center;">${particular}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: #475569; font-weight: 700; vertical-align: middle; width: 20%;">${r.type}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: ${debit > 0 ? '#991b1b' : '#64748b'}; vertical-align: middle; width: 20%; font-weight: 800;">${debit > 0 ? 'Rs. ' + debit.toLocaleString('en-IN') : '-'}</td>
+                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: ${credit > 0 ? '#047857' : '#64748b'}; vertical-align: middle; width: 20%; font-weight: 800;">${credit > 0 ? 'Rs. ' + credit.toLocaleString('en-IN') : '-'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -1908,7 +1744,7 @@
                             </div>
                             <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
                                 <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Net Due</p>
-                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: ${netDue >= 0 ? '#991b1b' : '#047857'};">Rs. ${Math.abs(netDue).toLocaleString('en-IN')} ${netDue >= 0 ? 'Dr' : 'Cr'}</p>
+                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: ${netDue >= 0 ? '#991b1b' : '#047857'};">Rs. ${Math.abs(netDue).toLocaleString('en-IN')}</p>
                             </div>
                             <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
                                 <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Entry Count</p>
@@ -1922,11 +1758,11 @@
                             <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #cbd5e1;">
                                 <thead>
                                     <tr style="background: #0f172a;">
-                                        <th style="padding: 9px 10px; text-align: left; font-size: 10px; font-weight: 800; color: #ffffff;">Date</th>
-                                        <th style="padding: 9px 10px; text-align: left; font-size: 10px; font-weight: 800; color: #ffffff;">Particulars</th>
-                                        <th style="padding: 9px 10px; text-align: center; font-size: 10px; font-weight: 800; color: #ffffff;">Type</th>
-                                        <th style="padding: 9px 10px; text-align: right; font-size: 10px; font-weight: 800; color: #ffffff;">Debit (+)</th>
-                                        <th style="padding: 9px 10px; text-align: right; font-size: 10px; font-weight: 800; color: #ffffff;">Credit (-)</th>
+                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Date</th>
+                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Particulars</th>
+                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Type</th>
+                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Debit (+)</th>
+                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Credit (-)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1935,22 +1771,22 @@
                             </table>
                         </div>
 
-                        <!-- Summary -->
+                        <!-- Summary Section -->
                         <div style="border-top: 2px solid #333; padding-top: 15px; display: flex; justify-content: flex-end;">
-                            <div style="width: 250px;">
-                                <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                                    <span style="font-size: 12px; font-weight: bold; color: #666;">Total Debit:</span>
-                                    <span style="font-size: 12px; font-weight: bold;">Rs. ${(totalSales + totalPaid).toLocaleString('en-IN')}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                                    <span style="font-size: 12px; font-weight: bold; color: #666;">Total Credit:</span>
-                                    <span style="font-size: 12px; font-weight: bold;">Rs. ${(totalBuying + totalReceived).toLocaleString('en-IN')}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-top: 1px solid #ddd; margin-top: 5px;">
-                                    <span style="font-size: 14px; font-weight: black; color: #333;">Closing Balance:</span>
-                                    <span style="font-size: 14px; font-weight: black; color: ${netDue >= 0 ? '#b91c1c' : '#047857'};">Rs. ${Math.abs(netDue).toLocaleString('en-IN')} ${netDue >= 0 ? 'Dr' : 'Cr'}</span>
-                                </div>
-                            </div>
+                            <table style="width: 350px; border-collapse: collapse;">
+                                <tr>
+                                    <td style="padding: 10px 0; font-size: 14px; font-weight: bold; color: #64748b; text-align: left;">Total Debit :</td>
+                                    <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0f172a; text-align: right;">Rs. ${(totalSales + totalPaid).toLocaleString('en-IN')}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 10px 0; font-size: 14px; font-weight: bold; color: #64748b; text-align: left; border-bottom: 1px solid #e2e8f0;">Total Credit :</td>
+                                    <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0f172a; text-align: right; border-bottom: 1px solid #e2e8f0;">Rs. ${(totalBuying + totalReceived).toLocaleString('en-IN')}</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding: 20px 0; font-size: 18px; font-weight: 500; color: #334155; text-align: left;">Closing Balance:</td>
+                                    <td style="padding: 20px 0; font-size: 18px; font-weight: 600; color: ${netDue >= 0 ? '#b91c1c' : '#047857'}; text-align: right; white-space: nowrap;">Rs. ${Math.abs(netDue).toLocaleString('en-IN')} ${netDue >= 0 ? 'Dr' : 'Cr'}</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
                 </div>

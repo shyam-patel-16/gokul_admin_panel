@@ -20,6 +20,11 @@
     <script src="assets/js/env.js"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <!-- jsPDF Library for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- QR Code Generator -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -1247,12 +1252,12 @@
                 <table class="w-full text-xs border-collapse mt-6 border border-slate-800">
                     <thead>
                         <tr class="bg-slate-850 text-white font-bold uppercase tracking-wider text-[10px]">
-                            <th class="p-2 border border-slate-800 text-left w-24">Date</th>
-                            <th class="p-2 border border-slate-800 text-left">Particulars</th>
-                            <th class="p-2 border border-slate-800 text-center w-20">Type</th>
-                            <th class="p-2 border border-slate-800 text-right w-24">Debit</th>
-                            <th class="p-2 border border-slate-800 text-right w-24">Credit</th>
-                            <th class="p-2 border border-slate-800 text-right w-28 bg-slate-700">Balance</th>
+                            <th class="p-2 border border-slate-800 text-left w-[12%]">Date</th>
+                            <th class="p-2 border border-slate-800 text-left w-[43%]">Particulars</th>
+                            <th class="p-2 border border-slate-800 text-center w-[10%]">Type</th>
+                            <th class="p-2 border border-slate-800 text-right w-[11%]">Debit (+)</th>
+                            <th class="p-2 border border-slate-800 text-right w-[11%]">Credit (-)</th>
+                            <th class="p-2 border border-slate-800 text-right w-[13%] bg-slate-700">Balance</th>
                         </tr>
                     </thead>
                     <tbody id="lp-table-body" class="text-slate-800 font-bold">
@@ -1260,10 +1265,10 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-slate-100 border-t-2 border-slate-800 font-black">
-                            <td colspan="3" class="p-3 text-right text-xs uppercase">TOTALS</td>
-                            <td id="lp-total-debit" class="p-3 text-right border border-slate-800">₹0</td>
-                            <td id="lp-total-credit" class="p-3 text-right border border-slate-800">₹0</td>
-                            <td id="lp-final-balance" class="p-3 text-right border border-slate-800 bg-slate-200">₹0</td>
+                            <td colspan="3" class="p-3 text-right text-xs uppercase border border-slate-800">TOTALS :</td>
+                            <td id="lp-total-debit" class="p-3 text-right border border-slate-800 whitespace-nowrap">₹0</td>
+                            <td id="lp-total-credit" class="p-3 text-right border border-slate-800 whitespace-nowrap">₹0</td>
+                            <td id="lp-final-balance" class="p-3 text-right border border-slate-800 bg-slate-200 whitespace-nowrap">₹0</td>
                         </tr>
                     </tfoot>
                 </table>

@@ -1,50 +1,7 @@
 
         /* Print Styles */
         @media print 
-        
-        @media print {
-
-    html,
-    body {
-        width: 100%;
-        height: auto !important;
-        overflow: visible !important;
-    }
-
-    #challan-modal,
-    #ledger-print-modal {
-        position: static !important;
-        width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-
-    #challan-modal-content,
-    #ledger-print-content {
-        height: auto !important;
-        overflow: visible !important;
-    }
-
-    table {
-        page-break-inside: auto;
-    }
-
-    tr {
-        page-break-inside: avoid;
-        page-break-after: auto;
-    }
-
-    .summary-section {
-        page-break-inside: avoid;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-}
-        
-        
-        
+ 
         {
             body * {
                 visibility: hidden;

@@ -153,6 +153,20 @@
             }
         }
 
+
+        .closing-balance {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 2px solid #ccc;
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+}
+
+#closing-balance-value {
+    color: #d60000;
+    margin-left: 10px;
+}
         @media (max-width: 767px) {
             #sidebar {
                 display: none !important;
