@@ -1658,150 +1658,354 @@
         }
 
         // Download Party-wise Ledger as PDF
-        function downloadPartyLedgerPDF() {
-            if (!activeParty) {
-                alert('Please select a party first.');
-                return;
-            }
+       function downloadPartyLedgerPDF() {
+    if (!activeParty) { alert('Please select a party first.'); return; }
 
-            const { partyOrders, partyPayments } = getFilteredPartyRecords(activeParty);
+    const selectedRange = getSelectedLedgerDateRange();
+    let startDate = selectedRange.startDate;
+    let endDate   = selectedRange.endDate;
+    let filterType   = document.getElementById('ledger-filter-type').value;
+    let filterStatus = document.getElementById('ledger-filter-status').value;
 
-            // Also sort PDF data chronologically (Oldest first for Ledger format)
-            partyOrders.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
-            partyPayments.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
+    let partyOrders   = db.orders.filter(o => o.party === activeParty);
+    let partyPayments = db.payments.filter(p => p.party === activeParty);
 
-            let dateRangeText = getSelectedLedgerPeriodText();
+    if (startDate) { partyOrders = partyOrders.filter(o => o.date >= startDate); partyPayments = partyPayments.filter(p => p.date >= startDate); }
+    if (endDate)   { partyOrders = partyOrders.filter(o => o.date <= endDate);   partyPayments = partyPayments.filter(p => p.date <= endDate); }
+    if (filterType !== 'All') { partyOrders = partyOrders.filter(o => o.type === filterType); partyPayments = partyPayments.filter(p => p.type === filterType); }
+    if (filterStatus !== 'All') { partyOrders = partyOrders.filter(o => o.status === filterStatus); partyPayments = []; }
 
-            let totalSales = partyOrders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
-            let totalBuying = partyOrders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
-            let totalReceived = partyPayments.filter(p => p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
-            let totalPaid = partyPayments.filter(p => p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
+    partyOrders.sort((a,b)   => (a.timestamp||a.id)-(b.timestamp||b.id));
+    partyPayments.sort((a,b) => (a.timestamp||a.id)-(b.timestamp||b.id));
 
-            let netDue = (totalSales - totalReceived) - (totalBuying - totalPaid);
-            let generatedDate = formatBusinessDate(new Date().toISOString().split('T')[0]);
-            let rows = [];
-            partyOrders.forEach(o => rows.push({ ...o, timestamp: o.timestamp || o.id }));
-            partyPayments.forEach(p => rows.push({ ...p, timestamp: p.timestamp || p.id }));
-            rows.sort(compareLedgerRecords);
+    const dateRangeText  = getSelectedLedgerPeriodText();
+    const generatedDate  = formatBusinessDate(new Date().toISOString().split('T')[0]);
+    const totalSales     = partyOrders.filter(o=>o.type==='Sales').reduce((s,o)=>s+o.amount,0);
+    const totalBuying    = partyOrders.filter(o=>o.type==='Buying').reduce((s,o)=>s+o.amount,0);
+    const totalReceived  = partyPayments.filter(p=>p.type==='Received').reduce((s,p)=>s+p.amount,0);
+    const totalPaid      = partyPayments.filter(p=>p.type==='Paid').reduce((s,p)=>s+p.amount,0);
+    const netDue         = (totalSales - totalReceived) - (totalBuying - totalPaid);
+    const entryCount     = partyOrders.length + partyPayments.length;
 
-            let transactionRows = rows.length === 0
-                ? `<tr><td colspan="5" style="padding: 18px; text-align: center; font-size: 11px; color: #64748b;">No transactions found for the selected period.</td></tr>`
-                : rows.map(r => {
-                    let debit = (r.type === 'Sales' || r.type === 'Paid') ? r.amount : 0;
-                    let credit = (r.type === 'Buying' || r.type === 'Received') ? r.amount : 0;
-                    let particular = r.item ? `${r.item} (${r.qty} x Rs. ${Number(r.price || 0).toLocaleString('en-IN')})` : `Payment ${r.mode ? 'via ' + r.mode : ''}`;
-                    return `
-                        <tr style="border-bottom: 1px solid #e2e8f0;">
-                            <td style="padding: 12px 10px; font-size: 11px; color: #334155; white-space: nowrap; vertical-align: middle; width: 20%; text-align: center;">${formatShortBusinessDate(r.date)}</td>
-                            <td style="padding: 12px 10px; font-size: 11px; color: #0f172a; vertical-align: middle; width: 20%; text-align: center;">${particular}</td>
-                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: #475569; font-weight: 700; vertical-align: middle; width: 20%;">${r.type}</td>
-                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: ${debit > 0 ? '#991b1b' : '#64748b'}; vertical-align: middle; width: 20%; font-weight: 800;">${debit > 0 ? 'Rs. ' + debit.toLocaleString('en-IN') : '-'}</td>
-                            <td style="padding: 12px 10px; text-align: center; font-size: 11px; color: ${credit > 0 ? '#047857' : '#64748b'}; vertical-align: middle; width: 20%; font-weight: 800;">${credit > 0 ? 'Rs. ' + credit.toLocaleString('en-IN') : '-'}</td>
-                        </tr>
-                    `;
-                }).join('');
+    // Build sorted ledger rows with running balance
+    let rows = [];
+    partyOrders.forEach(o   => rows.push({...o,  timestamp: o.timestamp||o.id}));
+    partyPayments.forEach(p => rows.push({...p,  timestamp: p.timestamp||p.id}));
+    rows.sort(compareLedgerRecords);
 
-            // Create HTML for PDF
-            let htmlContent = `
-                <div style="font-family: Arial, sans-serif; padding: 16px; background: #f8fafc; color: #0f172a;">
-                    <div style="background: white; padding: 24px; border: 1px solid #cbd5e1;">
-                        <!-- Header -->
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; border-bottom: 2px solid #0f172a; padding-bottom: 14px;">
-                            <div>
-                                <h1 style="margin: 0; color: #0f172a; font-size: 27px; letter-spacing: 0.5px;">GOKUL PLASTIC</h1>
-                                <p style="margin: 5px 0 0 0; color: #475569; font-size: 11px;">A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad, 382415</p>
-                                <p style="margin: 4px 0 0 0; color: #475569; font-size: 11px;">Phone: 9428344742 | GST: 24AYVPB8220E1ZK</p>
-                            </div>
-                            <div style="text-align: right;">
-                                <div style="display: inline-block; border: 1px solid #0f172a; padding: 6px 10px; font-size: 12px; font-weight: 800; letter-spacing: 0.6px;">PARTY LEDGER</div>
-                                <p style="margin: 8px 0 0 0; color: #64748b; font-size: 10px;">Generated: ${generatedDate}</p>
-                            </div>
-                        </div>
+    let runBal = 0;
+    const ledgerRows = rows.map(r => {
+        const debit  = (r.type==='Sales'  || r.type==='Paid')     ? r.amount : 0;
+        const credit = (r.type==='Buying' || r.type==='Received') ? r.amount : 0;
+        runBal += (debit - credit);
+        return {...r, debit, credit, balance: runBal};
+    });
 
-                        <!-- Party Details -->
-                        <div style="margin-bottom: 18px; border: 1px solid #e2e8f0; padding: 14px; background: #f8fafc;">
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                                <div>
-                                    <p style="margin: 0; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase;">Party Name</p>
-                                    <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 16px; font-weight: 800;">${activeParty}</p>
-                                </div>
-                                <div>
-                                    <p style="margin: 0; color: #64748b; font-size: 10px; font-weight: 700; text-transform: uppercase;">Report Period</p>
-                                    <p style="margin: 5px 0 0 0; color: #0f172a; font-size: 13px; font-weight: 800;">${dateRangeText}</p>
-                                </div>
-                            </div>
-                        </div>
+    const pdfTotalDebit  = ledgerRows.reduce((s,r)=>s+r.debit,  0);
+    const pdfTotalCredit = ledgerRows.reduce((s,r)=>s+r.credit, 0);
+    const pdfClosing     = pdfTotalDebit - pdfTotalCredit;
+    const pdfClosingAbs  = Math.abs(pdfClosing);
+    const pdfClosingType = pdfClosing >= 0 ? 'Dr' : 'Cr';
 
-                        <!-- Summary Cards -->
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;">
-                            <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
-                                <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Sales</p>
-                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: #0f172a;">Rs. ${totalSales.toLocaleString('en-IN')}</p>
-                            </div>
-                            <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
-                                <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Received</p>
-                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: #047857;">Rs. ${totalReceived.toLocaleString('en-IN')}</p>
-                            </div>
-                            <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
-                                <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Net Due</p>
-                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: ${netDue >= 0 ? '#991b1b' : '#047857'};">Rs. ${Math.abs(netDue).toLocaleString('en-IN')}</p>
-                            </div>
-                            <div style="border: 1px solid #cbd5e1; padding: 12px; background: #ffffff;">
-                                <p style="margin: 0; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase;">Entry Count</p>
-                                <p style="margin: 7px 0 0 0; font-size: 16px; font-weight: 800; color: #0f172a;">${partyOrders.length + partyPayments.length}</p>
-                            </div>
-                        </div>
+    // ── PDF INIT ─────────────────────────────────────────────────────
+    let doc;
+    try { doc = new jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); }
+    catch(e) { doc = new window.jspdf.jsPDF('portrait','mm','a4'); }
 
-                        <!-- Entries Table (Combined Ledger Style) -->
-                        <div style="margin-bottom: 25px;">
-                            <h3 style="margin: 0 0 10px 0; color: #0f172a; font-size: 13px; font-weight: 800; text-transform: uppercase;">Transaction History</h3>
-                            <table style="width: 100%; border-collapse: collapse; background: white; border: 1px solid #cbd5e1;">
-                                <thead>
-                                    <tr style="background: #0f172a;">
-                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Date</th>
-                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Particulars</th>
-                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Type</th>
-                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Debit (+)</th>
-                                        <th style="padding: 12px 10px; text-align: center; font-size: 11px; font-weight: 800; color: #ffffff; width: 20%; vertical-align: middle;">Credit (-)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${transactionRows}
-                                </tbody>
-                            </table>
-                        </div>
+    const PW = doc.internal.pageSize.getWidth();   // 210
+    const PH = doc.internal.pageSize.getHeight();  // 297
 
-                        <!-- Summary Section -->
-                        <div style="border-top: 2px solid #333; padding-top: 15px; display: flex; justify-content: flex-end;">
-                            <table style="width: 350px; border-collapse: collapse;">
-                                <tr>
-                                    <td style="padding: 10px 0; font-size: 14px; font-weight: bold; color: #64748b; text-align: left;">Total Debit :</td>
-                                    <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0f172a; text-align: right;">Rs. ${(totalSales + totalPaid).toLocaleString('en-IN')}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 10px 0; font-size: 14px; font-weight: bold; color: #64748b; text-align: left; border-bottom: 1px solid #e2e8f0;">Total Credit :</td>
-                                    <td style="padding: 10px 0; font-size: 15px; font-weight: 900; color: #0f172a; text-align: right; border-bottom: 1px solid #e2e8f0;">Rs. ${(totalBuying + totalReceived).toLocaleString('en-IN')}</td>
-                                </tr>
-                                <tr>
-                                    <td style="padding: 20px 0; font-size: 18px; font-weight: 500; color: #334155; text-align: left;">Closing Balance:</td>
-                                    <td style="padding: 20px 0; font-size: 18px; font-weight: 600; color: ${netDue >= 0 ? '#b91c1c' : '#047857'}; text-align: right; white-space: nowrap;">Rs. ${Math.abs(netDue).toLocaleString('en-IN')} ${netDue >= 0 ? 'Dr' : 'Cr'}</td>
-                                </tr>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            `;
+    // Layout constants
+    const BO  = 10;                     // border offset from page edge
+    const BW  = PW - BO*2;             // border width  = 190
+    const BH  = PH - BO*2;             // border height = 277
+    const PAD = 5;
+    const ML  = BO + PAD;              // marginLeft = 15
+    const MT  = BO + PAD;              // marginTop  = 15
+    const CW  = BW - PAD*2;            // contentWidth = 180
+    const FOOTER_H = 8;
+    const BOTTOM   = PH - BO - PAD - FOOTER_H;   // lowest y allowed for content
 
-            let opt = {
-                margin: 10,
-                filename: `${activeParty}_Ledger_${new Date().toISOString().split('T')[0]}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-            };
+    // Column definitions (all in mm, sum = 180 = CW)
+    // date(22) + particulars(62) + type(20) + debit(28) + credit(28) + balance(20)
+    const COL = {
+        date:        {x:  0, w: 22},
+        particulars: {x: 22, w: 62},
+        type:        {x: 84, w: 20},
+        debit:       {x:104, w: 28},
+        credit:      {x:132, w: 28},
+        balance:     {x:160, w: 20},
+    };
 
-            html2pdf().set(opt).from(htmlContent).save();
+    const ROW_H   = 5.2;   // base row height
+    const ROW_PAD = 1.4;   // vertical padding inside row
+
+    let y = MT;
+
+    // ── HELPERS ──────────────────────────────────────────────────────
+    const cx = key => ML + COL[key].x;           // left edge of column
+    const cxR= key => ML + COL[key].x + COL[key].w;  // right edge of column
+
+    function border() {
+        doc.setDrawColor(20,20,20); doc.setLineWidth(0.7);
+        doc.rect(BO, BO, BW, BH);
+    }
+
+    function hline(lx, rx, yy, lw, r, g, b) {
+        doc.setDrawColor(r||0,g||0,b||0); doc.setLineWidth(lw||0.25);
+        doc.line(lx, yy, rx, yy);
+    }
+
+    function txt(text, x, yy, opts) {
+        doc.text(String(text), x, yy, opts||{});
+    }
+
+    // Full header (page 1 only)
+    function drawFullHeader() {
+        // Company name
+        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(0,0,0);
+        txt('GOKUL PLASTIC', ML, y+5);
+
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
+        txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9.5);
+        txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13.2);
+
+        // Badge
+        const bW=48, bH=8, bX=ML+CW-bW;
+        doc.setFillColor(28,28,28); doc.setDrawColor(0,0,0); doc.setLineWidth(0.4);
+        doc.rect(bX, y, bW, bH, 'FD');
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+        txt('PARTY LEDGER', bX+bW/2, y+5.2, {align:'center'});
+
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.3); doc.setTextColor(110,110,110);
+        txt('Generated: '+generatedDate, bX+bW, y+11.8, {align:'right'});
+
+        y += 16;
+        hline(ML, ML+CW, y, 0.45);
+        y += 4.5;
+
+        // Party bar
+        const barH = 13;
+        doc.setFillColor(246,246,246); doc.setDrawColor(180,180,180); doc.setLineWidth(0.3);
+        doc.rect(ML, y, CW, barH, 'FD');
+
+        const half = ML + CW*0.54;
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(110,110,110);
+        txt('PARTY NAME',   ML+3,   y+4.2);
+        txt('REPORT PERIOD', half,  y+4.2);
+
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(0,0,0);
+        txt(activeParty,     ML+3,  y+10.3);
+
+        doc.setFontSize(9); doc.setTextColor(30,30,30);
+        txt(dateRangeText,   half,  y+10.3);
+        y += barH + 4.5;
+
+        // Summary cards
+        const gap=3, cardH=13;
+        const cardW = (CW - gap*3) / 4;
+        const cards = [
+            {label:'TOTAL SALES',     val:'Rs. '+totalSales.toLocaleString('en-IN'),   col:[0,0,0]},
+            {label:'TOTAL RECEIVED',  val:'Rs. '+totalReceived.toLocaleString('en-IN'), col:[0,100,0]},
+            {label:'NET DUE',         val:'Rs. '+Math.abs(netDue).toLocaleString('en-IN')+' '+(netDue>=0?'Dr':'Cr'), col: netDue>=0?[175,0,0]:[0,100,0]},
+            {label:'ENTRIES',         val:String(entryCount), col:[0,0,0]},
+        ];
+        cards.forEach((c,i) => {
+            const cx2 = ML + i*(cardW+gap);
+            doc.setFillColor(255,255,255); doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+            doc.rect(cx2, y, cardW, cardH, 'FD');
+
+            doc.setFont('helvetica','bold'); doc.setFontSize(6.2); doc.setTextColor(110,110,110);
+            txt(c.label, cx2+2.5, y+4.2);
+
+            doc.setFontSize(8.5); doc.setTextColor(c.col[0],c.col[1],c.col[2]);
+            // Auto-shrink if too wide
+            let fs=8.5;
+            doc.setFontSize(fs);
+            while(doc.getTextWidth(c.val) > cardW-4 && fs>6){ fs-=0.4; doc.setFontSize(fs); }
+            txt(c.val, cx2+2.5, y+10.2);
+        });
+        y += cardH + 5;
+    }
+
+    // Compact continuation header
+    function drawContinuedHeader() {
+        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(0,0,0);
+        txt('GOKUL PLASTIC', ML, y+4);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+        txt(activeParty+' — Party Ledger (continued)', ML, y+8.5);
+        doc.setFontSize(6.3);
+        txt('Generated: '+generatedDate, ML+CW, y+4, {align:'right'});
+        y += 12;
+        hline(ML, ML+CW, y, 0.4);
+        y += 4.5;
+    }
+
+    // Table header row
+    function drawTableHeader() {
+        doc.setFillColor(28,28,28);
+        doc.rect(ML, y, CW, 7, 'F');
+        doc.setTextColor(255,255,255);
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
+
+        txt('DATE',          cx('date')+2,       y+4.7);
+        txt('PARTICULARS',   cx('particulars')+2, y+4.7);
+        txt('TYPE',          cx('type')+COL.type.w/2, y+4.7, {align:'center'});
+        txt('DEBIT (Rs.)',   cxR('debit')-2,      y+4.7, {align:'right'});
+        txt('CREDIT (Rs.)',  cxR('credit')-2,     y+4.7, {align:'right'});
+        txt('BALANCE',       cxR('balance')-2,    y+4.7, {align:'right'});
+        y += 7;
+    }
+
+    // Footer on every page (called once at the end after all pages exist)
+    function drawAllFooters() {
+        const total = doc.internal.getNumberOfPages();
+        for(let i=1;i<=total;i++) {
+            doc.setPage(i);
+            const fy = PH - BO - 3;
+            hline(ML, ML+CW, fy-3.5, 0.22, 200, 200, 200);
+            doc.setFont('helvetica','normal'); doc.setFontSize(6.3); doc.setTextColor(140,140,140);
+            txt('Gokul Plastic — Party Ledger',   ML,    fy);
+            txt('Page '+i+' of '+total,           ML+CW, fy, {align:'right'});
         }
+    }
+
+    function newPage(full) {
+        doc.addPage();
+        y = MT;
+        border();
+        if(full) drawFullHeader();
+        else     drawContinuedHeader();
+        drawTableHeader();
+    }
+
+    // ── PAGE 1 ───────────────────────────────────────────────────────
+    border();
+    drawFullHeader();
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.8); doc.setTextColor(0,0,0);
+    txt('TRANSACTION HISTORY', ML, y);
+    y += 4;
+    drawTableHeader();
+
+    // ── TABLE ROWS ───────────────────────────────────────────────────
+    if(ledgerRows.length === 0) {
+        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(150,150,150);
+        txt('No transactions found.', ML+CW/2, y+8, {align:'center'});
+        y += 14;
+    }
+
+    ledgerRows.forEach((r, idx) => {
+        // Build particulars text
+        let particular = r.item
+            ? r.item + ' (' + r.qty + ' x Rs. ' + Number(r.price||0).toLocaleString('en-IN') + ')'
+            : 'Payment' + (r.mode ? ' via ' + r.mode : '');
+
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.8);
+        const wrapW = COL.particulars.w - 4;
+        let lines   = doc.splitTextToSize(particular, wrapW);
+        if(lines.length > 2) lines = [lines[0], lines[1].substring(0, lines[1].length-3)+'...'];
+
+        const rowH = ROW_H * lines.length + ROW_PAD;
+
+        // Page break?
+        if(y + rowH > BOTTOM) newPage(false);
+
+        // Zebra stripe
+        if(idx % 2 === 1) {
+            doc.setFillColor(247,247,247);
+            doc.rect(ML, y, CW, rowH, 'F');
+        }
+
+        // Bottom border of row
+        hline(ML, ML+CW, y+rowH, 0.15, 215, 215, 215);
+
+        const ty = y + ROW_H - 0.6;   // baseline for text
+
+        // Date
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(0,0,0);
+        txt(formatShortBusinessDate(r.date), cx('date')+2, ty);
+
+        // Particulars (multi-line)
+        doc.setTextColor(20,20,20);
+        lines.forEach((ln,li) => txt(ln, cx('particulars')+2, ty + li*ROW_H));
+
+        // Type (centered, coloured)
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        const isDebitType = (r.type==='Sales' || r.type==='Paid');
+        doc.setTextColor(isDebitType ? 175:0, isDebitType ? 0:100, 0);
+        txt(r.type, cx('type')+COL.type.w/2, ty, {align:'center'});
+
+        // Debit (right-aligned)
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.8);
+        if(r.debit > 0) {
+            doc.setTextColor(175,0,0);
+            txt('Rs. '+r.debit.toLocaleString('en-IN'), cxR('debit')-2, ty, {align:'right'});
+        } else {
+            doc.setTextColor(190,190,190);
+            txt('-', cxR('debit')-2, ty, {align:'right'});
+        }
+
+        // Credit (right-aligned)
+        if(r.credit > 0) {
+            doc.setTextColor(0,110,0);
+            txt('Rs. '+r.credit.toLocaleString('en-IN'), cxR('credit')-2, ty, {align:'right'});
+        } else {
+            doc.setTextColor(190,190,190);
+            txt('-', cxR('credit')-2, ty, {align:'right'});
+        }
+
+        // Running Balance (right-aligned)
+        doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        const bAbs  = Math.abs(r.balance);
+        const bType = r.balance >= 0 ? 'Dr' : 'Cr';
+        doc.setTextColor(r.balance>=0 ? 175:0, r.balance>=0 ? 0:100, 0);
+        txt(bAbs.toLocaleString('en-IN')+' '+bType, cxR('balance')-2, ty, {align:'right'});
+
+        y += rowH;
+    });
+
+    // ── SUMMARY BLOCK ────────────────────────────────────────────────
+    const SUMMARY_H = 50;
+    if(y + SUMMARY_H > BOTTOM) { newPage(false); y += 2; } else { y += 4; }
+
+    const sRight  = ML + CW - 4;
+    const sLabelX = ML + CW - 82;
+
+    hline(sLabelX, ML+CW, y, 0.45);
+    y += 5.5;
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
+    txt('Total Debit  :', sLabelX,  y);
+    txt('Rs. '+pdfTotalDebit.toLocaleString('en-IN'), sRight, y, {align:'right'});
+    y += 5.5;
+
+    txt('Total Credit :', sLabelX, y);
+    txt('Rs. '+pdfTotalCredit.toLocaleString('en-IN'), sRight, y, {align:'right'});
+    y += 5.5;
+
+    hline(sLabelX, ML+CW, y, 0.3, 190, 190, 190);
+    y += 8;
+
+    // Closing Balance Box
+    const boxW=82, boxH=16, boxX=ML+CW-boxW;
+    doc.setFillColor(pdfClosing>=0 ? 255:242, pdfClosing>=0 ? 242:252, pdfClosing>=0 ? 242:242);
+    doc.setDrawColor(pdfClosing>=0 ? 200:150, pdfClosing>=0 ? 150:200, 150);
+    doc.setLineWidth(0.45);
+    doc.rect(boxX, y, boxW, boxH, 'FD');
+
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(70,70,70);
+    txt('CLOSING BALANCE', boxX+boxW/2, y+5.5, {align:'center'});
+
+    doc.setFontSize(12.5);
+    doc.setTextColor(pdfClosing>=0 ? 175:0, pdfClosing>=0 ? 0:120, 0);
+    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+boxW/2, y+13, {align:'center'});
+
+    // ── FOOTERS ──────────────────────────────────────────────────────
+    drawAllFooters();
+
+    doc.save(activeParty+'_Ledger_'+new Date().toISOString().split('T')[0]+'.pdf');
+}
 
         // ═══════════════════════════════════════════
         // PARTY NAME AUTOCOMPLETE
