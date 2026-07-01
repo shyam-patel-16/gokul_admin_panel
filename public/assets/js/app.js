@@ -1782,11 +1782,11 @@
     // Clean structural column layouts
     const COL = {
         date:        {x: 0,   w: 24},
-        particulars: {x: 24,  w: 66},
-        type:        {x: 90,  w: 18},
-        debit:       {x: 108, w: 24},
-        credit:      {x: 132, w: 24},
-        balance:     {x: 156, w: 24},
+        particulars: {x: 24,  w: 62},
+        type:        {x: 86,  w: 18},
+        debit:       {x: 104, w: 24},
+        credit:      {x: 128, w: 24},
+        balance:     {x: 152, w: 24},
     };
 
     const ROW_PAD = 2.0;  
@@ -2009,40 +2009,41 @@
         y += 6; 
     }
 
-    const sRight  = ML + CW - 4;
-    const sLabelX = ML + CW - 75;
+    const sRight   = ML + CW - 4;
+    const sLabelX  = ML + CW - 64;
 
-    hline(sLabelX, ML+CW, y, 0.4, 33, 37, 41);
-    y += 5;
+    doc.setDrawColor(0,0,0);
+    hline(sLabelX, ML+CW, y, 0.8, 0, 0, 0);
+    y += 8;
 
-    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
-    txt('Total Debit :', sLabelX,  y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(75,75,75);
+    txt('Total Debit :', sLabelX,  y, {align:'right'});
     doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalDebit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 5;
+    y += 6;
 
-    doc.setFont('helvetica','normal'); doc.setTextColor(50,50,50);
-    txt('Total Credit :', sLabelX, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(75,75,75);
+    txt('Total Credit :', sLabelX, y, {align:'right'});
     doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalCredit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 5;
+    y += 10;
 
-    hline(sLabelX, ML+CW, y, 0.2, 200, 200, 200);
-    y += 4;
+    const boxW = 86;
+    const boxH = 18;
+    const boxX = ML + CW - boxW;
 
-    // Closing clean styled ledger context card
-    const boxW=75, boxH=14, boxX=ML+CW-boxW;
-    doc.setFillColor(pdfClosing>=0 ? 255:244, pdfClosing>=0 ? 243:245, pdfClosing>=0 ? 243:244);
-    doc.setDrawColor(pdfClosing>=0 ? 220:25, pdfClosing>=0 ? 53:135, pdfClosing>=0 ? 69:84);
+    doc.setDrawColor(0,0,0);
     doc.setLineWidth(0.3);
-    doc.rect(boxX, y, boxW, boxH, 'FD');
+    doc.rect(boxX, y, boxW, boxH, 'S');
+    doc.setFillColor(pdfClosing>=0 ? 255:244, pdfClosing>=0 ? 243:245, pdfClosing>=0 ? 243:244);
+    doc.rect(boxX, y, boxW, boxH, 'F');
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(100,100,100);
-    txt('CLOSING BALANCE', boxX+4, y+4.5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+    txt('CLOSING BALANCE', boxX+4, y+5);
 
     doc.setFontSize(11);
     doc.setTextColor(pdfClosing>=0 ? 220:25, pdfClosing>=0 ? 53:135, pdfClosing>=0 ? 69:84);
-    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+4, y+10.2);
+    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+4, y+12.5);
 
     // ── RENDER FOOTERS ACROSS ALL DISCOVERED PAGES ───────────────────
     drawAllFooters();

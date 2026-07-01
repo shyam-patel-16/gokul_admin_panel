@@ -24,6 +24,17 @@
             .no-print {
                 display: none !important;
             }
+
+            #challan-modal .copy-2,
+            #challan-modal .cut-line {
+                display: none !important;
+            }
+
+            #challan-modal .copy-1 {
+                width: 100% !important;
+                min-height: auto !important;
+                page-break-after: avoid !important;
+            }
         }
 
         /* Custom Scrollbars */
