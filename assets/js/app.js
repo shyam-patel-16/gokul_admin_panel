@@ -1657,7 +1657,7 @@
                 });
         }
 
-        // Download Party-wise Ledger as PDF
+        // Download Party-wise Ledger as PDF (restored jsPDF-based implementation)
        function downloadPartyLedgerPDF() {
     if (!activeParty) { alert('Please select a party first.'); return; }
 
@@ -1687,7 +1687,6 @@
     const netDue         = (totalSales - totalReceived) - (totalBuying - totalPaid);
     const entryCount     = partyOrders.length + partyPayments.length;
 
-    // Build sorted ledger rows with running balance
     let rows = [];
     partyOrders.forEach(o   => rows.push({...o,  timestamp: o.timestamp||o.id}));
     partyPayments.forEach(p => rows.push({...p,  timestamp: p.timestamp||p.id}));
@@ -1712,47 +1711,42 @@
     try { doc = new jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); }
     catch(e) { doc = new window.jspdf.jsPDF('portrait','mm','a4'); }
 
-    const PW = doc.internal.pageSize.getWidth();   // 210
-    const PH = doc.internal.pageSize.getHeight();  // 297
+    const PW = doc.internal.pageSize.getWidth();   
+    const PH = doc.internal.pageSize.getHeight();  
 
-    // Layout constants
-    const BO  = 10;                     // border offset from page edge
-    const BW  = PW - BO*2;             // border width  = 190
-    const BH  = PH - BO*2;             // border height = 277
+    const BO  = 12;                     
+    const BW  = PW - BO*2;             
+    const BH  = PH - BO*2;             
     const PAD = 5;
-    const ML  = BO + PAD;              // marginLeft = 15
-    const MT  = BO + PAD;              // marginTop  = 15
-    const CW  = BW - PAD*2;            // contentWidth = 180
-    const FOOTER_H = 8;
-    const BOTTOM   = PH - BO - PAD - FOOTER_H;   // lowest y allowed for content
+    const ML  = BO + PAD;              
+    const MT  = BO + PAD;              
+    const CW  = BW - PAD*2;            
+    const FOOTER_H = 10;
+    const BOTTOM   = PH - BO - PAD - FOOTER_H;   
 
-    // Column definitions (all in mm, sum = 180 = CW)
-    // date(22) + particulars(62) + type(20) + debit(28) + credit(28) + balance(20)
+    // Clean structural column layouts
     const COL = {
-        date:        {x:  0, w: 22},
-        particulars: {x: 22, w: 62},
-        type:        {x: 84, w: 20},
-        debit:       {x:104, w: 28},
-        credit:      {x:132, w: 28},
-        balance:     {x:160, w: 20},
+        date:        {x: 0,   w: 24},
+        particulars: {x: 24,  w: 66},
+        type:        {x: 90,  w: 18},
+        debit:       {x: 108, w: 24},
+        credit:      {x: 132, w: 24},
+        balance:     {x: 156, w: 24},
     };
 
-    const ROW_H   = 5.2;   // base row height
-    const ROW_PAD = 1.4;   // vertical padding inside row
-
+    const ROW_PAD = 2.0;  
     let y = MT;
 
-    // ── HELPERS ──────────────────────────────────────────────────────
-    const cx = key => ML + COL[key].x;           // left edge of column
-    const cxR= key => ML + COL[key].x + COL[key].w;  // right edge of column
+    const cx = key => ML + COL[key].x;           
+    const cxR= key => ML + COL[key].x + COL[key].w;  
 
     function border() {
-        doc.setDrawColor(20,20,20); doc.setLineWidth(0.7);
+        doc.setDrawColor(40,40,40); doc.setLineWidth(0.5);
         doc.rect(BO, BO, BW, BH);
     }
 
     function hline(lx, rx, yy, lw, r, g, b) {
-        doc.setDrawColor(r||0,g||0,b||0); doc.setLineWidth(lw||0.25);
+        doc.setDrawColor(r||0,g||0,b||0); doc.setLineWidth(lw||0.2);
         doc.line(lx, yy, rx, yy);
     }
 
@@ -1760,112 +1754,101 @@
         doc.text(String(text), x, yy, opts||{});
     }
 
-    // Full header (page 1 only)
     function drawFullHeader() {
-        // Company name
-        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(0,0,0);
-        txt('GOKUL PLASTIC', ML, y+5);
+        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
+        txt('GOKUL PLASTIC', ML, y+4);
 
-        doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(70,70,70);
-        txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9.5);
-        txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13.2);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+        txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
+        txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
 
-        // Badge
-        const bW=48, bH=8, bX=ML+CW-bW;
-        doc.setFillColor(28,28,28); doc.setDrawColor(0,0,0); doc.setLineWidth(0.4);
-        doc.rect(bX, y, bW, bH, 'FD');
+        const bW=45, bH=8, bX=ML+CW-bW;
+        doc.setFillColor(33,37,41); doc.rect(bX, y, bW, bH, 'F');
         doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
         txt('PARTY LEDGER', bX+bW/2, y+5.2, {align:'center'});
 
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.3); doc.setTextColor(110,110,110);
-        txt('Generated: '+generatedDate, bX+bW, y+11.8, {align:'right'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(110,110,110);
+        txt('Generated: '+generatedDate, bX+bW, y+12.5, {align:'right'});
 
         y += 16;
-        hline(ML, ML+CW, y, 0.45);
-        y += 4.5;
+        hline(ML, ML+CW, y, 0.4, 60, 60, 60);
+        y += 4;
 
-        // Party bar
-        const barH = 13;
-        doc.setFillColor(246,246,246); doc.setDrawColor(180,180,180); doc.setLineWidth(0.3);
+        const barH = 14;
+        doc.setFillColor(248,249,250); doc.setDrawColor(218,224,233); doc.setLineWidth(0.25);
         doc.rect(ML, y, CW, barH, 'FD');
 
-        const half = ML + CW*0.54;
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(110,110,110);
-        txt('PARTY NAME',   ML+3,   y+4.2);
-        txt('REPORT PERIOD', half,  y+4.2);
+        const half = ML + CW*0.55;
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(120,120,120);
+        txt('PARTY NAME',   ML+3,   y+4.5);
+        txt('REPORT PERIOD', half,  y+4.5);
 
         doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(0,0,0);
-        txt(activeParty,     ML+3,  y+10.3);
+        txt(activeParty,     ML+3,  y+10.5);
 
-        doc.setFontSize(9); doc.setTextColor(30,30,30);
-        txt(dateRangeText,   half,  y+10.3);
-        y += barH + 4.5;
+        doc.setFontSize(9.5); doc.setTextColor(40,40,40);
+        txt(dateRangeText,   half,  y+10.5);
+        y += barH + 4;
 
-        // Summary cards
         const gap=3, cardH=13;
         const cardW = (CW - gap*3) / 4;
         const cards = [
-            {label:'TOTAL SALES',     val:'Rs. '+totalSales.toLocaleString('en-IN'),   col:[0,0,0]},
-            {label:'TOTAL RECEIVED',  val:'Rs. '+totalReceived.toLocaleString('en-IN'), col:[0,100,0]},
-            {label:'NET DUE',         val:'Rs. '+Math.abs(netDue).toLocaleString('en-IN')+' '+(netDue>=0?'Dr':'Cr'), col: netDue>=0?[175,0,0]:[0,100,0]},
-            {label:'ENTRIES',         val:String(entryCount), col:[0,0,0]},
+            {label:'TOTAL SALES',     val:'Rs. '+totalSales.toLocaleString('en-IN'),    col:[33,37,41]},
+            {label:'TOTAL RECEIVED',  val:'Rs. '+totalReceived.toLocaleString('en-IN'), col:[25,135,84]},
+            {label:'NET DUE',         val:'Rs. '+Math.abs(netDue).toLocaleString('en-IN')+' '+(netDue>=0?'Dr':'Cr'), col: netDue>=0?[220,53,69]:[25,135,84]},
+            {label:'ENTRY COUNT',     val:String(entryCount), col:[33,37,41]},
         ];
         cards.forEach((c,i) => {
             const cx2 = ML + i*(cardW+gap);
-            doc.setFillColor(255,255,255); doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+            doc.setFillColor(255,255,255); doc.setDrawColor(222,226,230); doc.setLineWidth(0.25);
             doc.rect(cx2, y, cardW, cardH, 'FD');
 
-            doc.setFont('helvetica','bold'); doc.setFontSize(6.2); doc.setTextColor(110,110,110);
-            txt(c.label, cx2+2.5, y+4.2);
+            doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(120,120,120);
+            txt(c.label, cx2+3, y+4.2);
 
-            doc.setFontSize(8.5); doc.setTextColor(c.col[0],c.col[1],c.col[2]);
-            // Auto-shrink if too wide
-            let fs=8.5;
-            doc.setFontSize(fs);
-            while(doc.getTextWidth(c.val) > cardW-4 && fs>6){ fs-=0.4; doc.setFontSize(fs); }
-            txt(c.val, cx2+2.5, y+10.2);
+            let fs=9;
+            doc.setFontSize(fs); doc.setTextColor(c.col[0],c.col[1],c.col[2]);
+            while(doc.getTextWidth(c.val) > cardW-6 && fs>6.5){ fs-=0.4; doc.setFontSize(fs); }
+            txt(c.val, cx2+3, y+10.2);
         });
-        y += cardH + 5;
+        y += cardH + 6;
     }
 
-    // Compact continuation header
     function drawContinuedHeader() {
-        doc.setFont('helvetica','bold'); doc.setFontSize(10.5); doc.setTextColor(0,0,0);
+        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
         txt('GOKUL PLASTIC', ML, y+4);
-        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
-        txt(activeParty+' — Party Ledger (continued)', ML, y+8.5);
-        doc.setFontSize(6.3);
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+        txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+        doc.setFontSize(7);
         txt('Generated: '+generatedDate, ML+CW, y+4, {align:'right'});
         y += 12;
-        hline(ML, ML+CW, y, 0.4);
-        y += 4.5;
+        hline(ML, ML+CW, y, 0.4, 60, 60, 60);
+        y += 4;
     }
 
-    // Table header row
     function drawTableHeader() {
-        doc.setFillColor(28,28,28);
-        doc.rect(ML, y, CW, 7, 'F');
+        doc.setFillColor(33,37,41);
+        doc.rect(ML, y, CW, 7.5, 'F');
         doc.setTextColor(255,255,255);
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.8);
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
 
-        txt('DATE',          cx('date')+2,       y+4.7);
-        txt('PARTICULARS',   cx('particulars')+2, y+4.7);
-        txt('TYPE',          cx('type')+COL.type.w/2, y+4.7, {align:'center'});
-        txt('DEBIT (Rs.)',   cxR('debit')-2,      y+4.7, {align:'right'});
-        txt('CREDIT (Rs.)',  cxR('credit')-2,     y+4.7, {align:'right'});
-        txt('BALANCE',       cxR('balance')-2,    y+4.7, {align:'right'});
-        y += 7;
+        txt('DATE',          cx('date')+2,        y+5);
+        txt('PARTICULARS',   cx('particulars')+2, y+5);
+        txt('TYPE',          cx('type')+COL.type.w/2, y+5, {align:'center'});
+        txt('DEBIT (Rs.)',   cxR('debit')-2,      y+5, {align:'right'});
+        txt('CREDIT (Rs.)',  cxR('credit')-2,     y+5, {align:'right'});
+        txt('BALANCE',       cxR('balance')-2,    y+5, {align:'right'});
+        y += 7.5;
     }
 
-    // Footer on every page (called once at the end after all pages exist)
     function drawAllFooters() {
         const total = doc.internal.getNumberOfPages();
         for(let i=1;i<=total;i++) {
             doc.setPage(i);
-            const fy = PH - BO - 3;
-            hline(ML, ML+CW, fy-3.5, 0.22, 200, 200, 200);
-            doc.setFont('helvetica','normal'); doc.setFontSize(6.3); doc.setTextColor(140,140,140);
-            txt('Gokul Plastic — Party Ledger',   ML,    fy);
+            const fy = PH - BO - 4;
+            hline(ML, ML+CW, fy-3, 0.2, 220, 220, 220);
+            doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(140,140,140);
+            txt('Gokul Plastic — Private & Confidential',  ML,    fy);
             txt('Page '+i+' of '+total,           ML+CW, fy, {align:'right'});
         }
     }
@@ -1874,134 +1857,139 @@
         doc.addPage();
         y = MT;
         border();
-        if(full) drawFullHeader();
-        else     drawContinuedHeader();
+        if(full) drawFullHeader(); else drawContinuedHeader();
         drawTableHeader();
     }
 
-    // ── PAGE 1 ───────────────────────────────────────────────────────
+    // ── START INITIAL PAGE ───────────────────────────────────────────
     border();
     drawFullHeader();
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.8); doc.setTextColor(0,0,0);
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(33,37,41);
     txt('TRANSACTION HISTORY', ML, y);
-    y += 4;
+    y += 4.5;
     drawTableHeader();
 
-    // ── TABLE ROWS ───────────────────────────────────────────────────
     if(ledgerRows.length === 0) {
-        doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(150,150,150);
-        txt('No transactions found.', ML+CW/2, y+8, {align:'center'});
-        y += 14;
+        doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(150,150,150);
+        txt('No transactions recorded within this timeframe.', ML+CW/2, y+10, {align:'center'});
+        y += 18;
     }
 
     ledgerRows.forEach((r, idx) => {
-        // Build particulars text
         let particular = r.item
             ? r.item + ' (' + r.qty + ' x Rs. ' + Number(r.price||0).toLocaleString('en-IN') + ')'
             : 'Payment' + (r.mode ? ' via ' + r.mode : '');
 
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.8);
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
         const wrapW = COL.particulars.w - 4;
         let lines   = doc.splitTextToSize(particular, wrapW);
-        if(lines.length > 2) lines = [lines[0], lines[1].substring(0, lines[1].length-3)+'...'];
+        
+        // Dynamic exact row height computation
+        const textHeight = lines.length * 4.2;
+        const rowH = textHeight + (ROW_PAD * 2);
 
-        const rowH = ROW_H * lines.length + ROW_PAD;
+        if(y + rowH > BOTTOM) {
+            newPage(false);
+        }
 
-        // Page break?
-        if(y + rowH > BOTTOM) newPage(false);
-
-        // Zebra stripe
+        // Alternating clear zebra row stripes
         if(idx % 2 === 1) {
-            doc.setFillColor(247,247,247);
+            doc.setFillColor(248,249,250);
             doc.rect(ML, y, CW, rowH, 'F');
         }
 
-        // Bottom border of row
-        hline(ML, ML+CW, y+rowH, 0.15, 215, 215, 215);
+        hline(ML, ML+CW, y+rowH, 0.15, 230, 230, 230);
 
-        const ty = y + ROW_H - 0.6;   // baseline for text
+        // Center baseline alignment for varying multiline outputs
+        const ty = y + ROW_PAD + 3.2; 
 
-        // Date
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.8); doc.setTextColor(0,0,0);
+        // 1. Date Output
+        doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
         txt(formatShortBusinessDate(r.date), cx('date')+2, ty);
 
-        // Particulars (multi-line)
-        doc.setTextColor(20,20,20);
-        lines.forEach((ln,li) => txt(ln, cx('particulars')+2, ty + li*ROW_H));
+        // 2. Wrap Particulars
+        doc.setTextColor(33,37,41);
+        lines.forEach((ln, li) => txt(ln, cx('particulars')+2, ty + (li * 4.2)));
 
-        // Type (centered, coloured)
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        // 3. Type Box Badge Style colors
+        doc.setFont('helvetica','bold'); doc.setFontSize(7);
         const isDebitType = (r.type==='Sales' || r.type==='Paid');
-        doc.setTextColor(isDebitType ? 175:0, isDebitType ? 0:100, 0);
-        txt(r.type, cx('type')+COL.type.w/2, ty, {align:'center'});
+        doc.setTextColor(isDebitType ? 220:25, isDebitType ? 53:135, isDebitType ? 69:84);
+        txt(r.type.toUpperCase(), cx('type')+COL.type.w/2, ty, {align:'center'});
 
-        // Debit (right-aligned)
-        doc.setFont('helvetica','normal'); doc.setFontSize(6.8);
+        // 4. Debit Values
+        doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
         if(r.debit > 0) {
-            doc.setTextColor(175,0,0);
-            txt('Rs. '+r.debit.toLocaleString('en-IN'), cxR('debit')-2, ty, {align:'right'});
+            doc.setTextColor(33,37,41);
+            txt(r.debit.toLocaleString('en-IN'), cxR('debit')-2, ty, {align:'right'});
         } else {
-            doc.setTextColor(190,190,190);
-            txt('-', cxR('debit')-2, ty, {align:'right'});
+            doc.setTextColor(200,200,200); txt('-', cxR('debit')-2, ty, {align:'right'});
         }
 
-        // Credit (right-aligned)
+        // 5. Credit Values
         if(r.credit > 0) {
-            doc.setTextColor(0,110,0);
-            txt('Rs. '+r.credit.toLocaleString('en-IN'), cxR('credit')-2, ty, {align:'right'});
+            doc.setTextColor(33,37,41);
+            txt(r.credit.toLocaleString('en-IN'), cxR('credit')-2, ty, {align:'right'});
         } else {
-            doc.setTextColor(190,190,190);
-            txt('-', cxR('credit')-2, ty, {align:'right'});
+            doc.setTextColor(200,200,200); txt('-', cxR('credit')-2, ty, {align:'right'});
         }
 
-        // Running Balance (right-aligned)
-        doc.setFont('helvetica','bold'); doc.setFontSize(6.5);
+        // 6. Balanced Cumulative Running Metrics
+        doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
         const bAbs  = Math.abs(r.balance);
         const bType = r.balance >= 0 ? 'Dr' : 'Cr';
-        doc.setTextColor(r.balance>=0 ? 175:0, r.balance>=0 ? 0:100, 0);
+        doc.setTextColor(r.balance>=0 ? 220:25, r.balance>=0 ? 53:135, r.balance>=0 ? 69:84);
         txt(bAbs.toLocaleString('en-IN')+' '+bType, cxR('balance')-2, ty, {align:'right'});
 
         y += rowH;
     });
 
-    // ── SUMMARY BLOCK ────────────────────────────────────────────────
-    const SUMMARY_H = 50;
-    if(y + SUMMARY_H > BOTTOM) { newPage(false); y += 2; } else { y += 4; }
+    // ── SECURE LEDGER END SUMMARY BLOCK ──────────────────────────────
+    const SUMMARY_H = 40; 
+    if(y + SUMMARY_H > BOTTOM) { 
+        newPage(false); 
+        y += 4; 
+    } else { 
+        y += 6; 
+    }
 
     const sRight  = ML + CW - 4;
-    const sLabelX = ML + CW - 82;
+    const sLabelX = ML + CW - 75;
 
-    hline(sLabelX, ML+CW, y, 0.45);
-    y += 5.5;
+    hline(sLabelX, ML+CW, y, 0.4, 33, 37, 41);
+    y += 5;
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(7.5); doc.setTextColor(0,0,0);
-    txt('Total Debit  :', sLabelX,  y);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(50,50,50);
+    txt('Total Debit :', sLabelX,  y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalDebit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 5.5;
+    y += 5;
 
+    doc.setFont('helvetica','normal'); doc.setTextColor(50,50,50);
     txt('Total Credit :', sLabelX, y);
+    doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalCredit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 5.5;
+    y += 5;
 
-    hline(sLabelX, ML+CW, y, 0.3, 190, 190, 190);
-    y += 8;
+    hline(sLabelX, ML+CW, y, 0.2, 200, 200, 200);
+    y += 4;
 
-    // Closing Balance Box
-    const boxW=82, boxH=16, boxX=ML+CW-boxW;
-    doc.setFillColor(pdfClosing>=0 ? 255:242, pdfClosing>=0 ? 242:252, pdfClosing>=0 ? 242:242);
-    doc.setDrawColor(pdfClosing>=0 ? 200:150, pdfClosing>=0 ? 150:200, 150);
-    doc.setLineWidth(0.45);
+    // Closing clean styled ledger context card
+    const boxW=75, boxH=14, boxX=ML+CW-boxW;
+    doc.setFillColor(pdfClosing>=0 ? 255:244, pdfClosing>=0 ? 243:245, pdfClosing>=0 ? 243:244);
+    doc.setDrawColor(pdfClosing>=0 ? 220:25, pdfClosing>=0 ? 53:135, pdfClosing>=0 ? 69:84);
+    doc.setLineWidth(0.3);
     doc.rect(boxX, y, boxW, boxH, 'FD');
 
-    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(70,70,70);
-    txt('CLOSING BALANCE', boxX+boxW/2, y+5.5, {align:'center'});
+    doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(100,100,100);
+    txt('CLOSING BALANCE', boxX+4, y+4.5);
 
-    doc.setFontSize(12.5);
-    doc.setTextColor(pdfClosing>=0 ? 175:0, pdfClosing>=0 ? 0:120, 0);
-    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+boxW/2, y+13, {align:'center'});
+    doc.setFontSize(11);
+    doc.setTextColor(pdfClosing>=0 ? 220:25, pdfClosing>=0 ? 53:135, pdfClosing>=0 ? 69:84);
+    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+4, y+10.2);
 
-    // ── FOOTERS ──────────────────────────────────────────────────────
+    // ── RENDER FOOTERS ACROSS ALL DISCOVERED PAGES ───────────────────
     drawAllFooters();
 
     doc.save(activeParty+'_Ledger_'+new Date().toISOString().split('T')[0]+'.pdf');
