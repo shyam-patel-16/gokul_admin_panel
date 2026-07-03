@@ -1570,14 +1570,118 @@
                     document.getElementById(`ch${i}-qty`).innerText = order.qty;
                     document.getElementById(`ch${i}-price`).innerText = "₹" + order.price.toLocaleString('en-IN');
                     document.getElementById(`ch${i}-total`).innerText = formattedTotal;
+                    
+                    // Safely set total-2 and total-3 only if they exist in the HTML
+                    const t2 = document.getElementById(`ch${i}-total-2`);
+                    const t3 = document.getElementById(`ch${i}-total-3`);
+                    if (t2) t2.innerText = formattedTotal;
+                    if (t3) t3.innerText = formattedTotal;
                 }
 
                 document.getElementById('wp-share-btn').onclick = function () {
-                    sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, order.qty, formattedTotal);
+                    shareChallanPDF(order, autoNo);
                 };
 
                 document.getElementById('challan-modal').classList.remove('hidden');
             }
+        }
+
+        function shareChallanPDF(order, autoNo) {
+            const element = document.getElementById('challan-original-copy');
+            if (!element) return alert("Error: Original copy element not found!");
+
+            const shareBtn = document.getElementById('wp-share-btn');
+            const originalText = shareBtn.innerHTML;
+            
+            shareBtn.disabled = true;
+            shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i> Loading PDF...`;
+
+            // Apply professional single-page A4 format temporarily during PDF rendering
+            const originalStyles = {
+                minHeight: element.style.minHeight,
+                padding: element.style.padding,
+                margin: element.style.margin,
+                borderRadius: element.style.borderRadius,
+                borderWidth: element.style.borderWidth,
+                borderColor: element.style.borderColor,
+                boxShadow: element.style.boxShadow
+            };
+
+            // Set clean, perfect full-page A4 styling
+            element.style.minHeight = 'auto'; // Fits content perfectly
+            element.style.padding = '12mm';    // Comfortable professional padding
+            element.style.margin = '0';
+            element.style.borderRadius = '0px'; // Straight edges for print document
+            element.style.borderWidth = '1px';  // Crisp 1px border
+            element.style.borderColor = '#1e293b';
+            element.style.boxShadow = 'none';
+
+            const opt = {
+                margin:       [5, 5, 5, 5],
+                filename:     `Challan-${autoNo}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2.5, useCORS: true, logging: false }, // Higher scale for extra crisp text
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(element).outputPdf('blob').then(function (pdfBlob) {
+                // Restore original screen styling immediately
+                element.style.minHeight = originalStyles.minHeight;
+                element.style.padding = originalStyles.padding;
+                element.style.margin = originalStyles.margin;
+                element.style.borderRadius = originalStyles.borderRadius;
+                element.style.borderWidth = originalStyles.borderWidth;
+                element.style.borderColor = originalStyles.borderColor;
+                element.style.boxShadow = originalStyles.boxShadow;
+
+                const pdfFile = new File([pdfBlob], `Challan-${autoNo}.pdf`, { type: 'application/pdf' });
+
+                if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                    navigator.share({
+                        files: [pdfFile],
+                        title: `Challan - ${autoNo}`,
+                        text: `Gokul Plastic - Challan for ${order.party}`
+                    })
+                    .then(() => {
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = originalText;
+                    })
+                    .catch((err) => {
+                        console.error("Share failed:", err);
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = originalText;
+                    });
+                } else {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(pdfBlob);
+                    link.download = `Challan-${autoNo}.pdf`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+
+                    let formattedTotal = "₹" + order.amount.toLocaleString('en-IN');
+                    sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, order.qty, formattedTotal);
+
+                    alert("PDF ડાઉનલોડ થઈ ગયું છે અને વોટ્સએપ વેબ ઓપન થઈ રહ્યું છે. તમે ફાઈલ વોટ્સએપ પર મેન્યુઅલી મોકલી શકો છો.");
+
+                    shareBtn.disabled = false;
+                    shareBtn.innerHTML = originalText;
+                }
+            }).catch(function (error) {
+                // Restore styles in case of error
+                element.style.minHeight = originalStyles.minHeight;
+                element.style.padding = originalStyles.padding;
+                element.style.margin = originalStyles.margin;
+                element.style.borderRadius = originalStyles.borderRadius;
+                element.style.borderWidth = originalStyles.borderWidth;
+                element.style.borderColor = originalStyles.borderColor;
+                element.style.boxShadow = originalStyles.boxShadow;
+
+                console.error("PDF generation failed:", error);
+                alert("PDF બનાવવામાં કંઈક ભૂલ આવી!");
+                shareBtn.disabled = false;
+                shareBtn.innerHTML = originalText;
+            });
         }
 
         // Share to WhatsApp API
@@ -1810,9 +1914,11 @@
     }
 
     function drawFullHeader() {
-        let logoImg = document.querySelector('img[src="logo.png"]') || 
-                      document.querySelector('img[src="345.png"]') || 
-                      document.querySelector('img[src="image123.png"]');
+        let logoImg = document.querySelector('img[src*="logo"]') || 
+                      document.querySelector('img[src*="345"]') || 
+                      document.querySelector('img[alt*="logo"]') || 
+                      document.querySelector('img[alt*="Logo"]') ||
+                      document.querySelector('img');
                       
         let logoLoaded = false;
         if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
@@ -1828,7 +1934,7 @@
 
                 doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
                 txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML + 18, y+9);
-                txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML + 18, y+13);
+                txt('Phone: 9428344742', ML + 18, y+13);
             } catch (err) {
                 logoLoaded = false;
             }
@@ -1840,7 +1946,7 @@
 
             doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
             txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
-            txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
+            txt('Phone: 9428344742', ML, y+13);
         }
 
         const bW=45, bH=8, bX=ML+CW-bW;
@@ -1896,9 +2002,11 @@
     }
 
     function drawContinuedHeader() {
-        let logoImg = document.querySelector('img[src="logo.png"]') || 
-                      document.querySelector('img[src="345.png"]') || 
-                      document.querySelector('img[src="image123.png"]');
+        let logoImg = document.querySelector('img[src*="logo"]') || 
+                      document.querySelector('img[src*="345"]') || 
+                      document.querySelector('img[alt*="logo"]') || 
+                      document.querySelector('img[alt*="Logo"]') ||
+                      document.querySelector('img');
                       
         let logoLoaded = false;
         if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {

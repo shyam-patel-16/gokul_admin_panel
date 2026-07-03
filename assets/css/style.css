@@ -1,39 +1,203 @@
 
         /* Print Styles */
         @media print {
-            body * {
-                visibility: hidden;
+            @page {
+                size: A4 portrait;
+                margin: 8mm 10mm 8mm 10mm;
             }
 
-            #challan-modal,
-            #challan-modal *,
-            #ledger-print-modal,
-            #ledger-print-modal * {
-                visibility: visible;
+            /* Hide everything except the modals */
+            body > :not(#challan-modal):not(#ledger-print-modal) {
+                display: none !important;
             }
 
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: #fff !important;
+                display: block !important;
+                width: 100% !important;
+                height: auto !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Reset fixed overlays to static blocks for layout flow */
             #challan-modal,
             #ledger-print-modal {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                height: 100%;
+                display: block !important;
+                position: static !important;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                visibility: visible !important;
+                background: transparent !important;
+                overflow: visible !important;
             }
 
+            #challan-modal *,
+            #ledger-print-modal * {
+                visibility: visible !important;
+            }
+
+            /* Hide elements with no-print class */
             .no-print {
                 display: none !important;
             }
 
-            #challan-modal .copy-2,
-            #challan-modal .cut-line {
-                display: none !important;
+            /* Main wrapper in the modal */
+            #challan-modal > div {
+                border-radius: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                box-shadow: none !important;
+                background: transparent !important;
             }
 
-            #challan-modal .copy-1 {
-                width: 100% !important;
-                min-height: auto !important;
+            /* Double copy printing wrap */
+            #challan-modal div.flex-col.justify-between {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                height: 278mm !important;
+                min-height: 278mm !important;
+                max-height: 278mm !important;
+                box-sizing: border-box !important;
+                page-break-inside: avoid !important;
                 page-break-after: avoid !important;
+            }
+
+            /* Individual challan copy container */
+            #challan-modal .challan-copy {
+                height: 132mm !important;
+                min-height: 132mm !important;
+                max-height: 132mm !important;
+                padding: 4mm 6mm !important;
+                border: 1.5px solid #000 !important;
+                border-radius: 6px !important;
+                box-sizing: border-box !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                gap: 0 !important;
+                margin: 0 !important;
+                background: #fff !important;
+                position: relative !important;
+            }
+
+            /* Inner elements height adjustments to prevent overflow */
+            #challan-modal .challan-copy > div {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: start !important;
+                gap: 2mm !important;
+                flex: 1 !important;
+            }
+
+            /* Adjust header flex layout */
+            #challan-modal .flex.justify-between.items-start {
+                padding-bottom: 1.5mm !important;
+                border-bottom: 1.5px solid #000 !important;
+            }
+
+            #challan-modal h2 {
+                font-size: 16pt !important;
+                line-height: 1.2 !important;
+            }
+
+            #challan-modal .text-xs {
+                font-size: 8pt !important;
+            }
+
+            #challan-modal .text-\[11px\] {
+                font-size: 7.5pt !important;
+            }
+
+            #challan-modal .text-\[10px\] {
+                font-size: 7pt !important;
+            }
+
+            #challan-modal .text-\[9px\] {
+                font-size: 6.5pt !important;
+            }
+
+            /* Logo container and image */
+            #challan-modal .w-14.h-14 {
+                width: 11mm !important;
+                height: 11mm !important;
+                padding: 1px !important;
+                border: 1px solid #000 !important;
+                border-radius: 4px !important;
+            }
+
+            /* Company label badge */
+            #challan-modal .challan-copy div.absolute {
+                position: absolute !important;
+                top: 1.5mm !important;
+                right: 1.5mm !important;
+                border: 1px solid #000 !important;
+                font-size: 7pt !important;
+                padding: 1px 3px !important;
+                background: #f1f5f9 !important;
+            }
+
+            /* Grid info section */
+            #challan-modal .grid.grid-cols-2 {
+                padding-top: 1mm !important;
+                padding-bottom: 1mm !important;
+                gap: 2mm !important;
+            }
+
+            /* Table within copies */
+            #challan-modal table {
+                margin-top: 2mm !important;
+                border: 1.5px solid #000 !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            #challan-modal th,
+            #challan-modal td {
+                border: 1px solid #000 !important;
+                padding: 3px 5px !important;
+                font-size: 8pt !important;
+                line-height: 1.1 !important;
+            }
+
+            #challan-modal th {
+                background-color: #f1f5f9 !important;
+                color: #000 !important;
+                font-weight: bold !important;
+            }
+
+            /* Custom height for item cell so it doesn't push the table down */
+            #challan-modal td[id$="-item"] {
+                height: 25mm !important;
+                min-height: 25mm !important;
+                vertical-align: top !important;
+                white-space: pre-wrap !important;
+                word-break: break-all !important;
+            }
+
+            /* Bottom footer signatures */
+            #challan-modal .flex.justify-between.items-end.pt-4 {
+                padding-top: 1.5mm !important;
+                margin-top: auto !important;
+            }
+
+            /* Cutting line */
+            #challan-modal .cut-line {
+                display: block !important;
+                text-align: center !important;
+                font-size: 8pt !important;
+                color: #555 !important;
+                margin: 1.5mm 0 !important;
+                border-top: 1.5px dashed #555 !important;
+                padding-top: 1mm !important;
+                width: 100% !important;
             }
         }
 

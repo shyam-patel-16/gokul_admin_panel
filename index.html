@@ -4,9 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>
-        
-        Plastic - Order, Ledger and Challan System</title>
+    <title>Gokul Plastic - Order, Ledger and Challan System</title>
     <!-- Google Fonts: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -849,7 +847,7 @@
                         </table>
                     </div>
                     <div id="orders-report-empty"
-                        class="hidden p-12 text-center text-slate-450 text-xs font-bold bg-white">
+                        class="hidden p-12 text-center text-slate-500 text-xs font-bold bg-white">
                         <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> No order entries found.
                     </div>
                 </div>
@@ -912,7 +910,7 @@
                         </table>
                     </div>
                     <div id="payments-report-empty"
-                        class="hidden p-12 text-center text-slate-450 text-xs font-bold bg-white">
+                        class="hidden p-12 text-center text-slate-500 text-xs font-bold bg-white">
                         <i class="fa-regular fa-folder-open text-3xl text-slate-200 block mb-2"></i> No payment transactions found.
                     </div>
                 </div>
@@ -942,7 +940,7 @@
                             class="mt-4 p-3 bg-slate-50 border border-slate-100 rounded-xl flex justify-between items-center text-xs">
                             <span class="font-bold text-slate-500">Connection Status:</span>
                             <span id="settings-firebase-status"
-                                class="font-black text-red-650 bg-red-50 px-2 py-0.5 rounded border border-red-100 flex items-center gap-1">
+                                class="font-black text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 flex items-center gap-1">
                                 <span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span> Offline
                             </span>
                         </div>
@@ -967,7 +965,7 @@
                                     Save and Connect
                                 </button>
                                 <button type="button" onclick="disconnectFirebase()" id="settings-fb-disconnect-btn"
-                                    class="hidden bg-red-650 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
+                                    class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition shadow">
                                     Disconnect
                                 </button>
                             </div>
@@ -1070,15 +1068,13 @@
                     <span>Double Delivery Challan</span>
                 </h3>
                 <button onclick="closeChallan()"
-                    class="text-slate-400 hover:text-slate-650 text-2xl font-bold p-1">&times;</button>
-            </div>
-
-            <!-- Double copy printing wrap -->
-            <div class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
+                    class="text-slate-400 hover:text-slate-700 text-2xl font-bold p-1">&times;</button>
+             <!-- Double copy printing wrap -->
+            <div id="challan-print-area" class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
 
                 <!-- COPY 1: ORIGINAL -->
-                <div
-                    class="border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-between min-h-[44vh]">
+                <div id="challan-original-copy"
+                    class="challan-copy copy-1 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
@@ -1090,10 +1086,10 @@
                                     <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
                                 </div>
                                 <div>
-                                    <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
+                                    <h2 class="text-2xl font-black text-slate-900 tracking-wide">GOKUL PLASTIC</h2>
                                     <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
                                     <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                    <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
+                                    <p class="text-[10px] text-slate-500 max-w-xl font-medium leading-tight mt-1">A-16,
                                         Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
                                     </p>
                                 </div>
@@ -1112,13 +1108,13 @@
                             <div class="text-right font-medium">
                                 <p>Date: <span id="ch1-date" class="font-bold text-slate-950"></span></p>
                                 <p class="mt-0.5">Challan No: <span id="ch1-num"
-                                        class="font-black text-red-650 text-sm"></span></p>
+                                        class="font-black text-red-600 text-sm"></span></p>
                             </div>
                         </div>
 
                         <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
                             <thead>
-                                <tr class="bg-slate-850 text-white font-bold">
+                                <tr class="bg-slate-800 text-white font-bold">
                                     <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
                                         Description)</th>
                                     <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
@@ -1137,12 +1133,13 @@
                                     <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50"
                                         id="ch1-total"></td>
                                 </tr>
+
                             </tbody>
                         </table>
                     </div>
 
                     <div
-                        class="flex justify-between items-end pt-4 text-[10px] border-t border-dashed border-slate-400 mt-4">
+                        class="flex justify-between items-end pt-4 text-[10px] mt-4">
                         <span class="text-slate-400 italic">This goods is sent via non-GST challan.</span>
                         <div class="flex space-x-12 text-center font-bold text-slate-700">
                             <div class="w-28 border-t border-slate-800 pt-1">Receiver's Signature</div>
@@ -1151,14 +1148,14 @@
                     </div>
                 </div>
 
-                <div
-                    class="border-t border-dashed border-slate-400 text-center text-[10px] text-slate-400 no-print my-1">
+                <!-- CUT LINE -->
+                <div class="cut-line border-t border-dashed border-slate-400 text-center text-[10px] text-slate-400 no-print my-1">
                     ✂️ Cut here after printing (Cutting Line) ✂️
                 </div>
 
                 <!-- COPY 2: OFFICE -->
-                <div
-                    class="border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-between min-h-[44vh]">
+                <div id="challan-office-copy"
+                    class="challan-copy copy-2 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
@@ -1170,10 +1167,10 @@
                                     <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
                                 </div>
                                 <div>
-                                    <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
+                                    <h2 class="text-2xl font-black text-slate-900 tracking-wide">GOKUL PLASTIC</h2>
                                     <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
                                     <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                    <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
+                                    <p class="text-[10px] text-slate-500 max-w-xl font-medium leading-tight mt-1">A-16,
                                         Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
                                     </p>
                                 </div>
@@ -1192,13 +1189,13 @@
                             <div class="text-right font-medium">
                                 <p>Date: <span id="ch2-date" class="font-bold text-slate-950"></span></p>
                                 <p class="mt-0.5">Challan No: <span id="ch2-num"
-                                        class="font-black text-red-655 text-sm"></span></p>
+                                        class="font-black text-red-600 text-sm"></span></p>
                             </div>
                         </div>
 
                         <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
                             <thead>
-                                <tr class="bg-slate-850 text-white font-bold">
+                                <tr class="bg-slate-800 text-white font-bold">
                                     <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
                                         Description)</th>
                                     <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
@@ -1217,19 +1214,20 @@
                                     <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50"
                                         id="ch2-total"></td>
                                 </tr>
+
                             </tbody>
                         </table>
                     </div>
 
                     <div
-                        class="flex justify-between items-end pt-4 text-[10px] border-t border-dashed border-slate-400 mt-4">
+                        class="flex justify-between items-end pt-4 text-[10px] mt-4">
                         <span class="text-slate-400 italic">Get customer's signature as confirmation that goods have been received safely and return.</span>
                         <div class="flex space-x-12 text-center font-bold text-slate-700">
                             <div class="w-28 border-t border-slate-800 pt-1 text-red-600">Customer's Signature (Mandatory)</div>
                             <div class="w-32 border-t border-slate-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
-                </div>
+                </div>               </div>
 
             </div>
 
@@ -1240,7 +1238,7 @@
                     <span>Print Both Challans Together</span>
                 </button>
                 <button id="wp-share-btn"
-                    class="flex-1 bg-teal-500 hover:bg-teal-650 text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-teal-500/10 flex items-center justify-center gap-2 transition duration-150">
+                    class="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-xl text-xs shadow-md shadow-teal-500/10 flex items-center justify-center gap-2 transition duration-150">
                     <i class="fa-brands fa-whatsapp text-lg"></i>
                     <span>Send Challan on WhatsApp</span>
                 </button>
