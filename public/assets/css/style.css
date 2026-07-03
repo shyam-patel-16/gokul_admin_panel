@@ -100,6 +100,18 @@
         }
         #sidebar.collapsed #sidebar-header > div:first-child {
             flex: none;
+            gap: 0;
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Center the navigation icons when collapsed */
+        #sidebar.collapsed .nav-link {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            gap: 0 !important;
         }
 
         /* sidebar-label: nav text labels, logout text etc. */

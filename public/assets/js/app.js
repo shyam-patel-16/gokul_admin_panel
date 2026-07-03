@@ -1810,12 +1810,38 @@
     }
 
     function drawFullHeader() {
-        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
-        txt('GOKUL PLASTIC', ML, y+4);
+        let logoImg = document.querySelector('img[src="logo.png"]') || 
+                      document.querySelector('img[src="345.png"]') || 
+                      document.querySelector('img[src="image123.png"]');
+                      
+        let logoLoaded = false;
+        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+            logoLoaded = true;
+        }
 
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
-        txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
-        txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
+        if (logoLoaded) {
+            try {
+                doc.addImage(logoImg, 'PNG', ML, y, 14, 14);
+                
+                doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
+                txt('GOKUL PLASTIC', ML + 18, y+4);
+
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+                txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML + 18, y+9);
+                txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML + 18, y+13);
+            } catch (err) {
+                logoLoaded = false;
+            }
+        }
+        
+        if (!logoLoaded) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
+            txt('GOKUL PLASTIC', ML, y+4);
+
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+            txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
+            txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
+        }
 
         const bW=45, bH=8, bX=ML+CW-bW;
         doc.setFillColor(33,37,41); doc.rect(bX, y, bW, bH, 'F');
@@ -1870,10 +1896,33 @@
     }
 
     function drawContinuedHeader() {
-        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
-        txt('GOKUL PLASTIC', ML, y+4);
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
-        txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+        let logoImg = document.querySelector('img[src="logo.png"]') || 
+                      document.querySelector('img[src="345.png"]') || 
+                      document.querySelector('img[src="image123.png"]');
+                      
+        let logoLoaded = false;
+        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+            logoLoaded = true;
+        }
+
+        if (logoLoaded) {
+            try {
+                doc.addImage(logoImg, 'PNG', ML, y, 9, 9);
+                doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
+                txt('GOKUL PLASTIC', ML + 11, y+3);
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+                txt(activeParty+' — Party Ledger (Continued)', ML + 11, y+7.5);
+            } catch (err) {
+                logoLoaded = false;
+            }
+        }
+        
+        if (!logoLoaded) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
+            txt('GOKUL PLASTIC', ML, y+4);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+            txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+        }
         doc.setFontSize(7);
         txt('Generated: '+generatedDate, ML+CW, y+4, {align:'right'});
         y += 12;
@@ -2009,12 +2058,12 @@
         y += 6; 
     }
 
-    const sRight   = ML + CW - 4;
-    const sLabelX  = ML + CW - 64;
+    const sRight   = ML + CW - 2;
+    const sLabelX  = ML + CW - 66;
 
     doc.setDrawColor(0,0,0);
-    hline(sLabelX, ML+CW, y, 0.8, 0, 0, 0);
-    y += 8;
+    hline(sLabelX - 2, sRight, y, 0.9, 0, 0, 0);
+    y += 5;
 
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(75,75,75);
     txt('Total Debit :', sLabelX,  y, {align:'right'});
@@ -2026,7 +2075,7 @@
     txt('Total Credit :', sLabelX, y, {align:'right'});
     doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalCredit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 10;
+    y += 9;
 
     const boxW = 86;
     const boxH = 18;

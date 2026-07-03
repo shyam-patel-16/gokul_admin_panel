@@ -1,13 +1,12 @@
 
         // Database state setup
-        let db = { orders: [], payments: [], parties: [] };
+        let db = { orders: [], payments: [] };
         let activeBusiness = null;
         let companiesList = JSON.parse(localStorage.getItem('biz_companies_list')) || ['ABS', 'PP'];
         let activeParty = "";
         let firestoreDb = null;
         let unsubOrders = null;
         let unsubPayments = null;
-        let unsubParties = null;
         let isFirebaseConnected = false;
         let currentTab = "dashboard";
         let currentSubTab = "orders";
@@ -59,89 +58,9 @@
             return (a.timestamp || a.id || 0) - (b.timestamp || b.id || 0);
         }
 
-        function normalizePartyName(partyName) {
-            return String(partyName || '').trim().replace(/\s+/g, ' ');
-        }
-
-        function getPartyMetaByName(partyName) {
-            const normalized = normalizePartyName(partyName).toLowerCase();
-            return (db.parties || []).find(p => normalizePartyName(p.name).toLowerCase() === normalized) || null;
-        }
-
-        function getPartyMetaById(partyId) {
-            return (db.parties || []).find(p => p.partyId === partyId) || null;
-        }
-
-        function getNextPartyId() {
-            const maxId = (db.parties || []).reduce((max, party) => {
-                const match = String(party.partyId || '').match(/^PARTY_(\d+)$/);
-                return match ? Math.max(max, Number(match[1])) : max;
-            }, 1000);
-
-            return `PARTY_${maxId + 1}`;
-        }
-
-        function getPartyQrPayload(partyId) {
-            return JSON.stringify({ partyId });
-        }
-
-        function getPartyQrScanUrl(partyId) {
-            const baseUrl = `${window.location.origin}${window.location.pathname}`;
-            return `${baseUrl}?partyId=${encodeURIComponent(partyId)}`;
-        }
-
-        function ensureDbShape() {
-            if (!db.orders) db.orders = [];
-            if (!db.payments) db.payments = [];
-            if (!db.parties) db.parties = [];
-
-            const names = new Set();
-            db.orders.forEach(o => { if (o.party) names.add(normalizePartyName(o.party)); });
-            db.payments.forEach(p => { if (p.party) names.add(normalizePartyName(p.party)); });
-            names.forEach(name => ensurePartyMeta(name, { persist: false }));
-        }
-
-        function savePartyMetaToFirebase(partyMeta) {
-            if (!isFirebaseConnected || !firestoreDb || !activeBusiness || !partyMeta) return;
-
-            const partiesCol = activeBusiness === 'ABS' ? 'parties' : activeBusiness + '_parties';
-            firestoreDb.collection(partiesCol).doc(partyMeta.partyId).set(partyMeta, { merge: true })
-                .catch(err => console.error('Party QR save error:', err));
-        }
-
-        function ensurePartyMeta(partyName, options = {}) {
-            const persist = options.persist !== false;
-            const normalizedName = normalizePartyName(partyName);
-            if (!normalizedName) return null;
-
-            if (!db.parties) db.parties = [];
-            let partyMeta = getPartyMetaByName(normalizedName);
-            if (partyMeta) return partyMeta;
-
-            const partyId = getNextPartyId();
-            const qrPayload = getPartyQrPayload(partyId);
-            partyMeta = {
-                partyId,
-                name: normalizedName,
-                qrPayload,
-                qrScanUrl: getPartyQrScanUrl(partyId),
-                createdAt: Date.now()
-            };
-
-            db.parties.push(partyMeta);
-
-            if (persist) {
-                localStorage.setItem(`biz_db_${activeBusiness}`, JSON.stringify(db));
-                savePartyMetaToFirebase(partyMeta);
-            }
-
-            return partyMeta;
-        }
-
         // Save data local storage and trigger UI updates
         function saveData() {
             if (activeBusiness) {
-                ensureDbShape();
                 // Ensure data is ALWAYS saved in date-wise (chronological) order
                 db.orders.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
                 db.payments.sort((a, b) => (a.timestamp || a.id) - (b.timestamp || b.id));
@@ -161,10 +80,9 @@
             let partyOrders = db.orders.filter(o => o.party === party);
             let partyPayments = db.payments.filter(p => p.party === party);
 
-            const startInput = document.getElementById('pdf-start-date');
-            const endInput = document.getElementById('pdf-end-date');
-            const startDate = startInput ? startInput.value : '';
-            const endDate = endInput ? endInput.value : '';
+            const selectedRange = getSelectedLedgerDateRange();
+            const startDate = selectedRange.startDate;
+            const endDate = selectedRange.endDate;
             const filterType = document.getElementById('ledger-filter-type')?.value || 'All';
             const filterStatus = document.getElementById('ledger-filter-status')?.value || 'All';
 
@@ -364,8 +282,8 @@
         function selectBusiness(business) {
             activeBusiness = business;
             db = JSON.parse(localStorage.getItem(`biz_db_${activeBusiness}`)) || { orders: [], payments: [] };
-            ensureDbShape();
-            localStorage.setItem(`biz_db_${activeBusiness}`, JSON.stringify(db));
+            if (!db.orders) db.orders = [];
+            if (!db.payments) db.payments = [];
             
             document.getElementById('business-selection-screen').classList.add('hidden');
             document.getElementById('business-selection-screen').classList.remove('flex');
@@ -1473,12 +1391,12 @@
 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800">
-                        <td class="p-2 border-r border-slate-800 text-[10.5px]">${t.displayDate}</td>
-                        <td class="p-2 border-r border-slate-800 text-[10.5px]">${t.particulars}</td>
-                        <td class="p-2 border-r border-slate-800 text-center text-[9.5px] uppercase">${t.type}</td>
-                        <td class="p-2 border-r border-slate-800 text-right text-[10.5px]">${t.debit > 0 ? '₹' + t.debit.toLocaleString('en-IN') : '-'}</td>
-                        <td class="p-2 border-r border-slate-800 text-right text-[10.5px]">${t.credit > 0 ? '₹' + t.credit.toLocaleString('en-IN') : '-'}</td>
-                        <td class="p-2 text-right bg-slate-50 text-[10.5px] ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${balType}</td>
+                        <td class="p-2 border-r border-slate-800">${t.displayDate}</td>
+                        <td class="p-2 border-r border-slate-800">${t.particulars}</td>
+                        <td class="p-2 border-r border-slate-800 text-center text-[10px]">${t.type}</td>
+                        <td class="p-2 border-r border-slate-800 text-right">${t.debit > 0 ? '₹'+t.debit.toLocaleString('en-IN') : '-'}</td>
+                        <td class="p-2 border-r border-slate-800 text-right">${t.credit > 0 ? '₹'+t.credit.toLocaleString('en-IN') : '-'}</td>
+                        <td class="p-2 text-right bg-slate-50 ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${balType}</td>
                     </tr>
                 `;
             });
@@ -1486,8 +1404,7 @@
             // Summary row
             document.getElementById('lp-total-debit').innerText = "₹" + totalDebit.toLocaleString('en-IN');
             document.getElementById('lp-total-credit').innerText = "₹" + totalCredit.toLocaleString('en-IN');
-            const finalBalType = runningBalance >= 0 ? "Dr" : "Cr";
-            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN') + " " + finalBalType;
+            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN') + (runningBalance >= 0 ? " Dr" : " Cr");
 
             document.getElementById('lp-closing-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN');
             document.getElementById('lp-closing-balance').className = runningBalance >= 0 ? "text-2xl font-black text-red-600" : "text-2xl font-black text-emerald-600";
@@ -1499,6 +1416,144 @@
 
         function closeLedgerPrint() {
             document.getElementById('ledger-print-modal').classList.add('hidden');
+        }
+
+        function getPartyLedgerQrPayload(partyName) {
+            const partyOrders = db.orders.filter(o => o.party === partyName);
+            const partyPayments = db.payments.filter(p => p.party === partyName);
+            const rows = [];
+
+            partyOrders.forEach(o => {
+                rows.push({
+                    date: o.date,
+                    timestamp: o.timestamp || o.id,
+                    type: o.type,
+                    detail: o.item ? `${o.item} ${o.qty || ''}x${o.price || ''}`.trim() : 'Order',
+                    debit: o.type === 'Sales' ? o.amount : 0,
+                    credit: o.type === 'Buying' ? o.amount : 0
+                });
+            });
+
+            partyPayments.forEach(p => {
+                rows.push({
+                    date: p.date,
+                    timestamp: p.timestamp || p.id,
+                    type: p.type,
+                    detail: `Payment ${p.mode || 'Cash'}${p.chequeNo ? ' #' + p.chequeNo : ''}`,
+                    debit: p.type === 'Paid' ? p.amount : 0,
+                    credit: p.type === 'Received' ? p.amount : 0
+                });
+            });
+
+            rows.sort(compareLedgerRecords);
+
+            let balance = 0;
+            let totalDebit = 0;
+            let totalCredit = 0;
+            const lines = [
+                'GOKUL PLASTIC',
+                `Party: ${partyName}`,
+                `Generated: ${formatShortBusinessDate(new Date().toISOString().split('T')[0])}`,
+                'Date | Type | Detail | Dr | Cr | Bal'
+            ];
+
+            rows.forEach(row => {
+                balance += row.debit - row.credit;
+                totalDebit += row.debit;
+                totalCredit += row.credit;
+                const balType = balance >= 0 ? 'Dr' : 'Cr';
+                lines.push([
+                    formatShortBusinessDate(row.date),
+                    row.type,
+                    row.detail.replace(/\s+/g, ' '),
+                    row.debit ? row.debit : '-',
+                    row.credit ? row.credit : '-',
+                    `${Math.abs(balance)} ${balType}`
+                ].join(' | '));
+            });
+
+            lines.push(`Total Dr: ${totalDebit}`);
+            lines.push(`Total Cr: ${totalCredit}`);
+            lines.push(`Closing: ${Math.abs(balance)} ${balance >= 0 ? 'Dr' : 'Cr'}`);
+
+            return { payload: lines.join('\n'), recordCount: rows.length };
+        }
+
+        function createPartyQrDataUrl(partyName) {
+            if (typeof qrcode === 'undefined') {
+                alert('QR library load નથી થઈ. Internet connection ચકાસો અને page refresh કરો.');
+                return null;
+            }
+
+            const { payload, recordCount } = getPartyLedgerQrPayload(partyName);
+
+            try {
+                const qr = qrcode(0, 'L');
+                qr.addData(payload);
+                qr.make();
+                return {
+                    dataUrl: qr.createDataURL(6, 8),
+                    payload,
+                    recordCount
+                };
+            } catch (error) {
+                alert('આ partyના records QR codeમાં સમાઈ રહ્યા નથી. Records વધારે છે, માટે PDF share કરવું વધારે સારું રહેશે.');
+                return null;
+            }
+        }
+
+        function openPartyQrModal() {
+            if (!activeParty) return alert('Please select a party first.');
+
+            const qrResult = createPartyQrDataUrl(activeParty);
+            if (!qrResult) return;
+
+            document.getElementById('party-qr-title').innerText = activeParty;
+            document.getElementById('party-qr-image').src = qrResult.dataUrl;
+            document.getElementById('party-qr-note').innerText = `${qrResult.recordCount} ledger records included for this party. Scan this QR to read the party-wise ledger text.`;
+            document.getElementById('party-qr-modal').classList.remove('hidden');
+        }
+
+        function closePartyQrModal() {
+            document.getElementById('party-qr-modal').classList.add('hidden');
+        }
+
+        async function sharePartyQrCode() {
+            if (!activeParty) return alert('Please select a party first.');
+
+            const qrResult = createPartyQrDataUrl(activeParty);
+            if (!qrResult) return;
+
+            const response = await fetch(qrResult.dataUrl);
+            const blob = await response.blob();
+            const extension = blob.type.includes('gif') ? 'gif' : 'png';
+            const fileName = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.${extension}`;
+            const file = new File([blob], fileName, { type: blob.type || 'image/gif' });
+
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: `${activeParty} Ledger QR`,
+                    text: `Gokul Plastic ledger QR for ${activeParty}`,
+                    files: [file]
+                });
+                return;
+            }
+
+            downloadPartyQrCode(qrResult.dataUrl);
+            alert('આ browser direct share support કરતું નથી, એટલે QR image download કરી છે.');
+        }
+
+        function downloadPartyQrCode(existingDataUrl) {
+            if (!activeParty) return alert('Please select a party first.');
+            const dataUrl = existingDataUrl || createPartyQrDataUrl(activeParty)?.dataUrl;
+            if (!dataUrl) return;
+
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.gif`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
         }
 
         function generateChallan(orderId) {
@@ -1755,12 +1810,38 @@
     }
 
     function drawFullHeader() {
-        doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
-        txt('GOKUL PLASTIC', ML, y+4);
+        let logoImg = document.querySelector('img[src="logo.png"]') || 
+                      document.querySelector('img[src="345.png"]') || 
+                      document.querySelector('img[src="image123.png"]');
+                      
+        let logoLoaded = false;
+        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+            logoLoaded = true;
+        }
 
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
-        txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
-        txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
+        if (logoLoaded) {
+            try {
+                doc.addImage(logoImg, 'PNG', ML, y, 14, 14);
+                
+                doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
+                txt('GOKUL PLASTIC', ML + 18, y+4);
+
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+                txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML + 18, y+9);
+                txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML + 18, y+13);
+            } catch (err) {
+                logoLoaded = false;
+            }
+        }
+        
+        if (!logoLoaded) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
+            txt('GOKUL PLASTIC', ML, y+4);
+
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(80,80,80);
+            txt('A-16, Maruti Ind. Estate, SP Ring Rd, Odhav, Ahmedabad - 382415', ML, y+9);
+            txt('Phone: 9428344742  |  GST: 24AYVPB8220E1ZK', ML, y+13);
+        }
 
         const bW=45, bH=8, bX=ML+CW-bW;
         doc.setFillColor(33,37,41); doc.rect(bX, y, bW, bH, 'F');
@@ -1815,10 +1896,33 @@
     }
 
     function drawContinuedHeader() {
-        doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
-        txt('GOKUL PLASTIC', ML, y+4);
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
-        txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+        let logoImg = document.querySelector('img[src="logo.png"]') || 
+                      document.querySelector('img[src="345.png"]') || 
+                      document.querySelector('img[src="image123.png"]');
+                      
+        let logoLoaded = false;
+        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+            logoLoaded = true;
+        }
+
+        if (logoLoaded) {
+            try {
+                doc.addImage(logoImg, 'PNG', ML, y, 9, 9);
+                doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
+                txt('GOKUL PLASTIC', ML + 11, y+3);
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+                txt(activeParty+' — Party Ledger (Continued)', ML + 11, y+7.5);
+            } catch (err) {
+                logoLoaded = false;
+            }
+        }
+        
+        if (!logoLoaded) {
+            doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
+            txt('GOKUL PLASTIC', ML, y+4);
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+            txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+        }
         doc.setFontSize(7);
         txt('Generated: '+generatedDate, ML+CW, y+4, {align:'right'});
         y += 12;
@@ -1954,12 +2058,12 @@
         y += 6; 
     }
 
-    const sRight   = ML + CW - 4;
-    const sLabelX  = ML + CW - 64;
+    const sRight   = ML + CW - 2;
+    const sLabelX  = ML + CW - 66;
 
     doc.setDrawColor(0,0,0);
-    hline(sLabelX, ML+CW, y, 0.8, 0, 0, 0);
-    y += 8;
+    hline(sLabelX - 2, sRight, y, 0.9, 0, 0, 0);
+    y += 5;
 
     doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(75,75,75);
     txt('Total Debit :', sLabelX,  y, {align:'right'});
@@ -1971,7 +2075,7 @@
     txt('Total Credit :', sLabelX, y, {align:'right'});
     doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
     txt('Rs. '+pdfTotalCredit.toLocaleString('en-IN'), sRight, y, {align:'right'});
-    y += 10;
+    y += 9;
 
     const boxW = 86;
     const boxH = 18;

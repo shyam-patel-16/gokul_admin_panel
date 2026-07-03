@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gokul Plastic - Order, Ledger and Challan System</title>
+    <title>
+        
+        Plastic - Order, Ledger and Challan System</title>
     <!-- Google Fonts: Outfit -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
@@ -63,8 +65,10 @@
 
             <!-- Top brand bar -->
             <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-8 py-6 text-center">
-                <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                    <i class="fa-solid fa-industry text-white text-2xl"></i>
+                <div class="flex items-center justify-center mx-auto mb-3">
+                    <div class="w-16 h-16 bg-white rounded-2xl flex items-center justify-center overflow-hidden p-1 shadow-lg border border-white/20">
+                        <img src="logo.png" alt="Gokul Plastic Logo" class="w-full h-full object-contain" />
+                    </div>
                 </div>
                 <h1 class="text-white font-black text-xl tracking-wide">Gokul Plastic</h1>
                 <p class="text-indigo-200 text-xs mt-1 font-medium">Billing & Accounting Software</p>
@@ -117,27 +121,26 @@
     <aside id="sidebar"
         class="no-print hidden md:flex flex-col bg-primary text-slate-200 fixed top-0 bottom-0 left-0 z-30 shadow-xl border-r border-slate-900">
 
-        <!-- Header: Logo + Collapse Toggle -->
-        <div id="sidebar-header" class="p-4 border-b border-slate-800 flex items-center justify-between gap-2 min-w-0">
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                    class="w-10 h-10 flex-shrink-0 rounded-xl bg-accent flex items-center justify-center text-white text-lg shadow-lg">
-                    <i class="fa-solid fa-industry"></i>
+                    <!-- Header: Logo + Collapse Toggle -->
+            <div id="sidebar-header" class="p-4 border-b border-slate-800 flex items-center justify-between gap-2 min-w-0">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <div class="w-11 h-11 flex-shrink-0 rounded-lg bg-white flex items-center justify-center shadow-lg overflow-hidden p-1 border border-slate-700/50">
+                        <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                    </div>
+                    <div class="sidebar-brand-text min-w-0 sidebar-label" style="overflow:hidden;">
+                        <h2 class="text-white font-extrabold text-sm tracking-wide whitespace-nowrap">Gokul Plastic</h2>
+                        <select id="sidebar-business-select" onchange="selectBusiness(this.value)" class="text-[10px] mt-1 tracking-wider uppercase font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded cursor-pointer outline-none w-full px-1.5 py-0.5">
+                            <!-- Loaded dynamically -->
+                        </select>
+                    </div>
                 </div>
-                <div class="sidebar-brand-text min-w-0 sidebar-label" style="overflow:hidden;">
-                    <h2 class="text-white font-extrabold text-sm tracking-wide whitespace-nowrap">Gokul Plastic</h2>
-                    <select id="sidebar-business-select" onchange="selectBusiness(this.value)" class="text-[10px] mt-1 tracking-wider uppercase font-bold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 rounded cursor-pointer outline-none w-full px-1.5 py-0.5">
-                        <!-- Loaded dynamically -->
-                    </select>
-                </div>
+                <!-- Toggle Button -->
+                <button onclick="toggleSidebar()" id="sidebar-toggle-btn"
+                    class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-800 hover:bg-accent text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200"
+                    title="Sidebar Toggle">
+                    <i id="sidebar-toggle-icon" class="fa-solid fa-chevron-left text-xs"></i>
+                </button>
             </div>
-            <!-- Toggle Button -->
-            <button onclick="toggleSidebar()" id="sidebar-toggle-btn"
-                class="flex-shrink-0 w-7 h-7 rounded-lg bg-slate-800 hover:bg-accent text-slate-400 hover:text-white flex items-center justify-center transition-all duration-200"
-                title="Sidebar Toggle">
-                <i id="sidebar-toggle-icon" class="fa-solid fa-chevron-left text-xs"></i>
-            </button>
-        </div>
 
         <!-- Navigation Links -->
         <nav class="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
@@ -1082,13 +1085,18 @@
                             ORIGINAL COPY (For Party)
                         </div>
                         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
-                            <div>
-                                <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
-                                <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
-                                <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
-                                    Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
-                                </p>
+                            <div class="flex items-center gap-3">
+                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-800 flex items-center justify-center">
+                                    <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
+                                    <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
+                                    <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
+                                    <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
+                                        Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
+                                    </p>
+                                </div>
                             </div>
                             <div class="text-right pt-4">
                                 <span
@@ -1157,13 +1165,18 @@
                             OFFICE COPY (Copy to be returned)
                         </div>
                         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
-                            <div>
-                                <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
-                                <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
-                                <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
-                                    Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
-                                </p>
+                            <div class="flex items-center gap-3">
+                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-800 flex items-center justify-center">
+                                    <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                                </div>
+                                <div>
+                                    <h2 class="text-2xl font-black text-slate-850 tracking-wide">GOKUL PLASTIC</h2>
+                                    <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
+                                    <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
+                                    <p class="text-[10px] text-slate-450 max-w-xl font-medium leading-tight mt-1">A-16,
+                                        Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
+                                    </p>
+                                </div>
                             </div>
                             <div class="text-right pt-4">
                                 <span
