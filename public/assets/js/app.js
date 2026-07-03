@@ -1253,7 +1253,10 @@
             partyOrders.forEach(o => {
                 let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `<button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center gap-0.5 transition"><i class="fa-solid fa-print"></i>Challan</button>` : '';
+                let challanBtn = o.status === 'Complete' ? `
+                    <button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center gap-0.5 transition" title="Print Challan"><i class="fa-solid fa-print"></i>Challan</button>
+                    <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="text-[10px] bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 flex items-center gap-0.5 transition" title="Share Challan"><i class="fa-solid fa-share-nodes"></i>Share</button>
+                ` : '';
 
                 orderTable.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs space-y-2 relative group">
@@ -1488,7 +1491,10 @@
             filteredOrders.forEach(o => {
                 let typeBadge = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusBadge = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `<button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center gap-0.5 transition"><i class="fa-solid fa-print"></i>ચલાન</button>` : '';
+                let challanBtn = o.status === 'Complete' ? `
+                    <button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center gap-0.5 transition" title="ચલાન પ્રિન્ટ કરો"><i class="fa-solid fa-print"></i>ચલાન</button>
+                    <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 text-[10px] font-bold flex items-center gap-0.5 transition" title="વોટ્સએપ/પીડીએફ શેર કરો"><i class="fa-solid fa-share-nodes"></i>શેર</button>
+                ` : '';
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
@@ -2156,15 +2162,197 @@
             }
         }
 
-        function shareChallanPDF(order, autoNo) {
+        function shareChallanDirectly(orderId) {
+            let order = db.orders.find(o => o.id === orderId);
+            if (!order) return;
+            let autoNo = getChallanSequenceNumber(order.id);
+            
+            // Parse items from order.item description
+            let items = [];
+            let lines = order.item.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            
+            if (lines.length <= 1) {
+                let parsed = parseSingleLine(lines[0] || order.item);
+                if (parsed) {
+                    items.push(parsed);
+                } else {
+                    items.push({
+                        name: order.item,
+                        qty: order.qty,
+                        price: order.price,
+                        amount: order.amount
+                    });
+                }
+            } else {
+                for (let line of lines) {
+                    let parsed = parseSingleLine(line);
+                    if (parsed) {
+                        items.push(parsed);
+                    } else {
+                        items.push({
+                            name: line,
+                            qty: null,
+                            price: null,
+                            amount: null
+                        });
+                    }
+                }
+            }
+
+            let totalQty = 0;
+            let totalAmount = 0;
+            let hasQty = false;
+            let hasAmount = false;
+
+            items.forEach(item => {
+                if (item.qty !== null) {
+                    totalQty += item.qty;
+                    hasQty = true;
+                }
+                if (item.amount !== null) {
+                    totalAmount += item.amount;
+                    hasAmount = true;
+                }
+            });
+
+            if (!hasAmount) {
+                totalAmount = order.amount;
+            }
+            if (!hasQty) {
+                totalQty = order.qty;
+            }
+
+            let formattedTotal = "₹" + totalAmount.toLocaleString('en-IN');
+            let words = numberToWords(totalAmount);
+
+            for (let i = 1; i <= 2; i++) {
+                const partyEl = document.getElementById(`ch${i}-party`);
+                if (partyEl) partyEl.innerText = order.party;
+
+                const phoneEl = document.getElementById(`ch${i}-phone`);
+                if (phoneEl) phoneEl.innerText = order.phone || '-';
+
+                const dateEl = document.getElementById(`ch${i}-date`);
+                if (dateEl) dateEl.innerText = formatBusinessDate(order.date);
+
+                const numEl = document.getElementById(`ch${i}-num`);
+                if (numEl) numEl.innerText = autoNo;
+
+                const tbody = document.getElementById(`ch${i}-table-body`);
+                if (tbody) {
+                    const table = tbody.closest('table');
+                    const hasSN = table && table.querySelectorAll('thead th').length === 5;
+                    let html = "";
+                    items.forEach((item, index) => {
+                        let qtyText = item.qty !== null ? item.qty : "-";
+                        let priceText = item.price !== null ? "₹" + item.price.toLocaleString('en-IN') : "-";
+                        let amountText = item.amount !== null ? "₹" + item.amount.toLocaleString('en-IN') : "-";
+
+                        if (hasSN) {
+                            html += `
+                                <tr>
+                                    <td class="p-2 border border-slate-800 text-center font-bold text-slate-700" style="width: 8%;">${index + 1}</td>
+                                    <td class="p-2 border border-slate-800 font-bold text-xs whitespace-pre-wrap break-words min-h-[40px]" style="width: 60%;">${item.name}</td>
+                                    <td class="p-2 border border-slate-800 text-center text-xs font-bold" style="width: 10%;">${qtyText}</td>
+                                    <td class="p-2 border border-slate-800 text-right text-xs font-bold" style="width: 10%;">${priceText}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-black text-xs bg-slate-50" style="width: 12%;">${amountText}</td>
+                                </tr>
+                            `;
+                        } else {
+                            html += `
+                                <tr>
+                                    <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]">${item.name}</td>
+                                    <td class="p-4 text-center border border-slate-800 text-sm font-bold">${qtyText}</td>
+                                    <td class="p-4 text-right border border-slate-800 text-sm font-bold">${priceText}</td>
+                                    <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50">${amountText}</td>
+                                </tr>
+                            `;
+                        }
+                    });
+
+                    if (hasSN) {
+                        html += `
+                            <tr class="spacer-row">
+                                <td class="p-2 border border-slate-800" style="width: 8%;">&nbsp;</td>
+                                <td class="p-2 border border-slate-800" style="width: 60%;">&nbsp;</td>
+                                <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                <td class="p-2 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
+                            </tr>
+                        `;
+                    } else {
+                        html += `
+                            <tr class="spacer-row">
+                                <td class="p-4 border border-slate-800" style="width: 68%;">&nbsp;</td>
+                                <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                <td class="p-4 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
+                            </tr>
+                        `;
+                    }
+
+                    let totalQtyText = "";
+                    if (hasSN) {
+                        html += `
+                            <tr class="font-bold border-t border-slate-800 bg-slate-50">
+                                <td colspan="2" class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
+                            </tr>
+                        `;
+                    } else {
+                        html += `
+                            <tr class="font-bold border-t border-slate-800 bg-slate-50">
+                                <td class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
+                            </tr>
+                        `;
+                    }
+                    tbody.innerHTML = html;
+                }
+
+                const wordsEl = document.getElementById(`ch${i}-words`);
+                if (wordsEl) wordsEl.innerText = words;
+            }
+
+            const vehicleInput = document.getElementById('challan-input-vehicle');
+            if (vehicleInput) vehicleInput.value = '';
+            
+            const transportInput = document.getElementById('challan-input-transport');
+            if (transportInput) transportInput.value = 'Road';
+            
+            const hsnInput = document.getElementById('challan-input-hsn');
+            if (hsnInput) hsnInput.value = '39269099';
+
+            updateChallanInputs();
+
+            document.getElementById('wp-share-btn').onclick = function () {
+                shareChallanPDF(order, autoNo);
+            };
+
+            const targetBtn = document.getElementById(`share-order-btn-${orderId}`);
+            shareChallanPDF(order, autoNo, targetBtn);
+        }
+        window.shareChallanDirectly = shareChallanDirectly;
+
+        function shareChallanPDF(order, autoNo, customBtn = null) {
             const element = document.getElementById('challan-print-area');
             if (!element) return alert("Error: Print area element not found!");
 
-            const shareBtn = document.getElementById('wp-share-btn');
-            const originalText = shareBtn.innerHTML;
+            const shareBtn = customBtn || document.getElementById('wp-share-btn');
+            const originalText = shareBtn ? shareBtn.innerHTML : '';
             
-            shareBtn.disabled = true;
-            shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i> Loading PDF...`;
+            if (shareBtn) {
+                shareBtn.disabled = true;
+                if (customBtn) {
+                    shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-xs"></i>`;
+                } else {
+                    shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i> Loading PDF...`;
+                }
+            }
 
             // Create temporary container for mobile compatibility
             const container = document.createElement('div');
@@ -2507,13 +2695,17 @@
                         text: `Gokul Plastic - Challan for ${order.party}`
                     })
                     .then(() => {
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = originalText;
+                        if (shareBtn) {
+                            shareBtn.disabled = false;
+                            shareBtn.innerHTML = originalText;
+                        }
                     })
                     .catch((err) => {
                         console.error("Share failed:", err);
-                        shareBtn.disabled = false;
-                        shareBtn.innerHTML = originalText;
+                        if (shareBtn) {
+                            shareBtn.disabled = false;
+                            shareBtn.innerHTML = originalText;
+                        }
                     });
                 } else {
                     const link = document.createElement('a');
@@ -2555,8 +2747,10 @@
 
                     alert("PDF ડાઉનલોડ થઈ ગયું છે અને વોટ્સએપ વેબ ઓપન થઈ રહ્યું છે. તમે ફાઈલ વોટ્સએપ પર મેન્યુઅલી મોકલી શકો છો.");
 
-                    shareBtn.disabled = false;
-                    shareBtn.innerHTML = originalText;
+                    if (shareBtn) {
+                        shareBtn.disabled = false;
+                        shareBtn.innerHTML = originalText;
+                    }
                 }
             }).catch(function (error) {
                 // Remove temporary container in case of error
@@ -2566,8 +2760,10 @@
 
                 console.error("PDF generation failed:", error);
                 alert("PDF બનાવવામાં કંઈક ભૂલ આવી!");
-                shareBtn.disabled = false;
-                shareBtn.innerHTML = originalText;
+                if (shareBtn) {
+                    shareBtn.disabled = false;
+                    shareBtn.innerHTML = originalText;
+                }
             });
         }
 
