@@ -641,8 +641,8 @@
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Details (Item Description)</label>
-                                <input type="text" id="ord-item" placeholder="Enter item name or description" required
-                                    class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
+                                <textarea id="ord-item" placeholder="Enter item name or description (For multiple items: Item, Qty, Rate on separate lines)" required
+                                    class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs" rows="2"></textarea>
                             </div>
                             <div class="grid grid-cols-3 gap-3">
                                 <div>
@@ -1072,10 +1072,10 @@
                 </div>
 
                 <!-- Double copy printing wrap -->
-                <div class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
+                <div id="challan-print-area" class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
 
                     <!-- COPY 1: ORIGINAL -->
-                    <div
+                    <div id="challan-original-copy"
                         class="challan-copy copy-1 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
                         <div>
                             <div
@@ -1114,7 +1114,7 @@
                                 </div>
                             </div>
 
-                            <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
+                            <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed grow">
                                 <thead>
                                     <tr class="bg-slate-850 text-white font-bold">
                                         <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
@@ -1124,7 +1124,7 @@
                                         <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="ch1-table-body">
                                     <tr>
                                         <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]"
                                             id="ch1-item"></td>
@@ -1156,7 +1156,7 @@
                     </div>
 
                     <!-- COPY 2: OFFICE -->
-                    <div
+                    <div id="challan-office-copy"
                         class="challan-copy copy-2 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
                         <div>
                             <div
@@ -1195,7 +1195,7 @@
                                 </div>
                             </div>
 
-                            <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
+                            <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed grow">
                                 <thead>
                                     <tr class="bg-slate-850 text-white font-bold">
                                         <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
@@ -1205,7 +1205,7 @@
                                         <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="ch2-table-body">
                                     <tr>
                                         <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]"
                                             id="ch2-item"></td>

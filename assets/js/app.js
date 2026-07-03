@@ -601,6 +601,15 @@
             }
         }
 
+        // Auto-calculate Order Form totals as user types
+        document.getElementById('ord-item').addEventListener('input', function () {
+            let totals = calculateTotalsFromDescription(this.value);
+            if (totals) {
+                document.getElementById('ord-qty').value = totals.qty;
+                document.getElementById('ord-price').value = totals.price;
+            }
+        });
+
         // Submit Order Form
         document.getElementById('order-form').addEventListener('submit', function (e) {
             e.preventDefault();
@@ -1103,11 +1112,15 @@
             let newItem = prompt("આઇટમ વિગત સુધારો:", order.item);
             if (newItem === null) return;
 
-            let newQtyStr = prompt("ક્વોન્ટિટી (Qty) સુધારો:", order.qty);
+            let calculated = calculateTotalsFromDescription(newItem);
+            let defaultQty = calculated ? calculated.qty : order.qty;
+            let defaultPrice = calculated ? calculated.price : order.price;
+
+            let newQtyStr = prompt("ક્વોન્ટિટી (Qty) સુધારો:", defaultQty);
             if (newQtyStr === null) return;
             let newQty = parseFloat(newQtyStr);
 
-            let newPriceStr = prompt("ભાવ (Price) સુધારો:", order.price);
+            let newPriceStr = prompt("ભાવ (Price) સુધારો:", defaultPrice);
             if (newPriceStr === null) return;
             let newPrice = parseFloat(newPriceStr);
 
@@ -1556,27 +1569,349 @@
             link.remove();
         }
 
+        function numberToWords(num) {
+            num = Math.round(num);
+            if (num === 0) return 'Zero Rupees Only';
+            
+            const single = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+            const double = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+            
+            function convertLessThanOneThousand(n) {
+                let temp = '';
+                if (n >= 100) {
+                    temp += single[Math.floor(n / 100)] + ' Hundred ';
+                    n %= 100;
+                }
+                if (n >= 20) {
+                    temp += double[Math.floor(n / 10)] + ' ';
+                    n %= 10;
+                }
+                if (n > 0) {
+                    temp += single[n] + ' ';
+                }
+                return temp;
+            }
+            
+            let words = '';
+            let integerPart = num;
+            
+            // Crore
+            if (integerPart >= 10000000) {
+                words += convertLessThanOneThousand(Math.floor(integerPart / 10000000)) + 'Crore ';
+                integerPart %= 10000000;
+            }
+            // Lakh
+            if (integerPart >= 100000) {
+                words += convertLessThanOneThousand(Math.floor(integerPart / 100000)) + 'Lakh ';
+                integerPart %= 100000;
+            }
+            // Thousand
+            if (integerPart >= 1000) {
+                words += convertLessThanOneThousand(Math.floor(integerPart / 1000)) + 'Thousand ';
+                integerPart %= 1000;
+            }
+            // Remainder
+            if (integerPart > 0) {
+                words += convertLessThanOneThousand(integerPart);
+            }
+            
+            return words.trim() + ' Rupees Only';
+        }
+
+        function updateChallanInputs() {
+            const vehicleElInput = document.getElementById('challan-input-vehicle');
+            const vehicle = vehicleElInput ? vehicleElInput.value.trim() || '-' : '-';
+            
+            const transportElInput = document.getElementById('challan-input-transport');
+            const transport = transportElInput ? transportElInput.value.trim() || 'Self' : 'Self';
+            
+            const hsnElInput = document.getElementById('challan-input-hsn');
+            const hsn = hsnElInput ? hsnElInput.value.trim() || '39269099' : '39269099';
+
+            for (let i = 1; i <= 2; i++) {
+                const vehicleEl = document.getElementById(`ch${i}-vehicle`);
+                const transportEl = document.getElementById(`ch${i}-transport`);
+                const hsnEl = document.getElementById(`ch${i}-hsn`);
+
+                if (vehicleEl) vehicleEl.innerText = vehicle;
+                if (transportEl) transportEl.innerText = transport;
+                if (hsnEl) hsnEl.innerText = hsn;
+            }
+        }
+        window.updateChallanInputs = updateChallanInputs;
+
+        function parseSingleLine(line) {
+            if (!line) return null;
+            line = line.trim();
+            if (line === '') return null;
+
+            // Try comma split first: Item, Qty, Rate
+            let parts = line.split(',');
+            if (parts.length >= 3) {
+                let qty = parseFloat(parts[parts.length - 2]);
+                let price = parseFloat(parts[parts.length - 1]);
+                if (!isNaN(qty) && !isNaN(price)) {
+                    let name = parts.slice(0, parts.length - 2).join(',').trim();
+                    return { name, qty, price, amount: qty * price };
+                }
+            }
+            if (parts.length === 2) {
+                let qty = parseFloat(parts[1]);
+                if (!isNaN(qty)) {
+                    return { name: parts[0].trim(), qty: qty, price: null, amount: null };
+                }
+            }
+
+            // Try dash split: Item - Qty - Rate
+            parts = line.split('-');
+            if (parts.length >= 3) {
+                let qty = parseFloat(parts[parts.length - 2]);
+                let price = parseFloat(parts[parts.length - 1]);
+                if (!isNaN(qty) && !isNaN(price)) {
+                    let name = parts.slice(0, parts.length - 2).join('-').trim();
+                    return { name, qty, price, amount: qty * price };
+                }
+            }
+            if (parts.length === 2) {
+                let qty = parseFloat(parts[1]);
+                if (!isNaN(qty)) {
+                    return { name: parts[0].trim(), qty: qty, price: null, amount: null };
+                }
+            }
+
+            // Try space split at the end: Item Qty Rate
+            let match = line.match(/^(.*?)\s+(\d+(?:\.\d+)?)\s+(\d+(?:\.\d+)?)$/);
+            if (match) {
+                let qty = parseFloat(match[2]);
+                let price = parseFloat(match[3]);
+                return {
+                    name: match[1].trim(),
+                    qty: qty,
+                    price: price,
+                    amount: qty * price
+                };
+            }
+            let matchQty = line.match(/^(.*?)\s+(\d+(?:\.\d+)?)$/);
+            if (matchQty) {
+                let qty = parseFloat(matchQty[2]);
+                return {
+                    name: matchQty[1].trim(),
+                    qty: qty,
+                    price: null,
+                    amount: null
+                };
+            }
+
+            return null;
+        }
+
+        function calculateTotalsFromDescription(text) {
+            let lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return null;
+
+            let totalQty = 0;
+            let totalAmount = 0;
+            let hasQty = false;
+            let hasAmount = false;
+
+            for (let line of lines) {
+                let parsed = parseSingleLine(line);
+                if (parsed) {
+                    if (parsed.qty !== null) {
+                        totalQty += parsed.qty;
+                        hasQty = true;
+                    }
+                    if (parsed.amount !== null) {
+                        totalAmount += parsed.amount;
+                        hasAmount = true;
+                    }
+                }
+            }
+
+            if (hasQty && totalQty > 0) {
+                return {
+                    qty: totalQty,
+                    price: hasAmount ? Number((totalAmount / totalQty).toFixed(4)) : 0,
+                    totalAmount: totalAmount
+                };
+            }
+            return null;
+        }
+
         function generateChallan(orderId) {
             let order = db.orders.find(o => o.id === orderId);
             if (order) {
                 let autoNo = getChallanSequenceNumber(order.id);
-                let formattedTotal = "₹" + order.amount.toLocaleString('en-IN');
+                
+                // Parse items from order.item description
+                let items = [];
+                let lines = order.item.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                
+                if (lines.length <= 1) {
+                    // Try to parse single line
+                    let parsed = parseSingleLine(lines[0] || order.item);
+                    if (parsed) {
+                        items.push(parsed);
+                    } else {
+                        items.push({
+                            name: order.item,
+                            qty: order.qty,
+                            price: order.price,
+                            amount: order.amount
+                        });
+                    }
+                } else {
+                    for (let line of lines) {
+                        let parsed = parseSingleLine(line);
+                        if (parsed) {
+                            items.push(parsed);
+                        } else {
+                            items.push({
+                                name: line,
+                                qty: null,
+                                price: null,
+                                amount: null
+                            });
+                        }
+                    }
+                }
+
+                // Calculate totals of parsed items
+                let totalQty = 0;
+                let totalAmount = 0;
+                let hasQty = false;
+                let hasAmount = false;
+
+                items.forEach(item => {
+                    if (item.qty !== null) {
+                        totalQty += item.qty;
+                        hasQty = true;
+                    }
+                    if (item.amount !== null) {
+                        totalAmount += item.amount;
+                        hasAmount = true;
+                    }
+                });
+
+                // Fallback to order total if no items had parsed amounts
+                if (!hasAmount) {
+                    totalAmount = order.amount;
+                }
+                if (!hasQty) {
+                    totalQty = order.qty;
+                }
+
+                let formattedTotal = "₹" + totalAmount.toLocaleString('en-IN');
+                let words = numberToWords(totalAmount);
+
+                // Reset inputs safely
+                const vehicleInput = document.getElementById('challan-input-vehicle');
+                if (vehicleInput) vehicleInput.value = '';
+                
+                const transportInput = document.getElementById('challan-input-transport');
+                if (transportInput) transportInput.value = 'Road';
+                
+                const hsnInput = document.getElementById('challan-input-hsn');
+                if (hsnInput) hsnInput.value = '39269099';
 
                 for (let i = 1; i <= 2; i++) {
-                    document.getElementById(`ch${i}-party`).innerText = order.party;
-                    document.getElementById(`ch${i}-date`).innerText = formatBusinessDate(order.date);
-                    document.getElementById(`ch${i}-num`).innerText = autoNo;
-                    document.getElementById(`ch${i}-item`).innerText = order.item;
-                    document.getElementById(`ch${i}-qty`).innerText = order.qty;
-                    document.getElementById(`ch${i}-price`).innerText = "₹" + order.price.toLocaleString('en-IN');
-                    document.getElementById(`ch${i}-total`).innerText = formattedTotal;
-                    
-                    // Safely set total-2 and total-3 only if they exist in the HTML
-                    const t2 = document.getElementById(`ch${i}-total-2`);
-                    const t3 = document.getElementById(`ch${i}-total-3`);
-                    if (t2) t2.innerText = formattedTotal;
-                    if (t3) t3.innerText = formattedTotal;
+                    const partyEl = document.getElementById(`ch${i}-party`);
+                    if (partyEl) partyEl.innerText = order.party;
+
+                    const phoneEl = document.getElementById(`ch${i}-phone`);
+                    if (phoneEl) phoneEl.innerText = order.phone || '-';
+
+                    const dateEl = document.getElementById(`ch${i}-date`);
+                    if (dateEl) dateEl.innerText = formatBusinessDate(order.date);
+
+                    const numEl = document.getElementById(`ch${i}-num`);
+                    if (numEl) numEl.innerText = autoNo;
+
+                    // Render table body
+                    const tbody = document.getElementById(`ch${i}-table-body`);
+                    if (tbody) {
+                        const table = tbody.closest('table');
+                        const hasSN = table && table.querySelectorAll('thead th').length === 5;
+                        let html = "";
+                        items.forEach((item, index) => {
+                            let qtyText = item.qty !== null ? item.qty : "-";
+                            let priceText = item.price !== null ? "₹" + item.price.toLocaleString('en-IN') : "-";
+                            let amountText = item.amount !== null ? "₹" + item.amount.toLocaleString('en-IN') : "-";
+
+                            if (hasSN) {
+                                html += `
+                                    <tr>
+                                        <td class="p-2 border border-slate-800 text-center font-bold text-slate-700" style="width: 8%;">${index + 1}</td>
+                                        <td class="p-2 border border-slate-800 font-bold text-xs whitespace-pre-wrap break-words min-h-[40px]" style="width: 60%;">${item.name}</td>
+                                        <td class="p-2 border border-slate-800 text-center text-xs font-bold" style="width: 10%;">${qtyText}</td>
+                                        <td class="p-2 border border-slate-800 text-right text-xs font-bold" style="width: 10%;">${priceText}</td>
+                                        <td class="p-2 border border-slate-800 text-right font-black text-xs bg-slate-50" style="width: 12%;">${amountText}</td>
+                                    </tr>
+                                `;
+                            } else {
+                                html += `
+                                    <tr>
+                                        <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]">${item.name}</td>
+                                        <td class="p-4 text-center border border-slate-800 text-sm font-bold">${qtyText}</td>
+                                        <td class="p-4 text-right border border-slate-800 text-sm font-bold">${priceText}</td>
+                                        <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50">${amountText}</td>
+                                    </tr>
+                                `;
+                            }
+                        });
+
+                        // Add spacer row to absorb remaining height and push total to bottom
+                        if (hasSN) {
+                            html += `
+                                <tr class="spacer-row">
+                                    <td class="p-2 border border-slate-800" style="width: 8%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 60%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
+                                </tr>
+                            `;
+                        } else {
+                            html += `
+                                <tr class="spacer-row">
+                                    <td class="p-4 border border-slate-800" style="width: 68%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
+                                </tr>
+                            `;
+                        }
+
+                        // Add Total row
+                        let totalQtyText = "";
+                        if (hasSN) {
+                            html += `
+                                <tr class="font-bold border-t border-slate-800 bg-slate-50">
+                                    <td colspan="2" class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                    <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
+                                </tr>
+                            `;
+                        } else {
+                            html += `
+                                <tr class="font-bold border-t border-slate-800 bg-slate-50">
+                                    <td class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                    <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
+                                </tr>
+                            `;
+                        }
+                        tbody.innerHTML = html;
+                    }
+
+                    const wordsEl = document.getElementById(`ch${i}-words`);
+                    if (wordsEl) wordsEl.innerText = words;
                 }
+
+                // Initial sync
+                updateChallanInputs();
 
                 document.getElementById('wp-share-btn').onclick = function () {
                     shareChallanPDF(order, autoNo);
@@ -1587,8 +1922,8 @@
         }
 
         function shareChallanPDF(order, autoNo) {
-            const element = document.getElementById('challan-original-copy');
-            if (!element) return alert("Error: Original copy element not found!");
+            const element = document.getElementById('challan-print-area');
+            if (!element) return alert("Error: Print area element not found!");
 
             const shareBtn = document.getElementById('wp-share-btn');
             const originalText = shareBtn.innerHTML;
@@ -1596,43 +1931,391 @@
             shareBtn.disabled = true;
             shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i> Loading PDF...`;
 
-            // Apply professional single-page A4 format temporarily during PDF rendering
-            const originalStyles = {
-                minHeight: element.style.minHeight,
-                padding: element.style.padding,
-                margin: element.style.margin,
-                borderRadius: element.style.borderRadius,
-                borderWidth: element.style.borderWidth,
-                borderColor: element.style.borderColor,
-                boxShadow: element.style.boxShadow
+            // Store original styles of print area
+            const originalElementStyles = element.getAttribute('style') || '';
+            
+            // Store original styles of each challan-copy
+            const copies = element.querySelectorAll('.challan-copy');
+            const originalCopiesStyles = [];
+            copies.forEach(copy => {
+                originalCopiesStyles.push({
+                    el: copy,
+                    style: copy.getAttribute('style') || ''
+                });
+            });
+
+            // Store original styles of inner elements to restore them later
+            const innerElements = [];
+            const saveStyle = (selector, styleProps) => {
+                const els = element.querySelectorAll(selector);
+                els.forEach(el => {
+                    const original = {};
+                    styleProps.forEach(prop => {
+                        original[prop] = el.style[prop] || '';
+                    });
+                    innerElements.push({ el, original });
+                });
             };
 
-            // Set clean, perfect full-page A4 styling
-            element.style.minHeight = 'auto'; // Fits content perfectly
-            element.style.padding = '12mm';    // Comfortable professional padding
+            // Capture original styles of elements we're going to modify dynamically
+            saveStyle('.absolute', ['top', 'right', 'border', 'color', 'backgroundColor', 'fontSize', 'fontWeight', 'padding', 'borderRadius']);
+            saveStyle('.flex.justify-between.items-start', ['borderBottom', 'paddingBottom']);
+            saveStyle('.w-12.h-12', ['width', 'height', 'borderRadius', 'border', 'padding']);
+            saveStyle('h2', ['fontSize', 'fontWeight', 'color', 'letterSpacing']);
+            saveStyle('p.text-\\[9px\\]', ['fontSize', 'color', 'fontWeight', 'marginTop']);
+            saveStyle('p.text-slate-600', ['fontSize', 'color', 'fontWeight', 'marginTop']);
+            saveStyle('p.font-bold.text-slate-600', ['fontSize', 'color', 'fontWeight', 'marginTop']);
+            saveStyle('p.text-slate-500.max-w-xl', ['fontSize', 'color', 'fontWeight', 'marginTop', 'lineHeight']);
+            saveStyle('.text-right span', ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'padding', 'border', 'borderRadius', 'letterSpacing']);
+            saveStyle('.grid.grid-cols-2', ['borderBottom', 'paddingTop', 'paddingBottom', 'gap']);
+            saveStyle('.grid.grid-cols-2 p.text-\\[9px\\]', ['fontSize', 'color', 'textTransform', 'fontWeight', 'letterSpacing']);
+            saveStyle('#ch1-party', ['fontSize', 'fontWeight', 'color', 'marginTop']);
+            saveStyle('.grid.grid-cols-2 span.text-\\[9px\\]', ['fontSize', 'color', 'fontWeight']);
+            saveStyle('.grid.grid-cols-2 span.text-xs', ['fontSize', 'fontWeight', 'color']);
+            saveStyle('#ch1-num', ['color', 'fontWeight']);
+            saveStyle('table', ['border', 'borderCollapse', 'marginTop', 'width']);
+            saveStyle('table th', ['backgroundColor', 'color', 'fontWeight', 'fontSize', 'padding', 'border']);
+            saveStyle('table td', ['border', 'padding', 'fontSize', 'color', 'lineHeight', 'fontWeight', 'textAlign', 'backgroundColor']);
+            saveStyle('.text-\\[9px\\].border-b.border-slate-200', ['borderBottom', 'paddingBottom', 'fontSize', 'color']);
+            saveStyle('#ch1-words', ['color', 'fontWeight']);
+            saveStyle('.flex.justify-between.items-end', ['paddingTop', 'marginTop']);
+            saveStyle('span.text-\\[8px\\]', ['fontSize', 'color', 'fontWeight', 'textTransform']);
+            saveStyle('p.text-\\[8px\\]', ['fontSize', 'color', 'lineHeight']);
+            saveStyle('.text-center', ['fontSize', 'color', 'fontWeight']);
+            saveStyle('.w-24.border-t', ['width', 'borderTop', 'paddingTop']);
+            saveStyle('.w-32.border-t', ['width', 'borderTop', 'paddingTop']);
+
+            // Handle no-print elements inside the element (excluding cut-line if needed)
+            const noPrintElements = element.querySelectorAll('.no-print');
+            const originalNoPrintDisplay = [];
+            noPrintElements.forEach(el => {
+                originalNoPrintDisplay.push({
+                    el: el,
+                    display: el.style.display
+                });
+                el.style.display = 'none';
+            });
+
+            // Adjust styles for a perfect A5 portrait PDF output containing ONLY original copy
+            element.style.display = 'block';
+            element.style.width = '148mm';
+            element.style.height = '210mm';
+            element.style.minHeight = '210mm';
+            element.style.maxHeight = '210mm';
+            element.style.padding = '0';
             element.style.margin = '0';
-            element.style.borderRadius = '0px'; // Straight edges for print document
-            element.style.borderWidth = '1px';  // Crisp 1px border
-            element.style.borderColor = '#1e293b';
-            element.style.boxShadow = 'none';
+            element.style.boxSizing = 'border-box';
+            element.style.background = '#ffffff';
+
+            const originalCopy = element.querySelector('#challan-original-copy');
+            if (originalCopy) {
+                originalCopy.style.display = 'flex';
+                originalCopy.style.flexDirection = 'column';
+                originalCopy.style.justifyContent = 'space-between';
+                originalCopy.style.width = '148mm';
+                originalCopy.style.height = '210mm';
+                originalCopy.style.minHeight = '210mm';
+                originalCopy.style.maxHeight = '210mm';
+                originalCopy.style.padding = '8mm 8mm 6mm 8mm';
+                originalCopy.style.border = 'none';
+                originalCopy.style.borderRadius = '0';
+                originalCopy.style.boxSizing = 'border-box';
+                originalCopy.style.gap = '3mm';
+                originalCopy.style.margin = '0';
+                originalCopy.style.background = '#ffffff';
+
+                // Premium layout details
+                const copyLabel = originalCopy.querySelector('.absolute');
+                if (copyLabel) {
+                    copyLabel.style.top = '6mm';
+                    copyLabel.style.right = '8mm';
+                    copyLabel.style.border = '1px solid #cbd5e1';
+                    copyLabel.style.color = '#475569';
+                    copyLabel.style.backgroundColor = '#f8fafc';
+                    copyLabel.style.fontSize = '8px';
+                    copyLabel.style.fontWeight = '700';
+                    copyLabel.style.padding = '2px 6px';
+                    copyLabel.style.borderRadius = '3px';
+                }
+
+                const header = originalCopy.querySelector('.flex.justify-between.items-start');
+                if (header) {
+                    header.style.borderBottom = '1.5px solid #0f172a';
+                    header.style.paddingBottom = '3mm';
+                }
+
+                const logoContainer = originalCopy.querySelector('.w-12.h-12');
+                if (logoContainer) {
+                    logoContainer.style.width = '12mm';
+                    logoContainer.style.height = '12mm';
+                    logoContainer.style.borderRadius = '6px';
+                    logoContainer.style.border = '1px solid #cbd5e1';
+                    logoContainer.style.padding = '1px';
+                }
+
+                const companyTitle = originalCopy.querySelector('h2');
+                if (companyTitle) {
+                    companyTitle.style.fontSize = '18px';
+                    companyTitle.style.fontWeight = '900';
+                    companyTitle.style.color = '#0f172a';
+                    companyTitle.style.letterSpacing = '0.5px';
+                }
+
+                const tagline = originalCopy.querySelector('p.text-\\[9px\\]');
+                if (tagline) {
+                    tagline.style.fontSize = '9px';
+                    tagline.style.color = '#64748b';
+                    tagline.style.fontWeight = '600';
+                    tagline.style.marginTop = '2px';
+                }
+
+                const gstPhone = originalCopy.querySelector('p.text-slate-600') || originalCopy.querySelector('p.font-bold.text-slate-600');
+                if (gstPhone) {
+                    gstPhone.style.fontSize = '9px';
+                    gstPhone.style.color = '#334155';
+                    gstPhone.style.fontWeight = '700';
+                    gstPhone.style.marginTop = '2px';
+                }
+
+                const address = originalCopy.querySelector('p.text-slate-500.max-w-xl');
+                if (address) {
+                    address.style.fontSize = '8px';
+                    address.style.color = '#64748b';
+                    address.style.fontWeight = '500';
+                    address.style.marginTop = '1px';
+                    address.style.lineHeight = '1.3';
+                }
+
+                const titleBadge = originalCopy.querySelector('.text-right span') || originalCopy.querySelector('.text-right.pt-2 span') || originalCopy.querySelector('.text-right span.text-xs');
+                if (titleBadge) {
+                    titleBadge.style.fontSize = '10px';
+                    titleBadge.style.fontWeight = '900';
+                    titleBadge.style.color = '#ffffff';
+                    titleBadge.style.backgroundColor = '#0f172a';
+                    titleBadge.style.padding = '4px 10px';
+                    titleBadge.style.border = 'none';
+                    titleBadge.style.borderRadius = '4px';
+                    titleBadge.style.letterSpacing = '1px';
+                    titleBadge.style.display = 'inline-block';
+                }
+
+                const gridSection = originalCopy.querySelector('.grid.grid-cols-2');
+                if (gridSection) {
+                    gridSection.style.borderBottom = '1px solid #e2e8f0';
+                    gridSection.style.paddingTop = '3mm';
+                    gridSection.style.paddingBottom = '3mm';
+                    gridSection.style.gap = '4mm';
+                }
+
+                const consigneeTitle = originalCopy.querySelector('.grid.grid-cols-2 p.text-\\[9px\\]');
+                if (consigneeTitle) {
+                    consigneeTitle.style.fontSize = '8px';
+                    consigneeTitle.style.color = '#64748b';
+                    consigneeTitle.style.textTransform = 'uppercase';
+                    consigneeTitle.style.fontWeight = 'bold';
+                    consigneeTitle.style.letterSpacing = '0.5px';
+                }
+
+                const consigneeName = originalCopy.querySelector('#ch1-party');
+                if (consigneeName) {
+                    consigneeName.style.fontSize = '12px';
+                    consigneeName.style.fontWeight = '800';
+                    consigneeName.style.color = '#0f172a';
+                    consigneeName.style.marginTop = '3px';
+                }
+
+                const infoLabels = originalCopy.querySelectorAll('.grid.grid-cols-2 span.text-\\[9px\\]');
+                infoLabels.forEach(label => {
+                    label.style.fontSize = '8px';
+                    label.style.color = '#64748b';
+                    label.style.fontWeight = '600';
+                });
+
+                const infoValues = originalCopy.querySelectorAll('.grid.grid-cols-2 span.text-xs');
+                infoValues.forEach(val => {
+                    val.style.fontSize = '10px';
+                    val.style.fontWeight = '700';
+                    val.style.color = '#0f172a';
+                });
+
+                const challanNumVal = originalCopy.querySelector('#ch1-num');
+                if (challanNumVal) {
+                    challanNumVal.style.color = '#dc2626';
+                    challanNumVal.style.fontWeight = '900';
+                }
+
+                const table = originalCopy.querySelector('table');
+                if (table) {
+                    table.style.border = '1px solid #cbd5e1';
+                    table.style.borderCollapse = 'collapse';
+                    table.style.marginTop = '3mm';
+                    table.style.width = '100%';
+                    table.style.height = '100%';
+                    table.style.flexGrow = '1';
+                }
+
+                const ths = originalCopy.querySelectorAll('table th');
+                ths.forEach(th => {
+                    th.style.backgroundColor = '#f8fafc';
+                    th.style.color = '#1e293b';
+                    th.style.fontWeight = '800';
+                    th.style.fontSize = '9px';
+                    th.style.padding = '6px 8px';
+                    th.style.border = '1px solid #cbd5e1';
+                });
+
+                const tds = originalCopy.querySelectorAll('table td');
+                tds.forEach(td => {
+                    td.style.border = '1px solid #cbd5e1';
+                    td.style.padding = '6px 8px';
+                    td.style.fontSize = '9px';
+                    td.style.color = '#334155';
+                    td.style.lineHeight = '1.3';
+                    td.style.verticalAlign = 'bottom';
+                });
+
+                const qtyCell = originalCopy.querySelector('#ch1-qty');
+                if (qtyCell) {
+                    qtyCell.style.fontWeight = '700';
+                    qtyCell.style.textAlign = 'center';
+                }
+
+                const priceCell = originalCopy.querySelector('#ch1-price');
+                if (priceCell) {
+                    priceCell.style.fontWeight = '700';
+                    priceCell.style.textAlign = 'right';
+                }
+
+                const totalCell = originalCopy.querySelector('#ch1-total');
+                if (totalCell) {
+                    totalCell.style.fontWeight = '700';
+                    totalCell.style.color = '#0f172a';
+                    totalCell.style.backgroundColor = '#f8fafc';
+                    totalCell.style.textAlign = 'right';
+                }
+
+                const tableRows = originalCopy.querySelectorAll('table tr');
+                tableRows.forEach(row => {
+                    if (!row.classList.contains('spacer-row') && row.parentNode.tagName.toLowerCase() !== 'thead') {
+                        row.style.height = '1px';
+                    }
+                    if (row.classList.contains('font-black') || row.style.fontWeight === '900' || row.classList.contains('font-bold') || row.style.fontWeight === '700') {
+                        const rowCells = row.querySelectorAll('td');
+                        rowCells.forEach(cell => {
+                            cell.style.border = '1px solid #cbd5e1';
+                            cell.style.backgroundColor = '#f8fafc';
+                            cell.style.fontWeight = '700';
+                            cell.style.color = '#0f172a';
+                            cell.style.fontSize = '9px';
+                            cell.style.padding = '6px 8px';
+                        });
+                    }
+                });
+
+                const spacerRows = originalCopy.querySelectorAll('.spacer-row');
+                spacerRows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        cell.style.border = '1px solid #cbd5e1';
+                        cell.style.padding = '4px 8px';
+                    });
+                });
+
+                const wordsBlock = originalCopy.querySelector('.text-\\[9px\\].border-b.border-slate-200') || (originalCopy.querySelector('#ch1-words') ? originalCopy.querySelector('#ch1-words').parentNode.parentNode : null);
+                if (wordsBlock) {
+                    wordsBlock.style.borderBottom = '1px solid #cbd5e1';
+                    wordsBlock.style.paddingBottom = '3px';
+                    wordsBlock.style.fontSize = '8px';
+                    wordsBlock.style.color = '#64748b';
+                }
+
+                const wordsStrong = originalCopy.querySelector('#ch1-words');
+                if (wordsStrong) {
+                    wordsStrong.style.color = '#1e293b';
+                    wordsStrong.style.fontWeight = '700';
+                }
+
+                const footerBlock = originalCopy.querySelector('.flex.justify-between.items-end') || originalCopy.querySelector('.flex.justify-between.items-end.text-\\[9px\\]');
+                if (footerBlock) {
+                    footerBlock.style.paddingTop = '3mm';
+                    footerBlock.style.marginTop = 'auto';
+                }
+
+                const termsTitle = originalCopy.querySelector('span.text-\\[8px\\]');
+                if (termsTitle) {
+                    termsTitle.style.fontSize = '7.5px';
+                    termsTitle.style.color = '#64748b';
+                    termsTitle.style.fontWeight = 'bold';
+                    termsTitle.style.textTransform = 'uppercase';
+                }
+
+                const termsParagraphs = originalCopy.querySelectorAll('p.text-\\[8px\\]');
+                termsParagraphs.forEach(p => {
+                    p.style.fontSize = '7px';
+                    p.style.color = '#94a3b8';
+                    p.style.lineHeight = '1.3';
+                });
+
+                const sigContainers = originalCopy.querySelectorAll('.text-center');
+                sigContainers.forEach(container => {
+                    container.style.fontSize = '8px';
+                    container.style.color = '#475569';
+                    container.style.fontWeight = '700';
+                });
+
+                const receiverSig = originalCopy.querySelector('.w-24.border-t');
+                if (receiverSig) {
+                    receiverSig.style.width = '24mm';
+                    receiverSig.style.borderTop = '1px solid #cbd5e1';
+                    receiverSig.style.paddingTop = '1mm';
+                }
+
+                const companySig = originalCopy.querySelector('.w-32.border-t');
+                if (companySig) {
+                    companySig.style.width = '32mm';
+                    companySig.style.borderTop = '1px solid #cbd5e1';
+                    companySig.style.paddingTop = '1mm';
+                }
+            }
+
+            const officeCopy = element.querySelector('#challan-office-copy');
+            if (officeCopy) {
+                officeCopy.style.display = 'none';
+            }
+
+            // Show the cut-line in the PDF (we hide it since it is 1 copy only)
+            const cutLine = element.querySelector('.cut-line');
+            let originalCutLineStyles = '';
+            if (cutLine) {
+                originalCutLineStyles = cutLine.getAttribute('style') || '';
+                cutLine.style.display = 'none';
+            }
 
             const opt = {
-                margin:       [5, 5, 5, 5],
+                margin:       [0, 0, 0, 0],
                 filename:     `Challan-${autoNo}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2.5, useCORS: true, logging: false }, // Higher scale for extra crisp text
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                html2canvas:  { scale: 3.5, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
             };
 
             html2pdf().set(opt).from(element).outputPdf('blob').then(function (pdfBlob) {
-                // Restore original screen styling immediately
-                element.style.minHeight = originalStyles.minHeight;
-                element.style.padding = originalStyles.padding;
-                element.style.margin = originalStyles.margin;
-                element.style.borderRadius = originalStyles.borderRadius;
-                element.style.borderWidth = originalStyles.borderWidth;
-                element.style.borderColor = originalStyles.borderColor;
-                element.style.boxShadow = originalStyles.boxShadow;
+                // Restore original styles
+                element.setAttribute('style', originalElementStyles);
+                originalCopiesStyles.forEach(item => {
+                    item.el.setAttribute('style', item.style);
+                });
+                originalNoPrintDisplay.forEach(item => {
+                    item.el.style.display = item.display;
+                });
+                if (cutLine) {
+                    cutLine.setAttribute('style', originalCutLineStyles);
+                }
+                innerElements.forEach(item => {
+                    Object.keys(item.original).forEach(prop => {
+                        item.el.style[prop] = item.original[prop];
+                    });
+                });
 
                 const pdfFile = new File([pdfBlob], `Challan-${autoNo}.pdf`, { type: 'application/pdf' });
 
@@ -1659,8 +2342,35 @@
                     link.click();
                     document.body.removeChild(link);
 
-                    let formattedTotal = "₹" + order.amount.toLocaleString('en-IN');
-                    sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, order.qty, formattedTotal);
+                    let items = [];
+                    let lines = order.item.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                    if (lines.length <= 1) {
+                        let parsed = parseSingleLine(lines[0] || order.item);
+                        if (parsed) items.push(parsed);
+                        else items.push({ name: order.item, qty: order.qty, price: order.price, amount: order.amount });
+                    } else {
+                        lines.forEach(line => {
+                            let parsed = parseSingleLine(line);
+                            if (parsed) items.push(parsed);
+                            else items.push({ name: line, qty: null, price: null, amount: null });
+                        });
+                    }
+                    let totalQty = 0;
+                    let totalAmount = 0;
+                    let hasQty = false;
+                    let hasAmount = false;
+                    items.forEach(item => {
+                        if (item.qty !== null) { totalQty += item.qty; hasQty = true; }
+                        if (item.amount !== null) { totalAmount += item.amount; hasAmount = true; }
+                    });
+                    if (!hasAmount) totalAmount = order.amount;
+                    if (!hasQty) totalQty = order.qty;
+
+                    let formattedTotal = "₹" + totalAmount.toLocaleString('en-IN');
+                    const transportInput = document.getElementById('challan-input-transport');
+                    const transportMode = transportInput ? transportInput.value.trim() || 'Road' : 'Road';
+                    
+                    sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, totalQty, formattedTotal, transportMode);
 
                     alert("PDF ડાઉનલોડ થઈ ગયું છે અને વોટ્સએપ વેબ ઓપન થઈ રહ્યું છે. તમે ફાઈલ વોટ્સએપ પર મેન્યુઅલી મોકલી શકો છો.");
 
@@ -1669,13 +2379,16 @@
                 }
             }).catch(function (error) {
                 // Restore styles in case of error
-                element.style.minHeight = originalStyles.minHeight;
-                element.style.padding = originalStyles.padding;
-                element.style.margin = originalStyles.margin;
-                element.style.borderRadius = originalStyles.borderRadius;
-                element.style.borderWidth = originalStyles.borderWidth;
-                element.style.borderColor = originalStyles.borderColor;
-                element.style.boxShadow = originalStyles.boxShadow;
+                element.setAttribute('style', originalElementStyles);
+                originalCopiesStyles.forEach(item => {
+                    item.el.setAttribute('style', item.style);
+                });
+                originalNoPrintDisplay.forEach(item => {
+                    item.el.style.display = item.display;
+                });
+                if (cutLine) {
+                    cutLine.setAttribute('style', originalCutLineStyles);
+                }
 
                 console.error("PDF generation failed:", error);
                 alert("PDF બનાવવામાં કંઈક ભૂલ આવી!");
@@ -1685,14 +2398,15 @@
         }
 
         // Share to WhatsApp API
-        function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total) {
+        function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total, transport = 'Self') {
             if (!phone || phone === "") return alert("મોબાઈલ નંબર ઉમેરેલો નથી! ખાતાવહીમાં જઈને સુધારો પર ક્લિક કરી પહેલા મોબાઈલ નંબર લખો.");
             let message = `*નમસ્તે ${party},*\n\n` +
                 `*GOKUL PLASTIC* તરફથી તમારો માલ રવાના થયો છે:\n\n` +
                 `🔹 *ચલાન નંબર:* ${challanNum}\n` +
                 `🔹 *વસ્તુ:* ${item}\n` +
                 `🔹 *જથ્થો:* ${qty}\n` +
-                `🔹 *ટોટલ અમાઉન્ટ:* ${total}\n\n` +
+                `🔹 *ટોટલ અમાઉન્ટ:* ${total}\n` +
+                `🔹 *ટ્રાન્સપોર્ટ:* ${transport}\n\n` +
                 `🙏 *Gokul Plastic (Ahmedabad)*`;
             window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(message)}`, '_blank');
         }

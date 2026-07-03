@@ -58,13 +58,13 @@
             }
 
             /* Double copy printing wrap */
-            #challan-modal div.flex-col.justify-between {
+            #challan-print-area {
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
-                height: 278mm !important;
-                min-height: 278mm !important;
-                max-height: 278mm !important;
+                height: 260mm !important;
+                min-height: 260mm !important;
+                max-height: 260mm !important;
                 box-sizing: border-box !important;
                 page-break-inside: avoid !important;
                 page-break-after: avoid !important;
@@ -72,10 +72,10 @@
 
             /* Individual challan copy container */
             #challan-modal .challan-copy {
-                height: 132mm !important;
-                min-height: 132mm !important;
-                max-height: 132mm !important;
-                padding: 4mm 6mm !important;
+                height: 125mm !important;
+                min-height: 125mm !important;
+                max-height: 125mm !important;
+                padding: 3mm 5mm !important;
                 border: 1.5px solid #000 !important;
                 border-radius: 6px !important;
                 box-sizing: border-box !important;
@@ -93,7 +93,7 @@
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: start !important;
-                gap: 2mm !important;
+                gap: 1mm !important;
                 flex: 1 !important;
             }
 
@@ -157,29 +157,30 @@
                 border: 1.5px solid #000 !important;
                 width: 100% !important;
                 border-collapse: collapse !important;
+                flex-grow: 1 !important;
+                height: 100% !important;
+            }
+
+            #challan-modal table tr:not(.spacer-row) {
+                height: 1px !important;
             }
 
             #challan-modal th,
             #challan-modal td {
                 border: 1px solid #000 !important;
-                padding: 3px 5px !important;
+                padding: 2.5px 5px !important;
                 font-size: 8pt !important;
                 line-height: 1.1 !important;
+            }
+
+            #challan-modal td {
+                vertical-align: bottom !important;
             }
 
             #challan-modal th {
                 background-color: #f1f5f9 !important;
                 color: #000 !important;
                 font-weight: bold !important;
-            }
-
-            /* Custom height for item cell so it doesn't push the table down */
-            #challan-modal td[id$="-item"] {
-                height: 25mm !important;
-                min-height: 25mm !important;
-                vertical-align: top !important;
-                white-space: pre-wrap !important;
-                word-break: break-all !important;
             }
 
             /* Bottom footer signatures */
@@ -194,10 +195,11 @@
                 text-align: center !important;
                 font-size: 8pt !important;
                 color: #555 !important;
-                margin: 1.5mm 0 !important;
+                margin: 1mm 0 !important;
                 border-top: 1.5px dashed #555 !important;
                 padding-top: 1mm !important;
                 width: 100% !important;
+                border-collapse: collapse !important;
             }
         }
 
@@ -358,5 +360,18 @@
             #sidebar {
                 display: none !important;
             }
+        }
+
+        #challan-modal table {
+            flex-grow: 1;
+            height: 100%;
+        }
+
+        #challan-modal table tr:not(.spacer-row) {
+            height: 1px;
+        }
+
+        #challan-modal td {
+            vertical-align: bottom;
         }
     

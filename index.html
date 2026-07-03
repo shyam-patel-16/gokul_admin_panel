@@ -641,8 +641,8 @@
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Details (Item Description)</label>
-                            <input type="text" id="ord-item" placeholder="Enter item name or description" required
-                                class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
+                            <textarea id="ord-item" placeholder="Enter item name or description (For multiple items: Item, Qty, Rate on separate lines)" required
+                                class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs" rows="2"></textarea>
                         </div>
                         <div class="grid grid-cols-3 gap-3">
                             <div>
@@ -1064,86 +1064,119 @@
 
             <div class="flex justify-between items-center border-b pb-3 no-print">
                 <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-copy text-accent"></i>
-                    <span>Double Delivery Challan</span>
+                    <i class="fa-solid fa-file-invoice text-accent"></i>
+                    <span>Premium Delivery Challan Preview</span>
                 </h3>
                 <button onclick="closeChallan()"
                     class="text-slate-400 hover:text-slate-700 text-2xl font-bold p-1">&times;</button>
+            </div>
+
+            <!-- Dynamic Input Fields (No Print) -->
+            <div class="grid grid-cols-1 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 no-print">
+                <div>
+                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1">Transport Mode / By</label>
+                    <input type="text" id="challan-input-transport" oninput="updateChallanInputs()" placeholder="e.g. Self / Road" 
+                        class="w-full border border-slate-200 bg-white px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition">
+                </div>
+                <!-- Hidden inputs to maintain JavaScript compatibility -->
+                <input type="hidden" id="challan-input-vehicle" value="">
+                <input type="hidden" id="challan-input-hsn" value="39269099">
+            </div>
+
              <!-- Double copy printing wrap -->
             <div id="challan-print-area" class="flex flex-col justify-between min-h-[92vh] space-y-4 print:space-y-2">
 
                 <!-- COPY 1: ORIGINAL -->
                 <div id="challan-original-copy"
-                    class="challan-copy copy-1 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
-                    <div>
-                        <div
-                            class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
-                            ORIGINAL COPY (For Party)
-                        </div>
-                        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-800 flex items-center justify-center">
-                                    <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
-                                </div>
-                                <div>
-                                    <h2 class="text-2xl font-black text-slate-900 tracking-wide">GOKUL PLASTIC</h2>
-                                    <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
-                                    <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                    <p class="text-[10px] text-slate-500 max-w-xl font-medium leading-tight mt-1">A-16,
-                                        Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="text-right pt-4">
-                                <span
-                                    class="text-xs font-black text-slate-800 block border border-slate-800 px-2 py-0.5 bg-slate-50 uppercase">DELIVERY
-                                    CHALLAN</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
-                            <div>
-                                <p class="text-slate-500">Customer (To): <span id="ch1-party"
-                                        class="text-sm font-black text-slate-900 block mt-0.5"></span></p>
-                            </div>
-                            <div class="text-right font-medium">
-                                <p>Date: <span id="ch1-date" class="font-bold text-slate-950"></span></p>
-                                <p class="mt-0.5">Challan No: <span id="ch1-num"
-                                        class="font-black text-red-600 text-sm"></span></p>
-                            </div>
-                        </div>
-
-                        <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
-                            <thead>
-                                <tr class="bg-slate-800 text-white font-bold">
-                                    <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
-                                        Description)</th>
-                                    <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-slate-800">Price</th>
-                                    <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]"
-                                        id="ch1-item"></td>
-                                    <td class="p-4 text-center border border-slate-800 text-sm font-bold" id="ch1-qty">
-                                    </td>
-                                    <td class="p-4 text-right border border-slate-800 text-sm font-bold" id="ch1-price">
-                                    </td>
-                                    <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50"
-                                        id="ch1-total"></td>
-                                </tr>
-
-                            </tbody>
-                        </table>
+                    class="challan-copy copy-1 border-2 border-slate-800 p-5 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-3 min-h-[44vh]">
+                    
+                    <div class="absolute top-2 right-2 border border-slate-800 text-[8px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider z-10 uppercase">
+                        Original Copy (For Party)
                     </div>
 
-                    <div
-                        class="flex justify-between items-end pt-4 text-[10px] mt-4">
-                        <span class="text-slate-400 italic">This goods is sent via non-GST challan.</span>
-                        <div class="flex space-x-12 text-center font-bold text-slate-700">
-                            <div class="w-28 border-t border-slate-800 pt-1">Receiver's Signature</div>
-                            <div class="w-32 border-t border-slate-800 pt-1">For GOKUL PLASTIC</div>
+                    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-lg overflow-hidden bg-white border border-slate-800 flex items-center justify-center p-1">
+                                <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-slate-900 tracking-wider leading-none">GOKUL PLASTIC</h2>
+                                <p class="text-[9px] text-slate-500 font-semibold mt-1">Manufacturers of Quality Plastic Products</p>
+                                <p class="text-[9px] font-bold text-slate-600">GSTIN: 24AYVPB8220E1ZK | Phone: 9428344742</p>
+                                <p class="text-[8px] text-slate-500 max-w-xl leading-tight font-medium">
+                                    A-16, Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad - 382415
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-right pt-2">
+                            <span class="text-xs font-black text-white bg-slate-900 border border-slate-900 px-3 py-1 uppercase tracking-wider block">
+                                DELIVERY CHALLAN
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-1 text-xs border-b border-slate-800">
+                        <div class="border-r border-slate-200 pr-2">
+                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Consignee (Bill To / Ship To):</p>
+                            <p class="text-xs font-black text-slate-900 mt-0.5" id="ch1-party"></p>
+                        </div>
+                        <div class="pl-2 flex flex-col justify-between">
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-1">
+                                <div>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Challan No:</span>
+                                    <span id="ch1-num" class="font-black text-red-600 text-xs"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Date:</span>
+                                    <span id="ch1-date" class="font-bold text-slate-950 text-xs"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Transport Mode:</span>
+                                    <span id="ch1-transport" class="font-bold text-slate-950 text-xs">Self</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <table class="w-full text-xs border-collapse border border-slate-800 table-fixed grow">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-800 text-slate-800 font-black">
+                                <th class="p-1.5 border border-slate-800 text-center w-[8%] font-black" style="width: 8%;">S.N.</th>
+                                <th class="p-1.5 border border-slate-800 text-left w-[60%] font-black" style="width: 60%;">Description of Goods</th>
+                                <th class="p-1.5 border border-slate-800 text-center w-[10%] font-black" style="width: 10%;">Qty</th>
+                                <th class="p-1.5 border border-slate-800 text-right w-[10%] font-black" style="width: 10%;">Rate</th>
+                                <th class="p-1.5 border border-slate-800 text-right w-[12%] font-black" style="width: 12%;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ch1-table-body">
+                            <tr>
+                                <td class="p-2 border border-slate-800 text-center font-bold text-slate-700">1</td>
+                                <td class="p-2 border border-slate-800 font-bold text-xs whitespace-pre-wrap break-words min-h-[40px]" id="ch1-item"></td>
+                                <td class="p-2 border border-slate-800 text-center text-xs font-bold" id="ch1-qty"></td>
+                                <td class="p-2 border border-slate-800 text-right text-xs font-bold" id="ch1-price"></td>
+                                <td class="p-2 border border-slate-800 text-right font-black text-xs bg-slate-50" id="ch1-total"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="text-[9px] border-b border-slate-200 pb-1 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Amount In Words: <strong id="ch1-words" class="text-slate-800 font-extrabold italic"></strong></span>
+                        <span class="text-slate-400 italic text-[8px] print:hidden">Supply under Rule 55 of CGST Rules</span>
+                    </div>
+
+                    <div class="flex justify-between items-end text-[9px] mt-auto pt-2">
+                        <div class="max-w-[50%] flex flex-col gap-0.5">
+                            <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wide">Terms & Conditions:</span>
+                            <p class="text-[8px] text-slate-400 leading-tight">1. Goods received in good condition.</p>
+                            <p class="text-[8px] text-slate-400 leading-tight">2. Subject to Ahmedabad jurisdiction.</p>
+                            <p class="text-[8px] text-slate-400 leading-tight italic">This is a computer-generated delivery challan.</p>
+                        </div>
+                        <div class="flex space-x-10 text-center font-bold text-slate-700">
+                            <div class="w-24 border-t border-slate-800 pt-1 text-[8px]">Receiver's Signature</div>
+                            <div class="w-32 border-t border-slate-800 pt-1 text-[8px]">
+                                <span class="block text-[7px] text-slate-500 font-semibold mb-3">For GOKUL PLASTIC</span>
+                                Authorized Signatory
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1155,81 +1188,99 @@
 
                 <!-- COPY 2: OFFICE -->
                 <div id="challan-office-copy"
-                    class="challan-copy copy-2 border-2 border-slate-800 p-6 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-4 min-h-[44vh]">
-                    <div>
-                        <div
-                            class="absolute top-2 right-2 border border-slate-800 text-[9px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider">
-                            OFFICE COPY (Copy to be returned)
+                    class="challan-copy copy-2 border-2 border-slate-800 p-5 rounded-xl bg-white relative flex-1 flex flex-col justify-start gap-y-3 min-h-[44vh]">
+                    
+                    <div class="absolute top-2 right-2 border border-slate-800 text-[8px] font-bold px-2 py-0.5 bg-slate-100 tracking-wider z-10 uppercase">
+                        Office Copy (To be Returned)
+                    </div>
+
+                    <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-lg overflow-hidden bg-white border border-slate-800 flex items-center justify-center p-1">
+                                <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-slate-900 tracking-wider leading-none">GOKUL PLASTIC</h2>
+                                <p class="text-[9px] text-slate-500 font-semibold mt-1">Manufacturers of Quality Plastic Products</p>
+                                <p class="text-[9px] font-bold text-slate-600">GSTIN: 24AYVPB8220E1ZK | Phone: 9428344742</p>
+                                <p class="text-[8px] text-slate-500 max-w-xl leading-tight font-medium">
+                                    A-16, Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad - 382415
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-2.5">
-                            <div class="flex items-center gap-3">
-                                <div class="w-14 h-14 rounded-xl overflow-hidden bg-slate-50 border border-slate-800 flex items-center justify-center">
-                                    <img src="logo.png" alt="Gokul Plastic logo" class="w-full h-full object-contain" />
+                        <div class="text-right pt-2">
+                            <span class="text-xs font-black text-white bg-slate-900 border border-slate-900 px-3 py-1 uppercase tracking-wider block">
+                                DELIVERY CHALLAN
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-1 text-xs border-b border-slate-800">
+                        <div class="border-r border-slate-200 pr-2">
+                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Consignee (Bill To / Ship To):</p>
+                            <p class="text-xs font-black text-slate-900 mt-0.5" id="ch2-party"></p>
+                        </div>
+                        <div class="pl-2 flex flex-col justify-between">
+                            <div class="grid grid-cols-2 gap-x-2 gap-y-1">
+                                <div>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Challan No:</span>
+                                    <span id="ch2-num" class="font-black text-red-600 text-xs"></span>
                                 </div>
                                 <div>
-                                    <h2 class="text-2xl font-black text-slate-900 tracking-wide">GOKUL PLASTIC</h2>
-                                    <p class="text-xs font-bold text-slate-600">Phone: 9428344742</p>
-                                    <p class="text-[11px] font-bold text-slate-700">GST No.: 24AYVPB8220E1ZK</p>
-                                    <p class="text-[10px] text-slate-500 max-w-xl font-medium leading-tight mt-1">A-16,
-                                        Maruti Ind. Estate, SP Ring Rd, Saymji Krishna Varma Nagar, Odhav, Ahmedabad, 382415
-                                    </p>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Date:</span>
+                                    <span id="ch2-date" class="font-bold text-slate-950 text-xs"></span>
+                                </div>
+                                <div>
+                                    <span class="text-[9px] font-semibold text-slate-500 block">Transport Mode:</span>
+                                    <span id="ch2-transport" class="font-bold text-slate-950 text-xs">Self</span>
                                 </div>
                             </div>
-                            <div class="text-right pt-4">
-                                <span
-                                    class="text-xs font-black text-slate-800 block border border-slate-800 px-2 py-0.5 bg-slate-50 uppercase">DELIVERY
-                                    CHALLAN</span>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4 py-2 text-xs border-b">
-                            <div>
-                                <p class="text-slate-500">Customer (To): <span id="ch2-party"
-                                        class="text-sm font-black text-slate-900 block mt-0.5"></span></p>
-                            </div>
-                            <div class="text-right font-medium">
-                                <p>Date: <span id="ch2-date" class="font-bold text-slate-950"></span></p>
-                                <p class="mt-0.5">Challan No: <span id="ch2-num"
-                                        class="font-black text-red-600 text-sm"></span></p>
-                            </div>
-                        </div>
-
-                        <table class="w-full text-xs border-collapse mt-3 border border-slate-800 table-fixed">
-                            <thead>
-                                <tr class="bg-slate-800 text-white font-bold">
-                                    <th class="p-2 border border-slate-800 text-left w-1/2">Item Name (Item
-                                        Description)</th>
-                                    <th class="p-2 text-center w-20 border border-slate-800">Quantity (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-slate-800">Price</th>
-                                    <th class="p-2 text-right w-28 border border-slate-800">Total Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="p-4 border border-slate-800 font-bold text-sm whitespace-pre-wrap break-words min-h-[60px]"
-                                        id="ch2-item"></td>
-                                    <td class="p-4 text-center border border-slate-800 text-sm font-bold" id="ch2-qty">
-                                    </td>
-                                    <td class="p-4 text-right border border-slate-800 text-sm font-bold" id="ch2-price">
-                                    </td>
-                                    <td class="p-4 text-right font-black border border-slate-800 text-sm bg-slate-50"
-                                        id="ch2-total"></td>
-                                </tr>
-
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div
-                        class="flex justify-between items-end pt-4 text-[10px] mt-4">
-                        <span class="text-slate-400 italic">Get customer's signature as confirmation that goods have been received safely and return.</span>
-                        <div class="flex space-x-12 text-center font-bold text-slate-700">
-                            <div class="w-28 border-t border-slate-800 pt-1 text-red-600">Customer's Signature (Mandatory)</div>
-                            <div class="w-32 border-t border-slate-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
-                </div>               </div>
 
+                    <table class="w-full text-xs border-collapse border border-slate-800 table-fixed grow">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-800 text-slate-800 font-black">
+                                <th class="p-1.5 border border-slate-800 text-center w-[8%] font-black" style="width: 8%;">S.N.</th>
+                                <th class="p-1.5 border border-slate-800 text-left w-[60%] font-black" style="width: 60%;">Description of Goods</th>
+                                <th class="p-1.5 border border-slate-800 text-center w-[10%] font-black" style="width: 10%;">Qty</th>
+                                <th class="p-1.5 border border-slate-800 text-right w-[10%] font-black" style="width: 10%;">Rate</th>
+                                <th class="p-1.5 border border-slate-800 text-right w-[12%] font-black" style="width: 12%;">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ch2-table-body">
+                            <tr>
+                                <td class="p-2 border border-slate-800 text-center font-bold text-slate-700">1</td>
+                                <td class="p-2 border border-slate-800 font-bold text-xs whitespace-pre-wrap break-words min-h-[40px]" id="ch2-item"></td>
+                                <td class="p-2 border border-slate-800 text-center text-xs font-bold" id="ch2-qty"></td>
+                                <td class="p-2 border border-slate-800 text-right text-xs font-bold" id="ch2-price"></td>
+                                <td class="p-2 border border-slate-800 text-right font-black text-xs bg-slate-50" id="ch2-total"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="text-[9px] border-b border-slate-200 pb-1 flex items-center justify-between">
+                        <span class="text-slate-500 font-medium">Amount In Words: <strong id="ch2-words" class="text-slate-800 font-extrabold italic"></strong></span>
+                        <span class="text-slate-400 italic text-[8px] print:hidden">Supply under Rule 55 of CGST Rules</span>
+                    </div>
+
+                    <div class="flex justify-between items-end text-[9px] mt-auto pt-2">
+                        <div class="max-w-[50%] flex flex-col gap-0.5">
+                            <span class="text-[8px] font-bold text-slate-500 uppercase tracking-wide">Receiver Acknowledgement:</span>
+                            <p class="text-[8px] text-slate-400 leading-tight">Received goods in correct description & quality.</p>
+                            <p class="text-[8px] text-slate-400 leading-tight italic">Please sign and return this copy to transporter.</p>
+                        </div>
+                        <div class="flex space-x-10 text-center font-bold text-slate-700">
+                            <div class="w-24 border-t border-slate-800 pt-1 text-[8px] text-red-600 font-black">Customer's Signature</div>
+                            <div class="w-32 border-t border-slate-800 pt-1 text-[8px]">
+                                <span class="block text-[7px] text-slate-500 font-semibold mb-3">For GOKUL PLASTIC</span>
+                                Authorized Signatory
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
 
             <div class="flex flex-col sm:flex-row gap-3 no-print pt-2">
                 <button onclick="window.print()"
