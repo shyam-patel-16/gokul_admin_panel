@@ -531,6 +531,170 @@
             reader.readAsText(file);
         }
 
+        // Dynamic order items builder state and helper functions
+        let currentOrderItems = [];
+
+        function renderOrderItemsList() {
+            const tbody = document.getElementById('order-items-table-body');
+            const totalQtyEl = document.getElementById('order-items-total-qty');
+            const totalAmountEl = document.getElementById('order-items-total-amount');
+
+            if (!tbody) return;
+
+            tbody.innerHTML = "";
+            let totalQty = 0;
+            let totalAmount = 0;
+
+            if (currentOrderItems.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="p-6 text-center text-slate-400 font-semibold bg-white">
+                            કોઈ આઇટમ ઉમેરેલી નથી (No items added yet)
+                        </td>
+                    </tr>
+                `;
+            } else {
+                currentOrderItems.forEach((item, index) => {
+                    const rowAmount = item.qty * item.price;
+                    totalQty += item.qty;
+                    totalAmount += rowAmount;
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100 transition">
+                            <td class="p-2.5 text-center text-slate-400 font-bold">${index + 1}</td>
+                            <td class="p-2.5 font-bold text-slate-850">${item.name}</td>
+                            <td class="p-2.5 text-center font-bold text-slate-700">${item.qty}</td>
+                            <td class="p-2.5 text-right font-semibold text-slate-600">₹${item.price.toLocaleString('en-IN')}</td>
+                            <td class="p-2.5 text-right font-extrabold text-indigo-650">₹${rowAmount.toLocaleString('en-IN')}</td>
+                            <td class="p-2.5 text-center">
+                                <button type="button" onclick="removeOrderItemRow(${index})" class="text-red-500 hover:text-red-700 p-1 font-bold transition" title="Delete">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+
+            if (totalQtyEl) totalQtyEl.innerText = totalQty;
+            if (totalAmountEl) totalAmountEl.innerText = "₹" + totalAmount.toLocaleString('en-IN');
+
+            // Update hidden inputs for original form fields compatibility
+            const ordItemEl = document.getElementById('ord-item');
+            const ordQtyEl = document.getElementById('ord-qty');
+            const ordPriceEl = document.getElementById('ord-price');
+
+            if (ordItemEl && ordQtyEl && ordPriceEl) {
+                if (currentOrderItems.length === 0) {
+                    ordItemEl.value = "";
+                    ordQtyEl.value = "";
+                    ordPriceEl.value = "";
+                } else {
+                    // Item description format: "Item1, Qty1, Price1\nItem2, Qty2, Price2"
+                    ordItemEl.value = currentOrderItems.map(item => `${item.name}, ${item.qty}, ${item.price}`).join('\n');
+                    ordQtyEl.value = totalQty;
+                    // Average price = totalAmount / totalQty
+                    ordPriceEl.value = totalQty > 0 ? Number((totalAmount / totalQty).toFixed(4)) : 0;
+                }
+            }
+        }
+
+        function addOrderItemRow() {
+            const nameInput = document.getElementById('item-input-name');
+            const qtyInput = document.getElementById('item-input-qty');
+            const priceInput = document.getElementById('item-input-price');
+
+            if (!nameInput || !qtyInput || !priceInput) return;
+
+            const name = nameInput.value.trim();
+            const qty = parseFloat(qtyInput.value);
+            let price = parseFloat(priceInput.value);
+            
+            // Default to 0 price if left blank
+            if (priceInput.value.trim() === "") {
+                price = 0;
+            }
+
+            if (!name) {
+                alert("કૃપા કરીને આઇટમનું નામ લખો (Please enter Item Name)");
+                nameInput.focus();
+                return;
+            }
+            if (isNaN(qty) || qty <= 0) {
+                alert("કૃપા કરીને સાચી ક્વોન્ટિટી લખો (Please enter valid Quantity)");
+                qtyInput.focus();
+                return;
+            }
+            if (isNaN(price) || price < 0) {
+                alert("કૃપા કરીને સાચો ભાવ લખો (Please enter valid Price)");
+                priceInput.focus();
+                return;
+            }
+
+            currentOrderItems.push({ name, qty, price });
+            
+            // Clear inputs for next entry
+            nameInput.value = "";
+            qtyInput.value = "";
+            priceInput.value = "";
+            const totalInput = document.getElementById('item-input-total');
+            if (totalInput) totalInput.value = "";
+
+            renderOrderItemsList();
+            nameInput.focus();
+        }
+
+        function removeOrderItemRow(index) {
+            currentOrderItems.splice(index, 1);
+            renderOrderItemsList();
+        }
+
+        function importFromText() {
+            const importTextarea = document.getElementById('item-import-textarea');
+            if (!importTextarea) return;
+
+            const text = importTextarea.value.trim();
+            if (!text) {
+                alert("કૃપા કરીને પેલા ખાનામાં આઇટમની વિગત પેસ્ટ કરો (Please paste some items first)");
+                return;
+            }
+
+            let lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            let importedCount = 0;
+
+            for (let line of lines) {
+                let parsed = parseSingleLine(line);
+                if (parsed) {
+                    currentOrderItems.push({
+                        name: parsed.name || "Unnamed Item",
+                        qty: parsed.qty || 0,
+                        price: parsed.price || 0
+                    });
+                    importedCount++;
+                } else {
+                    currentOrderItems.push({
+                        name: line,
+                        qty: 0,
+                        price: 0
+                    });
+                    importedCount++;
+                }
+            }
+
+            if (importedCount > 0) {
+                renderOrderItemsList();
+                importTextarea.value = "";
+                document.getElementById('import-container').classList.add('hidden');
+                alert(`${importedCount} આઇટમ સફળતાપૂર્વક આયાત કરવામાં આવી! (Successfully imported ${importedCount} items!)`);
+            } else {
+                alert("કોઈ પણ સાચી આઇટમ મળી નથી. કૃપા કરીને ફોર્મેટ ચેક કરો. (No valid items found. Please check format)");
+            }
+        }
+
+        window.addOrderItemRow = addOrderItemRow;
+        window.removeOrderItemRow = removeOrderItemRow;
+        window.importFromText = importFromText;
+
         // Navigation Page Swapping Switcher
         function switchPage(pageId) {
             currentTab = pageId;
@@ -580,6 +744,18 @@
                 renderAllPayments();
             } else if (pageId === 'settings') {
                 renderSettingsConfig();
+            } else if (pageId === 'add-order') {
+                const nameInput = document.getElementById('item-input-name');
+                const qtyInput = document.getElementById('item-input-qty');
+                const priceInput = document.getElementById('item-input-price');
+                if (nameInput) nameInput.value = "";
+                if (qtyInput) qtyInput.value = "";
+                if (priceInput) priceInput.value = "";
+                currentOrderItems = [];
+                renderOrderItemsList();
+                setTimeout(() => {
+                    if (nameInput) nameInput.focus();
+                }, 50);
             }
         }
 
@@ -601,14 +777,59 @@
             }
         }
 
-        // Auto-calculate Order Form totals as user types
-        document.getElementById('ord-item').addEventListener('input', function () {
-            let totals = calculateTotalsFromDescription(this.value);
-            if (totals) {
-                document.getElementById('ord-qty').value = totals.qty;
-                document.getElementById('ord-price').value = totals.price;
+        // Setup Event Handlers for Order Items Inputs (Enter Key navigation & Auto-calculation of Row Total)
+        function setupItemInputHandlers() {
+            const nameInput = document.getElementById('item-input-name');
+            const qtyInput = document.getElementById('item-input-qty');
+            const priceInput = document.getElementById('item-input-price');
+            const totalInput = document.getElementById('item-input-total');
+
+            // Keyboard navigation (Enter key shifts focus or submits)
+            if (nameInput) {
+                nameInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (qtyInput) qtyInput.focus();
+                    }
+                });
             }
-        });
+
+            if (qtyInput) {
+                qtyInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        if (priceInput) priceInput.focus();
+                    }
+                });
+                
+                qtyInput.addEventListener('input', updateItemInputTotal);
+            }
+
+            if (priceInput) {
+                priceInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addOrderItemRow();
+                    }
+                });
+                
+                priceInput.addEventListener('input', updateItemInputTotal);
+            }
+
+            function updateItemInputTotal() {
+                if (qtyInput && priceInput && totalInput) {
+                    const qty = parseFloat(qtyInput.value) || 0;
+                    const price = parseFloat(priceInput.value) || 0;
+                    totalInput.value = qty > 0 && price >= 0 ? (qty * price).toFixed(2) : "";
+                }
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupItemInputHandlers);
+        } else {
+            setupItemInputHandlers();
+        }
 
         // Submit Order Form
         document.getElementById('order-form').addEventListener('submit', function (e) {
@@ -623,6 +844,17 @@
                 if (foundOrder) existingPhone = foundOrder.phone;
             }
 
+            if (currentOrderItems.length === 0) {
+                alert("કૃપા કરીને ઓછામાં ઓછી એક આઇટમ ઓર્ડર લિસ્ટમાં ઉમેરો (Please add at least one item to the order items list)");
+                return;
+            }
+
+            renderOrderItemsList();
+
+            let totalQty = currentOrderItems.reduce((sum, item) => sum + item.qty, 0);
+            let totalAmount = currentOrderItems.reduce((sum, item) => sum + (item.qty * item.price), 0);
+            let averagePrice = totalQty > 0 ? Number((totalAmount / totalQty).toFixed(4)) : 0;
+
             let newOrder = {
                 id: Date.now(),
                 type: document.getElementById('ord-type').value,
@@ -630,12 +862,12 @@
                 timestamp: new Date(document.getElementById('ord-date').value).getTime() || Date.now(),
                 party: partyName,
                 phone: existingPhone,
-                item: document.getElementById('ord-item').value,
-                qty: parseFloat(document.getElementById('ord-qty').value),
-                price: parseFloat(document.getElementById('ord-price').value),
+                item: currentOrderItems.map(item => `${item.name}, ${item.qty}, ${item.price}`).join('\n'),
+                qty: totalQty,
+                price: averagePrice,
+                amount: totalAmount,
                 status: document.getElementById('ord-status').value
             };
-            newOrder.amount = newOrder.qty * newOrder.price;
 
             if (isFirebaseConnected && firestoreDb) {
                 let ordersCol = activeBusiness === 'ABS' ? 'orders' : activeBusiness + '_orders';
@@ -644,6 +876,9 @@
                 db.orders.push(newOrder);
                 saveData();
             }
+
+            currentOrderItems = [];
+            renderOrderItemsList();
 
             activeParty = newOrder.party;
             this.reset();
@@ -1864,20 +2099,20 @@
                         if (hasSN) {
                             html += `
                                 <tr class="spacer-row">
-                                    <td class="p-2 border border-slate-800">&nbsp;</td>
-                                    <td class="p-2 border border-slate-800">&nbsp;</td>
-                                    <td class="p-2 border border-slate-800">&nbsp;</td>
-                                    <td class="p-2 border border-slate-800">&nbsp;</td>
-                                    <td class="p-2 border border-slate-800 bg-slate-50">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 8%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 60%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-2 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
                                 </tr>
                             `;
                         } else {
                             html += `
                                 <tr class="spacer-row">
-                                    <td class="p-4 border border-slate-800">&nbsp;</td>
-                                    <td class="p-4 border border-slate-800">&nbsp;</td>
-                                    <td class="p-4 border border-slate-800">&nbsp;</td>
-                                    <td class="p-4 border border-slate-800 bg-slate-50">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800" style="width: 68%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800" style="width: 10%;">&nbsp;</td>
+                                    <td class="p-4 border border-slate-800 bg-slate-50" style="width: 12%;">&nbsp;</td>
                                 </tr>
                             `;
                         }
@@ -1887,19 +2122,19 @@
                         if (hasSN) {
                             html += `
                                 <tr class="font-bold border-t border-slate-800 bg-slate-50">
-                                    <td colspan="2" class="p-2 border border-slate-800 text-right font-bold uppercase">Total:</td>
-                                    <td class="p-2 border border-slate-800 text-center font-bold">${totalQtyText}</td>
-                                    <td class="p-2 border border-slate-800 text-right font-bold"></td>
-                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100">${formattedTotal}</td>
+                                    <td colspan="2" class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                    <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
                                 </tr>
                             `;
                         } else {
                             html += `
                                 <tr class="font-bold border-t border-slate-800 bg-slate-50">
-                                    <td class="p-2 border border-slate-800 text-right font-bold uppercase">Total:</td>
-                                    <td class="p-2 border border-slate-800 text-center font-bold">${totalQtyText}</td>
-                                    <td class="p-2 border border-slate-800 text-right font-bold"></td>
-                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100">${formattedTotal}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold uppercase" style="width: 68%;">Total:</td>
+                                    <td class="p-2 border border-slate-800 text-center font-bold" style="width: 10%;">${totalQtyText}</td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold" style="width: 10%;"></td>
+                                    <td class="p-2 border border-slate-800 text-right font-bold text-xs bg-slate-100" style="width: 12%;">${formattedTotal}</td>
                                 </tr>
                             `;
                         }

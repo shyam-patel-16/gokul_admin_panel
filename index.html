@@ -639,35 +639,110 @@
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs">
                             </div>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Details (Item Description)</label>
-                            <textarea id="ord-item" placeholder="Enter item name or description (For multiple items: Item, Qty, Rate on separate lines)" required
-                                class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 text-xs" rows="2"></textarea>
+                        <!-- Dynamic Order Items List Card -->
+                        <div class="border border-slate-100 rounded-2xl p-4 bg-slate-50/50 space-y-4">
+                            <div class="flex justify-between items-center">
+                                <h4 class="font-extrabold text-slate-700 text-xs flex items-center gap-2">
+                                    <i class="fa-solid fa-list text-accent"></i>
+                                    <span>Order Items List</span>
+                                </h4>
+                                <button type="button" onclick="document.getElementById('import-container').classList.toggle('hidden')" 
+                                    class="text-accent hover:text-accentHover font-bold text-[10px] flex items-center gap-1">
+                                    <i class="fa-solid fa-file-import"></i> <span>📋 Paste Bulk Text</span>
+                                </button>
+                            </div>
+
+                            <!-- Bulk Import text area container, hidden by default -->
+                            <div id="import-container" class="hidden border border-dashed border-indigo-200 rounded-xl p-3 bg-indigo-50/20 space-y-2">
+                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Paste items text (Format: Name, Qty, Price on each line)</label>
+                                <textarea id="item-import-textarea" rows="3" placeholder="PP Bag, 100, 1.50&#10;LD Roll, 250, 85" 
+                                    class="w-full p-2 border border-slate-200 rounded-xl text-xs outline-none bg-white focus:ring-2 focus:ring-accent/20"></textarea>
+                                <div class="flex gap-2 justify-end">
+                                    <button type="button" onclick="document.getElementById('import-container').classList.add('hidden')" 
+                                        class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-[10px] transition">Cancel</button>
+                                    <button type="button" onclick="importFromText()" 
+                                        class="bg-accent hover:bg-accentHover text-white font-bold px-3 py-1.5 rounded-lg text-[10px] transition flex items-center gap-1">
+                                        <i class="fa-solid fa-check"></i> Import Items
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Items Table -->
+                            <div class="overflow-x-auto border border-slate-200/60 rounded-xl bg-white">
+                                <table class="w-full text-xs text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-200/60 text-slate-500 font-bold uppercase tracking-wider text-[9px]">
+                                            <th class="p-2.5 text-center w-12">S.N.</th>
+                                            <th class="p-2.5">Item Description</th>
+                                            <th class="p-2.5 text-center w-24">Qty</th>
+                                            <th class="p-2.5 text-right w-24">Price</th>
+                                            <th class="p-2.5 text-right w-28">Total</th>
+                                            <th class="p-2.5 text-center w-12">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="order-items-table-body" class="divide-y divide-slate-100 font-semibold text-slate-700">
+                                        <!-- Will be rendered dynamically -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-slate-50/80 font-black border-t border-slate-200 text-slate-800">
+                                            <td colspan="2" class="p-2.5 text-right uppercase tracking-wider text-[10px]">Grand Total:</td>
+                                            <td id="order-items-total-qty" class="p-2.5 text-center">0</td>
+                                            <td class="p-2.5"></td>
+                                            <td id="order-items-total-amount" class="p-2.5 text-right">₹0</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+
+                            <!-- Input Row for adding new item -->
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-2">
+                                <div class="sm:col-span-5">
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Name / Description</label>
+                                    <input type="text" id="item-input-name" placeholder="e.g. PP Bag 10x12" 
+                                        class="w-full p-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-xs">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Qty</label>
+                                    <input type="number" step="any" id="item-input-qty" placeholder="0" 
+                                        class="w-full p-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-xs font-bold text-center">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Price (Rate)</label>
+                                    <input type="number" step="any" id="item-input-price" placeholder="0" 
+                                        class="w-full p-2 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent text-xs font-bold text-right">
+                                </div>
+                                <div class="sm:col-span-2">
+                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Total (Amt)</label>
+                                    <input type="text" id="item-input-total" placeholder="0.00" readonly tabindex="-1"
+                                        class="w-full p-2 border border-slate-200 rounded-xl bg-slate-100 outline-none text-xs font-black text-right text-slate-700">
+                                </div>
+                                <div class="sm:col-span-1 flex items-end">
+                                    <button type="button" onclick="addOrderItemRow()" 
+                                        class="w-full bg-accent hover:bg-accentHover text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1 shadow-sm transition" title="Add Item">
+                                        <i class="fa-solid fa-plus"></i> Add
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-3 gap-3">
+
+                        <!-- Status & Hidden inputs for compatibility -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
-                                <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Quantity
-                                    (Qty)</label>
-                                <input type="number" step="any" id="ord-qty" placeholder="0" required
-                                    class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 font-bold text-xs">
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Price
-                                    (Price)</label>
-                                <input type="number" step="any" id="ord-price" placeholder="0" required
-                                    class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 text-slate-700 font-bold text-xs">
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</label>
+                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Status</label>
                                 <select id="ord-status"
                                     class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition duration-150 font-bold text-slate-700 text-xs">
                                     <option value="Pending">Pending</option>
                                     <option value="Complete">Complete</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <!-- Hidden compatibility inputs -->
+                        <div class="hidden">
+                            <textarea id="ord-item"></textarea>
+                            <input type="number" step="any" id="ord-qty">
+                            <input type="number" step="any" id="ord-price">
                         </div>
                         <button type="submit"
                             class="w-full bg-accent hover:bg-accentHover text-white font-bold py-3 px-4 rounded-xl transition duration-150 shadow-md hover:shadow-lg shadow-accent/10 flex items-center justify-center gap-2 text-xs">
