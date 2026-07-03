@@ -2166,83 +2166,34 @@
             shareBtn.disabled = true;
             shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-lg"></i> Loading PDF...`;
 
-            // Store original styles of print area
-            const originalElementStyles = element.getAttribute('style') || '';
-            
-            // Store original styles of each challan-copy
-            const copies = element.querySelectorAll('.challan-copy');
-            const originalCopiesStyles = [];
-            copies.forEach(copy => {
-                originalCopiesStyles.push({
-                    el: copy,
-                    style: copy.getAttribute('style') || ''
-                });
-            });
+            // Create temporary container for mobile compatibility
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '0';
+            container.style.top = '0';
+            container.style.width = '148mm';
+            container.style.height = '210mm';
+            container.style.zIndex = '-9999';
+            container.style.overflow = 'hidden';
+            container.style.background = '#ffffff';
+            document.body.appendChild(container);
 
-            // Store original styles of inner elements to restore them later
-            const innerElements = [];
-            const saveStyle = (selector, styleProps) => {
-                const els = element.querySelectorAll(selector);
-                els.forEach(el => {
-                    const original = {};
-                    styleProps.forEach(prop => {
-                        original[prop] = el.style[prop] || '';
-                    });
-                    innerElements.push({ el, original });
-                });
-            };
+            // Clone the original element
+            const clone = element.cloneNode(true);
+            clone.id = 'challan-print-area-clone';
 
-            // Capture original styles of elements we're going to modify dynamically
-            saveStyle('.absolute', ['top', 'right', 'border', 'color', 'backgroundColor', 'fontSize', 'fontWeight', 'padding', 'borderRadius']);
-            saveStyle('.flex.justify-between.items-start', ['borderBottom', 'paddingBottom']);
-            saveStyle('.w-12.h-12', ['width', 'height', 'borderRadius', 'border', 'padding']);
-            saveStyle('h2', ['fontSize', 'fontWeight', 'color', 'letterSpacing']);
-            saveStyle('p.text-\\[9px\\]', ['fontSize', 'color', 'fontWeight', 'marginTop']);
-            saveStyle('p.text-slate-600', ['fontSize', 'color', 'fontWeight', 'marginTop']);
-            saveStyle('p.font-bold.text-slate-600', ['fontSize', 'color', 'fontWeight', 'marginTop']);
-            saveStyle('p.text-slate-500.max-w-xl', ['fontSize', 'color', 'fontWeight', 'marginTop', 'lineHeight']);
-            saveStyle('.text-right span', ['fontSize', 'fontWeight', 'color', 'backgroundColor', 'padding', 'border', 'borderRadius', 'letterSpacing']);
-            saveStyle('.grid.grid-cols-2', ['borderBottom', 'paddingTop', 'paddingBottom', 'gap']);
-            saveStyle('.grid.grid-cols-2 p.text-\\[9px\\]', ['fontSize', 'color', 'textTransform', 'fontWeight', 'letterSpacing']);
-            saveStyle('#ch1-party', ['fontSize', 'fontWeight', 'color', 'marginTop']);
-            saveStyle('.grid.grid-cols-2 span.text-\\[9px\\]', ['fontSize', 'color', 'fontWeight']);
-            saveStyle('.grid.grid-cols-2 span.text-xs', ['fontSize', 'fontWeight', 'color']);
-            saveStyle('#ch1-num', ['color', 'fontWeight']);
-            saveStyle('table', ['border', 'borderCollapse', 'marginTop', 'width']);
-            saveStyle('table th', ['backgroundColor', 'color', 'fontWeight', 'fontSize', 'padding', 'border']);
-            saveStyle('table td', ['border', 'padding', 'fontSize', 'color', 'lineHeight', 'fontWeight', 'textAlign', 'backgroundColor']);
-            saveStyle('.text-\\[9px\\].border-b.border-slate-200', ['borderBottom', 'paddingBottom', 'fontSize', 'color']);
-            saveStyle('#ch1-words', ['color', 'fontWeight']);
-            saveStyle('.flex.justify-between.items-end', ['paddingTop', 'marginTop']);
-            saveStyle('span.text-\\[8px\\]', ['fontSize', 'color', 'fontWeight', 'textTransform']);
-            saveStyle('p.text-\\[8px\\]', ['fontSize', 'color', 'lineHeight']);
-            saveStyle('.text-center', ['fontSize', 'color', 'fontWeight']);
-            saveStyle('.w-24.border-t', ['width', 'borderTop', 'paddingTop']);
-            saveStyle('.w-32.border-t', ['width', 'borderTop', 'paddingTop']);
+            // Set fixed dimensions for the clone
+            clone.style.display = 'block';
+            clone.style.width = '148mm';
+            clone.style.height = '210mm';
+            clone.style.minHeight = '210mm';
+            clone.style.maxHeight = '210mm';
+            clone.style.padding = '0';
+            clone.style.margin = '0';
+            clone.style.boxSizing = 'border-box';
+            clone.style.background = '#ffffff';
 
-            // Handle no-print elements inside the element (excluding cut-line if needed)
-            const noPrintElements = element.querySelectorAll('.no-print');
-            const originalNoPrintDisplay = [];
-            noPrintElements.forEach(el => {
-                originalNoPrintDisplay.push({
-                    el: el,
-                    display: el.style.display
-                });
-                el.style.display = 'none';
-            });
-
-            // Adjust styles for a perfect A5 portrait PDF output containing ONLY original copy
-            element.style.display = 'block';
-            element.style.width = '148mm';
-            element.style.height = '210mm';
-            element.style.minHeight = '210mm';
-            element.style.maxHeight = '210mm';
-            element.style.padding = '0';
-            element.style.margin = '0';
-            element.style.boxSizing = 'border-box';
-            element.style.background = '#ffffff';
-
-            const originalCopy = element.querySelector('#challan-original-copy');
+            const originalCopy = clone.querySelector('#challan-original-copy');
             if (originalCopy) {
                 originalCopy.style.display = 'flex';
                 originalCopy.style.flexDirection = 'column';
@@ -2513,18 +2464,25 @@
                 }
             }
 
-            const officeCopy = element.querySelector('#challan-office-copy');
+            const officeCopy = clone.querySelector('#challan-office-copy');
             if (officeCopy) {
                 officeCopy.style.display = 'none';
             }
 
-            // Show the cut-line in the PDF (we hide it since it is 1 copy only)
-            const cutLine = element.querySelector('.cut-line');
-            let originalCutLineStyles = '';
+            // Hide the cut-line in the PDF
+            const cutLine = clone.querySelector('.cut-line');
             if (cutLine) {
-                originalCutLineStyles = cutLine.getAttribute('style') || '';
                 cutLine.style.display = 'none';
             }
+
+            // Hide no-print elements inside the clone
+            const noPrintElements = clone.querySelectorAll('.no-print');
+            noPrintElements.forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Append clone to temporary container
+            container.appendChild(clone);
 
             const opt = {
                 margin:       [0, 0, 0, 0],
@@ -2534,23 +2492,11 @@
                 jsPDF:        { unit: 'mm', format: 'a5', orientation: 'portrait' }
             };
 
-            html2pdf().set(opt).from(element).outputPdf('blob').then(function (pdfBlob) {
-                // Restore original styles
-                element.setAttribute('style', originalElementStyles);
-                originalCopiesStyles.forEach(item => {
-                    item.el.setAttribute('style', item.style);
-                });
-                originalNoPrintDisplay.forEach(item => {
-                    item.el.style.display = item.display;
-                });
-                if (cutLine) {
-                    cutLine.setAttribute('style', originalCutLineStyles);
+            html2pdf().set(opt).from(clone).outputPdf('blob').then(function (pdfBlob) {
+                // Remove temporary container
+                if (container.parentNode) {
+                    container.parentNode.removeChild(container);
                 }
-                innerElements.forEach(item => {
-                    Object.keys(item.original).forEach(prop => {
-                        item.el.style[prop] = item.original[prop];
-                    });
-                });
 
                 const pdfFile = new File([pdfBlob], `Challan-${autoNo}.pdf`, { type: 'application/pdf' });
 
@@ -2613,16 +2559,9 @@
                     shareBtn.innerHTML = originalText;
                 }
             }).catch(function (error) {
-                // Restore styles in case of error
-                element.setAttribute('style', originalElementStyles);
-                originalCopiesStyles.forEach(item => {
-                    item.el.setAttribute('style', item.style);
-                });
-                originalNoPrintDisplay.forEach(item => {
-                    item.el.style.display = item.display;
-                });
-                if (cutLine) {
-                    cutLine.setAttribute('style', originalCutLineStyles);
+                // Remove temporary container in case of error
+                if (container.parentNode) {
+                    container.parentNode.removeChild(container);
                 }
 
                 console.error("PDF generation failed:", error);
@@ -2631,6 +2570,8 @@
                 shareBtn.innerHTML = originalText;
             });
         }
+
+
 
         // Share to WhatsApp API
         function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total, transport = 'Self') {
