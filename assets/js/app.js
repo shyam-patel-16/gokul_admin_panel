@@ -1253,10 +1253,15 @@
             partyOrders.forEach(o => {
                 let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `
-                    <button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center gap-0.5 transition" title="Print Challan"><i class="fa-solid fa-print"></i>Challan</button>
-                    <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="text-[10px] bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 flex items-center gap-0.5 transition" title="Share Challan"><i class="fa-solid fa-share-nodes"></i>Share</button>
-                ` : '';
+                let actionStack = `
+                    <div class="flex flex-col gap-1 items-end min-w-[70px] no-print">
+                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusClass} flex items-center justify-center gap-0.5 transition w-full" title="સ્થિતિ બદલો">${o.status} <i class="fa-solid fa-arrows-rotate text-[8px] ml-0.5"></i></button>
+                        ${o.status === 'Complete' ? `
+                            <button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-0.5 transition w-full" title="Print Challan"><i class="fa-solid fa-print"></i>Challan</button>
+                            <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="text-[10px] bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 flex items-center justify-center gap-0.5 transition w-full" title="Share Challan"><i class="fa-solid fa-share-nodes"></i>Share</button>
+                        ` : ''}
+                    </div>
+                `;
 
                 orderTable.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs space-y-2 relative group">
@@ -1271,10 +1276,7 @@
                         <p class="font-bold text-slate-800 text-xs">${o.item} <span class="text-slate-400">(${o.qty} x ₹${o.price})</span></p>
                         <div class="flex justify-between items-center pt-2 border-t border-dashed border-slate-100">
                             <span class="font-extrabold text-slate-800">₹${o.amount.toLocaleString('en-IN')}</span>
-                            <div class="flex space-x-1.5 items-center">
-                                ${challanBtn}
-                                <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusClass}">${o.status} <i class="fa-solid fa-arrows-rotate text-[8px] ml-0.5"></i></button>
-                            </div>
+                            ${actionStack}
                         </div>
                     </div>
                 `;
@@ -1491,10 +1493,17 @@
             filteredOrders.forEach(o => {
                 let typeBadge = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusBadge = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
-                let challanBtn = o.status === 'Complete' ? `
-                    <button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center gap-0.5 transition" title="ચલાન પ્રિન્ટ કરો"><i class="fa-solid fa-print"></i>ચલાન</button>
-                    <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 text-[10px] font-bold flex items-center gap-0.5 transition" title="વોટ્સએપ/પીડીએફ શેર કરો"><i class="fa-solid fa-share-nodes"></i>શેર</button>
-                ` : '';
+                let actionStack = `
+                    <div class="flex flex-col gap-1 items-center w-full min-w-[70px]">
+                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge} inline-flex items-center justify-center gap-0.5 hover:shadow-xs transition w-full" title="સ્થિતિ બદલો">
+                            ${o.status} <i class="fa-solid fa-arrows-rotate text-[8px]"></i>
+                        </button>
+                        ${o.status === 'Complete' ? `
+                            <button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="ચલાન પ્રિન્ટ કરો"><i class="fa-solid fa-print"></i>ચલાન</button>
+                            <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="વોટ્સએપ/પીડીએફ શેર કરો"><i class="fa-solid fa-share-nodes"></i>શેર</button>
+                        ` : ''}
+                    </div>
+                `;
 
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50 transition border-b border-slate-100">
@@ -1506,14 +1515,16 @@
                         <td class="p-4 text-right font-semibold text-slate-600">₹${o.price.toLocaleString('en-IN')}</td>
                         <td class="p-4 text-right font-extrabold text-slate-800">₹${o.amount.toLocaleString('en-IN')}</td>
                         <td class="p-4 text-center">
-                            <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge} inline-flex items-center gap-0.5 hover:shadow-xs transition">
-                                ${o.status} <i class="fa-solid fa-arrows-rotate text-[8px]"></i>
-                            </button>
+                            <span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge}">
+                                ${o.status}
+                            </span>
                         </td>
-                        <td class="p-4 text-center no-print flex justify-center items-center gap-2 mt-1">
-                            ${challanBtn}
-                            <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent p-1" title="સુધારો"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
-                            <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                        <td class="p-4 text-center no-print flex justify-center items-center gap-3">
+                            ${actionStack}
+                            <div class="flex flex-col gap-1.5">
+                                <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent p-1" title="સુધારો"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
+                                <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            </div>
                         </td>
                     </tr>
                 `;
