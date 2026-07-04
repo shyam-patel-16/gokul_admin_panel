@@ -1,8 +1,8 @@
 // ============================================================================
 // ENVIRONMENT VARIABLES (FIREBASE CONFIGURATION)
 // ============================================================================
-// જ્યારે તમે આ એપને નવા સર્વર/ડોમેન પર ડિપ્લોય કરો, ત્યારે અહિયાં તમારી નવી
-// ફાયરબેઝ (Firebase) ની વિગતો બદલી શકો છો.
+// When you deploy this app on a new server/domain, you can change your new
+// Firebase configuration details here.
 
 const ENV_FIREBASE_CONFIG ={
   "apiKey": "AIzaSyAjpJl4uT39VabjHCPImm9S6fOTvv7GkXs",

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gokul Plastic - ઓર્ડર, લેજર અને ઓટો ચલાન સિસ્ટમ</title>
+    <title>Gokul Plastic - Order, Ledger and Auto Challan System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -44,10 +44,10 @@
                 <span id="firebase-status-badge"
                     class="text-[11px] bg-red-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold">
                     <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
-                    <span>Local Mode (ઑફલાઇન)</span>
+                    <span>Local Mode (Offline)</span>
                 </span>
                 <button onclick="openSettings()" class="hover:bg-blue-700 p-2 rounded-lg transition duration-200"
-                    title="Firebase સેટિંગ્સ">
+                    title="Firebase Settings">
                     <i class="fa-solid fa-gear text-lg animate-pulse hover:animate-spin"></i>
                 </button>
             </div>
@@ -58,19 +58,19 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
-                <p class="text-gray-500 text-sm font-semibold">કુલ સેલ્સ (Sales)</p>
+                <p class="text-gray-500 text-sm font-semibold">Total Sales (Sales)</p>
                 <p id="dash-sales" class="text-2xl font-bold text-gray-800">₹0</p>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-orange-500">
-                <p class="text-gray-500 text-sm font-semibold">કુલ ખરીદી (Buying)</p>
+                <p class="text-gray-500 text-sm font-semibold">Total Purchases (Buying)</p>
                 <p id="dash-buying" class="text-2xl font-bold text-gray-800">₹0</p>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
-                <p class="text-gray-500 text-sm font-semibold">મળેલ પેમેન્ટ (Received)</p>
+                <p class="text-gray-500 text-sm font-semibold">Received Payment (Received)</p>
                 <p id="dash-received" class="text-2xl font-bold text-green-600">₹0</p>
             </div>
             <div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-red-500">
-                <p class="text-gray-500 text-sm font-semibold">કુલ બાકી લેણાં (Total Due)</p>
+                <p class="text-gray-500 text-sm font-semibold">Total Outstanding Due (Total Due)</p>
                 <p id="dash-due" class="text-2xl font-bold text-red-600">₹0</p>
             </div>
         </div>
@@ -78,97 +78,96 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div class="bg-white p-5 rounded-xl shadow-sm">
                 <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"><i
-                        class="fa-solid fa-cart-plus mr-2 text-blue-500"></i>નવો ઓર્ડર ઉમેરો</h2>
+                        class="fa-solid fa-cart-plus mr-2 text-blue-500"></i>Add New Order</h2>
                 <form id="order-form" class="space-y-3">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">પ્રકાર</label>
+                            <label class="block text-xs font-semibold text-gray-600">Type</label>
                             <select id="ord-type" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
-                                <option value="Sales">Sales (веચાણ)</option>
-                                <option value="Buying">Buying (ખરીદી)</option>
+                                <option value="Sales">Sales (Selling)</option>
+                                <option value="Buying">Buying (Purchasing)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">તારીખ</label>
+                            <label class="block text-xs font-semibold text-gray-600">Date</label>
                             <input type="date" id="ord-date" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">પાર્ટીનું નામ</label>
-                            <input type="text" id="ord-party" placeholder="પાર્ટીનું નામ" required
+                            <label class="block text-xs font-semibold text-gray-600">Party Name</label>
+                            <input type="text" id="ord-party" placeholder="Party Name" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">મોબાઈલ નં (WhatsApp માટે)</label>
-                            <input type="number" id="ord-phone" placeholder="દા.ત. 9898XXXXXX"
+                            <label class="block text-xs font-semibold text-gray-600">Mobile No. (For WhatsApp)</label>
+                            <input type="number" id="ord-phone" placeholder="e.g. 9898XXXXXX"
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600">આઇટમ વિગત</label>
-                        <input type="text" id="ord-item" placeholder="વસ્તુનું નામ લખો" required
+                        <label class="block text-xs font-semibold text-gray-600">Item Details</label>
+                        <input type="text" id="ord-item" placeholder="Enter Item Name" required
                             class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">ક્વોન્ટિટી (Qty)</label>
+                            <label class="block text-xs font-semibold text-gray-600">Quantity (Qty)</label>
                             <input type="number" id="ord-qty" placeholder="0" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">ભાવ (Price)</label>
+                            <label class="block text-xs font-semibold text-gray-600">Price</label>
                             <input type="number" id="ord-price" placeholder="0" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">ઓર્ડર સ્ટેટસ</label>
+                            <label class="block text-xs font-semibold text-gray-600">Order Status</label>
                             <select id="ord-status" class="w-full mt-1 p-2 border rounded-lg bg-gray-50 outline-none">
-                                <option value="Pending">Pending (બાકી છે)</option>
-                                <option value="Complete">Complete (પૂરો થયો)</option>
+                                <option value="Pending">Pending (Outstanding)</option>
+                                <option value="Complete">Complete (Finished)</option>
                             </select>
                         </div>
                     </div>
                     <button type="submit"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow">ઓર્ડર
-                        સેવ કરો</button>
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg transition shadow">Save Order</button>
                 </form>
             </div>
 
             <div class="bg-white p-5 rounded-xl shadow-sm flex flex-col justify-between">
                 <div>
                     <h2 class="text-lg font-bold text-gray-700 mb-4 border-b pb-2"><i
-                            class="fa-solid fa-money-bill-wave mr-2 text-green-500"></i>પેમેન્ટની એન્ટ્રી (Payment In /
+                            class="fa-solid fa-money-bill-wave mr-2 text-green-500"></i>Payment Entry (Payment In / Out)
                         Out)</h2>
                     <form id="payment-form" class="space-y-3">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600">પેમેન્ટ પ્રકાર</label>
+                                <label class="block text-xs font-semibold text-gray-600">Payment Type</label>
                                 <select id="pay-type" class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
-                                    <option value="Received">Received (પાર્ટીએ આપ્યા)</option>
-                                    <option value="Paid">Paid (આપણે આપ્યા)</option>
+                                    <option value="Received">Received (Party Paid)</option>
+                                    <option value="Paid">Paid (We Paid)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600">તારીખ</label>
+                                <label class="block text-xs font-semibold text-gray-600">Date</label>
                                 <input type="date" id="pay-date" required
                                     class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
                             </div>
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">પાર્ટીનું નામ</label>
-                            <input type="text" id="pay-party" placeholder="પાર્ટીનું નામ લખો" required
+                            <label class="block text-xs font-semibold text-gray-600">Party Name</label>
+                            <input type="text" id="pay-party" placeholder="Enter Party Name" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-gray-600">રકમ (Amount)</label>
+                            <label class="block text-xs font-semibold text-gray-600">Amount</label>
                             <input type="number" id="pay-amount" placeholder="0" required
                                 class="w-full mt-1 p-2 border rounded-lg bg-gray-50">
                         </div>
                         <button type="submit"
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition shadow">પેમેન્ટ
-                            જમા કરો</button>
+                            class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition shadow">Payment
+                            Save</button>
                     </form>
                 </div>
             </div>
@@ -176,19 +175,19 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div class="bg-white p-4 rounded-xl shadow-sm lg:col-span-1">
-                <h2 class="text-md font-bold text-gray-700 mb-3"><i class="fa-solid fa-users text-blue-500 mr-2"></i>બધી
-                    પાર્ટીઓનું લિસ્ટ</h2>
-                <input type="text" id="party-search" oninput="renderParties()" placeholder="પાર્ટી સર્ચ કરો..."
+                <h2 class="text-md font-bold text-gray-700 mb-3"><i class="fa-solid fa-users text-blue-500 mr-2"></i>All
+                    Parties List</h2>
+                <input type="text" id="party-search" oninput="renderParties()" placeholder="Search Party..."
                     class="w-full p-2 mb-3 border rounded-lg text-sm outline-none">
                 <div id="party-list-box" class="space-y-2 max-h-[400px] overflow-y-auto pr-1"></div>
             </div>
 
             <div class="bg-white p-5 rounded-xl shadow-sm lg:col-span-2">
                 <div class="flex justify-between items-center border-b pb-3 mb-4">
-                    <h2 class="text-xl font-bold text-blue-600" id="selected-party-title">કૃપા કરીને પાર્ટી પસંદ કરો
+                    <h2 class="text-xl font-bold text-blue-600" id="selected-party-title">Please select a party
                     </h2>
                     <div class="text-right text-sm">
-                        <span class="font-semibold text-gray-600">બાકી હિસાબ: </span>
+                        <span class="font-semibold text-gray-600">Outstanding Balance: </span>
                         <span id="selected-party-due" class="font-bold text-lg text-gray-800">₹0</span>
                     </div>
                 </div>
@@ -196,13 +195,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="border rounded-xl p-3 bg-gray-50">
                         <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm text-blue-600"><i
-                                class="fa-solid fa-boxes-stacked mr-1"></i> ઓર્ડર રેકોર્ડ</h3>
+                                class="fa-solid fa-boxes-stacked mr-1"></i> Order Record</h3>
                         <div id="party-orders-table" class="space-y-2 max-h-[350px] overflow-y-auto text-xs"></div>
                     </div>
 
                     <div class="border rounded-xl p-3 bg-gray-50">
                         <h3 class="font-bold text-gray-700 mb-2 border-b pb-1 text-sm text-green-600"><i
-                                class="fa-solid fa-receipt mr-1"></i> પેમેન્ટ હિસાબ</h3>
+                                class="fa-solid fa-receipt mr-1"></i> Payment Account</h3>
                         <div id="party-payments-table" class="space-y-2 max-h-[350px] overflow-y-auto text-xs"></div>
                     </div>
                 </div>
@@ -216,8 +215,8 @@
             class="bg-white rounded-xl shadow-2xl max-w-4xl w-full p-6 space-y-6 print:shadow-none print:p-0 print:w-full">
 
             <div class="flex justify-between items-center border-b pb-2 no-print">
-                <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-copy text-blue-500 mr-2"></i>ડબલ ચલાન
-                    (આખું પેજ ફિટ અને ઓટો નંબર)</h3>
+                <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-copy text-blue-500 mr-2"></i>Double Challan
+                    (Page Fit & Auto Number)</h3>
                 <button onclick="closeChallan()"
                     class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
             </div>
@@ -229,7 +228,7 @@
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-gray-800 text-[9px] font-bold px-2 py-0.5 bg-gray-100 tracking-wider">
-                            ORIGINAL COPY (પાર્ટી માટે)</div>
+                            ORIGINAL COPY (For Party)</div>
                         <div class="flex justify-between items-start border-b-2 border-gray-800 pb-2">
                             <div>
                                 <h2 class="text-2xl font-black text-gray-800 tracking-wide">GOKUL PLASTIC</h2>
@@ -247,7 +246,7 @@
                                         class="text-sm font-black text-gray-900"></span></p>
                             </div>
                             <div class="text-right font-medium">
-                                <p>તારીખ: <span id="ch1-date" class="font-bold text-gray-900"></span> | ચલાન નં: <span
+                                <p>Date: <span id="ch1-date" class="font-bold text-gray-900"></span> | Challan No: <span
                                         id="ch1-num" class="font-black text-red-600 text-sm"></span></p>
                             </div>
                         </div>
@@ -255,10 +254,10 @@
                         <table class="w-full text-xs border-collapse mt-3 border border-gray-400 table-fixed">
                             <thead>
                                 <tr class="bg-gray-800 text-white font-bold">
-                                    <th class="p-2 border border-gray-400 text-left w-1/2">વસ્તુ નું નામ (Item Description)</th>
-                                    <th class="p-2 text-center w-16 border border-gray-400">જથ્થો (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-gray-400">ભાવ (Price)</th>
-                                    <th class="p-2 text-right w-28 border border-gray-400">ટોટલ રકમ (Amount)</th>
+                                    <th class="p-2 border border-gray-400 text-left w-1/2">Item Name (Item Description)</th>
+                                    <th class="p-2 text-center w-16 border border-gray-400">Quantity (Qty)</th>
+                                    <th class="p-2 text-right w-24 border border-gray-400">Price</th>
+                                    <th class="p-2 text-right w-28 border border-gray-400">Total Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -277,23 +276,23 @@
                     </div>
 
                     <div class="flex justify-between items-end pt-4 text-[11px] border-t border-dashed mt-4">
-                        <span class="text-gray-400 italic">આ માલ બિન-જીએસટી ચલાનથી મોકલેલ છે.</span>
+                        <span class="text-gray-400 italic">This goods are sent under Non-GST Challan.</span>
                         <div class="flex space-x-12 text-center font-bold text-gray-700">
-                            <div class="w-28 border-t border-gray-800 pt-1">માલ મેળવનારની સહી</div>
-                            <div class="w-32 border-t border-gray-800 pt-1">GOKUL PLASTIC માટે</div>
+                            <div class="w-28 border-t border-gray-800 pt-1">Receiver's Signature</div>
+                            <div class="w-32 border-t border-gray-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
                 </div>
 
                 <div class="border-t-2 border-dashed border-gray-400 text-center text-xs text-gray-400 no-print my-1">✂️
-                    પ્રિન્ટ કર્યા પછી અહીંથી કટ કરવું (Cutting Line) ✂️</div>
+                    Cut from here after printing (Cutting Line) ✂️</div>
 
                 <div
                     class="border-2 border-gray-800 p-6 rounded-lg bg-white relative flex-1 flex flex-col justify-between min-h-[44vh]">
                     <div>
                         <div
                             class="absolute top-2 right-2 border border-gray-800 text-[9px] font-bold px-2 py-0.5 bg-gray-100 tracking-wider">
-                            OFFICE COPY (પરત લાવવાની નકલ)</div>
+                            OFFICE COPY (To be returned)</div>
                         <div class="flex justify-between items-start border-b-2 border-gray-800 pb-2">
                             <div>
                                 <h2 class="text-2xl font-black text-gray-800 tracking-wide">GOKUL PLASTIC</h2>
@@ -311,7 +310,7 @@
                                         class="text-sm font-black text-gray-900"></span></p>
                             </div>
                             <div class="text-right font-medium">
-                                <p>તારીખ: <span id="ch2-date" class="font-bold text-gray-900"></span> | ચલાન નં: <span
+                                <p>Date: <span id="ch2-date" class="font-bold text-gray-900"></span> | Challan No: <span
                                         id="ch2-num" class="font-black text-red-600 text-sm"></span></p>
                             </div>
                         </div>
@@ -319,10 +318,10 @@
                         <table class="w-full text-xs border-collapse mt-3 border border-gray-400 table-fixed">
                             <thead>
                                 <tr class="bg-gray-800 text-white font-bold">
-                                    <th class="p-2 border border-gray-400 text-left w-1/2">વસ્તુ નું નામ (Item Description)</th>
-                                    <th class="p-2 text-center w-16 border border-gray-400">જથ્થો (Qty)</th>
-                                    <th class="p-2 text-right w-24 border border-gray-400">ભાવ (Price)</th>
-                                    <th class="p-2 text-right w-28 border border-gray-400">ટોટલ રકમ (Amount)</th>
+                                    <th class="p-2 border border-gray-400 text-left w-1/2">Item Name (Item Description)</th>
+                                    <th class="p-2 text-center w-16 border border-gray-400">Quantity (Qty)</th>
+                                    <th class="p-2 text-right w-24 border border-gray-400">Price</th>
+                                    <th class="p-2 text-right w-28 border border-gray-400">Total Amount</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -341,10 +340,10 @@
                     </div>
 
                     <div class="flex justify-between items-end pt-4 text-[11px] border-t border-dashed mt-4">
-                        <span class="text-gray-400 italic">માલ સહી-સલામત મળ્યો છે તેની ખાતરી માટે ગ્રાહકની સહી કરાવી પરત લેવું.</span>
+                        <span class="text-gray-400 italic">Customer signature is mandatory upon receiving goods in good condition.</span>
                         <div class="flex space-x-12 text-center font-bold text-gray-700">
-                            <div class="w-28 border-t border-gray-800 pt-1 text-red-600">ગ્રાહકની સહી (ફરજીયાત)</div>
-                            <div class="w-32 border-t border-gray-800 pt-1">GOKUL PLASTIC માટે</div>
+                            <div class="w-28 border-t border-gray-800 pt-1 text-red-600">Customer's Signature (Mandatory)</div>
+                            <div class="w-32 border-t border-gray-800 pt-1">For GOKUL PLASTIC</div>
                         </div>
                     </div>
                 </div>
@@ -354,12 +353,12 @@
             <div class="flex flex-col sm:flex-row gap-3 no-print pt-2">
                 <button onclick="window.print()"
                     class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg text-md shadow"><i
-                        class="fa-solid fa-print mr-2"></i>એકસાથે બંને ચલાન પ્રિન્ટ કરો</button>
+                        class="fa-solid fa-print mr-2"></i>Print Both Challans Together</button>
                 <button id="wp-share-btn"
                     class="flex-1 bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 rounded-lg text-md shadow"><i
-                        class="fa-brands fa-whatsapp text-lg mr-2"></i>WhatsApp પર ચલાન મોકલો</button>
+                        class="fa-brands fa-whatsapp text-lg mr-2"></i>Send Challan on WhatsApp</button>
                 <button onclick="closeChallan()"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3 rounded-lg text-md">બંધ કરો</button>
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-6 py-3 rounded-lg text-md">closed do</button>
             </div>
         </div>
     </div>
@@ -368,25 +367,25 @@
         class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 overflow-y-auto z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-cloud mr-2 text-blue-500"></i>Firebase ડેટાબેઝ સેટિંગ્સ</h3>
+                <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-cloud mr-2 text-blue-500"></i>Firebase Database Settings</h3>
                 <button onclick="closeSettings()"
                     class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
             </div>
 
             <div class="space-y-3">
-                <p class="text-xs text-gray-500">તમારા ડેટાને કાયમી સાચવવા અને બીજા મોબાઈલ/કોમ્પ્યુટર માં સિંક કરવા માટે Firebase Firestore સેટઅપ કરો.</p>
+                <p class="text-xs text-gray-500">Setup Firebase Firestore to save your data permanently and sync across other devices.</p>
 
                 <div class="p-3 bg-gray-50 rounded-lg border text-xs space-y-1.5">
                     <div class="flex justify-between items-center">
-                        <span class="font-semibold text-gray-600">કનેક્શન સ્ટેટસ:</span>
-                        <span id="modal-firebase-status" class="font-bold text-red-500">કનેક્ટ નથી (Local Database)</span>
+                        <span class="font-semibold text-gray-600">Connection Status:</span>
+                        <span id="modal-firebase-status" class="font-bold text-red-500">Not Connected (Local Database)</span>
                     </div>
                 </div>
 
                 <form id="firebase-config-form" class="space-y-3">
                     <div>
-                        <label class="block text-xs font-semibold text-gray-600">Firebase Config JSON અથવા Config ઑબ્જેક્ટ</label>
-                        <textarea id="fb-config-json" rows="8" placeholder='દા.ત. 
+                        <label class="block text-xs font-semibold text-gray-600">Firebase Config JSON or Config Object</label>
+                        <textarea id="fb-config-json" rows="8" placeholder='e.g. 
 {
   "apiKey": "AIzaSy...",
   "authDomain": "gokul-plastic.firebaseapp.com",
@@ -399,31 +398,31 @@
 
                     <div class="flex gap-2">
                         <button type="submit"
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm transition shadow">સેવ કરો અને કનેક્ટ કરો</button>
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg text-sm transition shadow">Save and Connect</button>
                         <button type="button" onclick="disconnectFirebase()" id="fb-disconnect-btn"
-                            class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow">ડિસ્કનેક્ટ</button>
+                            class="hidden bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg text-sm transition shadow">Disconnect</button>
                     </div>
                 </form>
 
                 <div id="migration-box" class="hidden border-t pt-3 space-y-2">
-                    <p class="text-xs font-semibold text-gray-700">ડેટા ટ્રાન્સફર (Data Migration):</p>
-                    <p class="text-[11px] text-gray-500">જો તમારી પાસે આ બ્રાઉઝરમાં ઓર્ડર/પેમેન્ટ છે, તો તમે તેને ફાયરબેઝ ઓનલાઇન ડેટાબેઝ પર અપલોડ કરી શકો છો.</p>
+                    <p class="text-xs font-semibold text-gray-700">Data Transfer (Data Migration):</p>
+                    <p class="text-[11px] text-gray-500">If you have orders/payments in this browser, you can upload them to the online Firebase database.</p>
                     <button onclick="migrateLocalDataToFirebase()" id="fb-migrate-btn"
                         class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg text-xs transition shadow flex justify-center items-center gap-1.5">
-                        <i class="fa-solid fa-cloud-arrow-up"></i> લોકલ ડેટા ફાયરબેઝ પર અપલોડ કરો
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Upload Local Data to Firebase
                     </button>
                 </div>
             </div>
 
             <div class="flex justify-end pt-2 border-t text-xs">
                 <button onclick="closeSettings()"
-                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg">બંધ કરો</button>
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold px-4 py-2 rounded-lg">closed do</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ડેટાબેઝ સેટઅપ અને પ્રારંભિક ચેકિંગ
+        // Database Setup and Initial Checking
         let db = JSON.parse(localStorage.getItem('biz_db_v4')) || { orders: [], payments: [] };
         if(!db.orders) db.orders = [];
         if(!db.payments) db.payments = [];
@@ -441,7 +440,7 @@
             if (activeParty) showPartyDetails(activeParty);
         }
 
-        // Firebase Initialization ફંક્શન
+        // Firebase Initialization Function
         function initFirebase() {
             const savedConfigStr = localStorage.getItem('firebase_config');
             const statusBadge = document.getElementById('firebase-status-badge');
@@ -452,17 +451,17 @@
             if (unsubOrders) { unsubOrders(); unsubOrders = null; }
             if (unsubPayments) { unsubPayments(); unsubPayments = null; }
 
-            // જો ફાયરબેઝ સેટિંગ્સ નથી, તો લોકલ મોડમાં ચાલશે
+            // If Firebase settings are not configured, it will run in Local Mode
             if (!savedConfigStr || typeof firebase === 'undefined') {
                 isFirebaseConnected = false;
                 firestoreDb = null;
                 if(statusBadge) {
                     statusBadge.className = "text-[11px] bg-red-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
-                    statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span><span>Local Mode (ઑફલાઇન)</span>`;
+                    statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span><span>Local Mode (Offline)</span>`;
                 }
                 if(modalStatus) {
                     modalStatus.className = "font-bold text-red-500";
-                    modalStatus.innerText = "કનેક્ટ નથી (Local Database)";
+                    modalStatus.innerText = "Not Connected (Local Database)";
                 }
                 if(disconnectBtn) disconnectBtn.classList.add('hidden');
                 if(migrationBox) migrationBox.classList.add('hidden');
@@ -474,7 +473,7 @@
 
             statusBadge.className = "text-[11px] bg-yellow-600 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
             statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></span><span>Connecting...</span>`;
-            modalStatus.innerText = "કનેક્ટ થઈ રહ્યું છે...";
+            modalStatus.innerText = "Connecting...";
 
             try {
                 const config = JSON.parse(savedConfigStr);
@@ -491,7 +490,7 @@
                 statusBadge.className = "text-[11px] bg-green-600 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
                 statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-ping"></span><span>Firebase Live 🟢</span>`;
                 modalStatus.className = "font-bold text-green-500";
-                modalStatus.innerText = "લાઈવ કનેક્ટેડ 🟢";
+                modalStatus.innerText = "Live Connected 🟢";
                 disconnectBtn.classList.remove('hidden');
                 migrationBox.classList.remove('hidden');
 
@@ -500,7 +499,7 @@
                 console.error("Firebase Error:", err);
                 statusBadge.className = "text-[11px] bg-red-700 px-2.5 py-1 rounded-full flex items-center gap-1.5 font-semibold text-white";
                 statusBadge.innerHTML = `<span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span><span>Error ❌</span>`;
-                modalStatus.innerText = "જોડાણ ભૂલ: " + err.message;
+                modalStatus.innerText = "Connection Error: " + err.message;
                 isFirebaseConnected = false;
             }
         }
@@ -541,7 +540,7 @@
                     if (match && match[1]) config[key] = match[1];
                 });
                 if (config.apiKey && config.projectId && config.appId) return config;
-                throw new Error("કોન્ફિગરેશન ફોર્મેટ અમાન્ય છે.");
+                throw new Error("Invalid configuration format.");
             }
         }
 
@@ -556,7 +555,7 @@
         }
 
         function disconnectFirebase() {
-            if (confirm("શું તમે ફાયરબેઝ ડિસ્કનેક્ટ કરવા માંગો છો?")) {
+            if (confirm("Are you sure you want to disconnect Firebase?")) {
                 localStorage.removeItem('firebase_config');
                 document.getElementById('fb-config-json').value = "";
                 initFirebase();
@@ -564,16 +563,16 @@
         }
 
         async function migrateLocalDataToFirebase() {
-            if (!isFirebaseConnected || !firestoreDb) return alert("પહેલા ફાયરબેઝ કનેક્ટ કરો!");
+            if (!isFirebaseConnected || !firestoreDb) return alert("Please connect Firebase first!");
             let localDb = JSON.parse(localStorage.getItem('biz_db_v4')) || { orders: [], payments: [] };
-            if (confirm(`શું તમે બધો જ લોકલ ડેટા ફાયરબેઝ પર અપલોડ કરવા માંગો છો?`)) {
+            if (confirm(`Are you sure you want to upload all local data to Firebase?`)) {
                 try {
                     let batch = firestoreDb.batch();
                     localDb.orders.forEach(order => batch.set(firestoreDb.collection('orders').doc(order.id.toString()), order));
                     localDb.payments.forEach(pay => batch.set(firestoreDb.collection('payments').doc(pay.id.toString()), pay));
                     await batch.commit();
-                    alert("ડેટા સફળતાપૂર્વક અપલોડ થઈ ગયો છે!");
-                } catch (err) { alert("ભૂલ: " + err.message); }
+                    alert("Data uploaded successfully!");
+                } catch (err) { alert("Error: " + err.message); }
             }
         }
 
@@ -584,13 +583,13 @@
                 localStorage.setItem('firebase_config', JSON.stringify(config));
                 initFirebase();
                 closeSettings();
-            } catch (err) { alert("ભૂલ: " + err.message); }
+            } catch (err) { alert("Error: " + err.message); }
         });
 
         document.getElementById('order-form').addEventListener('submit', function (e) {
             e.preventDefault();
             
-            // જો આ પાર્ટીનો ફોન નંબર પહેલા કોઈ ઓર્ડરમાં સેવ હોય તો એ આપોઆપ લઈ લેશે
+            // If this party's phone number was previously saved in an order, it will load automatically
             let existingPhone = document.getElementById('ord-phone').value.trim();
             let partyName = document.getElementById('ord-party').value.trim();
             if(!existingPhone){
@@ -686,9 +685,9 @@
                     let dueColor = pDue >= 0 ? 'text-red-500' : 'text-green-500';
                     let activeClass = (party === activeParty) ? 'bg-blue-50 border-blue-500 shadow-sm' : 'bg-gray-50 border-transparent hover:bg-gray-100';
                     
-                    // પાર્ટીનો સેવ કરેલો ફોન નંબર શોધો
+                    // Find party's saved phone number
                     let lastOrderWithPhone = db.orders.find(o => o.party === party && o.phone);
-                    let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "નથી";
+                    let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "None";
 
                     box.innerHTML += `
                         <div onclick="showPartyDetails('${party}')" class="p-3 border rounded-xl cursor-pointer transition flex justify-between items-center ${activeClass}">
@@ -696,73 +695,73 @@
                                 <p class="font-bold text-gray-800 text-sm">${party}</p>
                                 <p class="text-[10px] text-gray-500 flex items-center gap-1">
                                     <i class="fa-solid fa-phone text-blue-400"></i> ${currentPhone}
-                                    <button onclick="event.stopPropagation(); editPartyPhone('${party}', '${currentPhone === 'નથી' ? '' : currentPhone}')" class="text-blue-600 hover:underline ml-1 font-semibold">✏️ સુધારો</button>
+                                    <button onclick="event.stopPropagation(); editPartyPhone('${party}', '${currentPhone === 'None' ? '' : currentPhone}')" class="text-blue-600 hover:underline ml-1 font-semibold">✏️ Edit</button>
                                 </p>
                             </div>
-                            <div class="text-right"><p class="text-xs font-semibold ${dueColor}">બાકી: ₹${pDue}</p></div>
+                            <div class="text-right"><p class="text-xs font-semibold ${dueColor}">Pending: ₹${pDue}</p></div>
                         </div>
                     `;
                 }
             });
         }
 
-        // જૂના ઓર્ડરમાં કે બધે પાર્ટીનો નવો ફોન નંબર એડિટ/સુધારો કરવા માટેનું નવું ફંક્શન
+        // New function to edit/update party's phone number across old orders or everywhere
         async function editPartyPhone(partyName, existingPhone) {
-            let newPhone = prompt(`"${partyName}" માટે નવો WhatsApp મોબાઈલ નંબર લખો:`, existingPhone);
-            if (newPhone === null) return; // જો કેન્સલ કરે તો
+            let newPhone = prompt(`"${partyName}" for New WhatsApp Mobile Number write:`, existingPhone);
+            if (newPhone === null) return; // If cancelled
             newPhone = newPhone.trim();
 
             if (newPhone && !/^\d{10}$/.test(newPhone)) {
-                alert("મહેરબાની કરીને સાચો ૧૦ આંકડાનો મોબાઈલ નંબર લખો.");
+                alert("Please enter a valid 10-digit mobile number.");
                 return;  
             }
 
-            // સ્થાનિક અથવા ફાયરબેઝમાં આ પાર્ટીના તમામ ઓર્ડર્સ શોધીને નંબર અપડેટ કરો
+            // Find and update number for all orders of this party in local or Firebase
             let targetOrders = db.orders.filter(o => o.party === partyName);
 
             if (isFirebaseConnected && firestoreDb) {
                 try {
                     let batch = firestoreDb.batch();
-                    // ફાયરબેઝમાંથી લાઈવ ડોક્યુમેન્ટ્સના આઈડી વાપરીને અપડેટ કરો
+                    // Update using live document IDs from Firebase
                     let snapshot = await firestoreDb.collection('orders').where('party', '==', partyName).get();
                     snapshot.forEach(doc => {
                         batch.update(doc.ref, { phone: newPhone });
                     });
                     await batch.commit();
-                    alert("મોબાઈલ નંબર ફાયરબેઝ પર સફળતાપૂર્વક અપડેટ થઈ ગયો છે!");
+                    alert("Mobile number updated successfully on Firebase!");
                 } catch (err) {
-                    alert("ભૂલ: " + err.message);
+                    alert("Error: " + err.message);
                 }
             } else {
-                // લોકલ મોડમાં અપડેટ
+                // Update in local mode
                 db.orders.forEach(o => {
                     if (o.party === partyName) {
                         o.phone = newPhone;
                     }
                 });
                 saveData();
-                alert("મોબાઈલ નંબર અપડેટ થઈ ગયો છે!");
+                alert("Mobile number updated successfully!");
             }
         }
 
-        // પાછળથી ઓર્ડરની વિગતો સુધારવા માટેનું નવું ફંક્શન
+        // New function to edit order details later
         function editOrder(orderId) {
             let order = db.orders.find(o => o.id === orderId);
             if (!order) return;
 
-            let newItem = prompt("આઇટમ વિગત સુધારો:", order.item);
+            let newItem = prompt("Edit item details:", order.item);
             if (newItem === null) return;
             
-            let newQtyStr = prompt("ક્વોન્ટિટી (Qty) સુધારો:", order.qty);
+            let newQtyStr = prompt("Edit Quantity (Qty):", order.qty);
             if (newQtyStr === null) return;
             let newQty = parseFloat(newQtyStr);
 
-            let newPriceStr = prompt("ભાવ (Price) સુધારો:", order.price);
+            let newPriceStr = prompt("Edit Price:", order.price);
             if (newPriceStr === null) return;
             let newPrice = parseFloat(newPriceStr);
 
             if (isNaN(newQty) || isNaN(newPrice)) {
-                alert("કૃપા કરીને ક્વોન્ટિટી અને ભાવ સાચા આંકડામાં લખો.");
+                alert("Please enter valid numbers for Quantity and Price.");
                 return;
             }
 
@@ -775,12 +774,12 @@
 
             if (isFirebaseConnected && firestoreDb) {
                 firestoreDb.collection('orders').doc(orderId.toString()).update(updatedData)
-                    .then(() => alert("ઓર્ડર સફળતાપૂર્વક સુધારી લેવાયો છે!"))
-                    .catch(err => alert("ભૂલ: " + err.message));
+                    .then(() => alert("Order details updated successfully!"))
+                    .catch(err => alert("Error: " + err.message));
             } else {
                 Object.assign(order, updatedData);
                 saveData();
-                alert("ઓર્ડર સફળતાપૂર્વક સુધારી લેવાયો છે!");
+                alert("Order details updated successfully!");
             }
         }
 
@@ -821,7 +820,7 @@
             dueText.className = netPartyDue >= 0 ? "font-bold text-lg text-red-600" : "font-bold text-lg text-green-600";
 
             let orderTable = document.getElementById('party-orders-table');
-            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-gray-400 text-center py-4">કોઈ ઓર્ડર નથી</p>` : "";
+            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-gray-400 text-center py-4">No orders</p>` : "";
             
             partyOrders.forEach(o => {
                 let badgeColor = o.type === 'Sales' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700';
@@ -831,7 +830,7 @@
                 orderTable.innerHTML += `
                     <div class="bg-white p-3 rounded-lg border shadow-xs space-y-2 relative">
                         <div class="absolute top-2 right-2 flex space-x-2">
-                            <button onclick="editOrder(${o.id})" class="text-gray-300 hover:text-blue-600" title="ઓર્ડર સુધારો"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="editOrder(${o.id})" class="text-gray-300 hover:text-blue-600" title="Edit Order"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="deleteItem('orders', ${o.id})" class="text-gray-300 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                         <div class="flex justify-between">
@@ -840,7 +839,7 @@
                         </div>
                         <p class="font-semibold text-gray-800 text-sm">${o.item} (${o.qty} x ₹${o.price})</p>
                         <div class="flex justify-between items-center pt-1 border-t border-dashed">
-                            <span class="font-bold text-gray-700">ટોટલ: ₹${o.amount}</span>
+                            <span class="font-bold text-gray-700">Total: ₹${o.amount}</span>
                             <div class="flex space-x-2 items-center">
                                 ${challanBtn}
                                 <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 rounded text-[10px] font-semibold ${statusClass}">${o.status} <i class="fa-solid fa-rotate ml-1"></i></button>
@@ -851,7 +850,7 @@
             });
 
             let paymentTable = document.getElementById('party-payments-table');
-            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-gray-400 text-center py-4">કોઈ ટ્રાન્ઝેક્શન નથી</p>` : "";
+            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-gray-400 text-center py-4">No transactions</p>` : "";
             
             partyPayments.forEach(p => {          
                 let badgeColor = p.type === 'Received' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
@@ -862,7 +861,7 @@
                                 <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${p.type}</span>
                                 <span class="text-gray-400 text-[11px]">${p.date}</span>
                             </div>
-                            <p class="font-bold text-gray-800 text-sm mt-1">રકમ: ₹${p.amount}</p>
+                            <p class="font-bold text-gray-800 text-sm mt-1">Amount: ₹${p.amount}</p>
                         </div>
                         <button onclick="deleteItem('payments', ${p.id})" class="text-gray-300 hover:text-red-500 mr-1"><i class="fa-solid fa-trash-can"></i></button>
                     </div>
@@ -876,7 +875,7 @@
                 let autoNo = getChallanSequenceNumber(order.id);
                 let formattedTotal = "₹" + order.amount.toLocaleString('en-IN');
 
-                // બંને નકલમાં ડેટા સેટ કરવો
+                // Set data in both copies
                 for(let i=1; i<=2; i++) {
                     document.getElementById(`ch${i}-party`).innerText = order.party;
                     document.getElementById(`ch${i}-date`).innerText = order.date;
@@ -887,7 +886,7 @@
                     document.getElementById(`ch${i}-total`).innerText = formattedTotal;
                 }
                 
-                // કવોન્ટિટી ફિક્સ કોપી ૨ માટે
+                // Fix quantity for copy 2
                 document.getElementById(`ch2-qty`).innerText = order.qty;
 
                 document.getElementById('wp-share-btn').onclick = function () {
@@ -899,13 +898,16 @@
         }
 
         function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total) {
-            if (!phone || phone === "") return alert("મોબાઈલ નંબર ઉમેરેલો નથી! ડાબી બાજુ પાર્ટી લિસ્ટમાંથી '✏️ સુધારો' પર ક્લિક કરીને પહેલા નંબર ઉમેરો.");
-            let message = `*નમસ્તે ${party},*\n\n` +
-                `*GOKUL PLASTIC* તરફથી તમારો માલ રવાના થયો છે:\n\n` +
-                `🔹 *ચલાન નંબર:* ${challanNum}\n` +
-                `🔹 *વસ્તુ:* ${item}\n` +
-                `🔹 *જથ્થો:* ${qty}\n` +
-                `🔹 *ટોટલ અમાઉન્ટ:* ${total}\n\n` +
+            if (!phone || phone === "") return alert("Mobile number is not added! Click '✏️ Edit' in the party list on the left to add the number first.");
+            let message = `*Hello ${party},*\n\n` +
+                `*GOKUL PLASTIC* - Your goods have been dispatched:\n\n` +
+                `🔹 *Challan Number:* ${challanNum}
+` +
+                `🔹 *Item:* ${item}
+` +
+                `🔹 *Quantity:* ${qty}
+` +
+                `🔹 *Total Amount:* ${total}\n\n` +
                 `🙏 *Gokul Plastic (Ahmedabad)*`;
             window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(message)}`, '_blank');
         }
@@ -915,7 +917,7 @@
         }
 
         function deleteItem(target, id) {
-            if (confirm("શું તમે આ એન્ટ્રી ડીલીટ કરવા માંગો છો?")) {
+            if (confirm("Are you sure you want to delete this entry?")) {
                 if (isFirebaseConnected && firestoreDb) {
                     firestoreDb.collection(target).doc(id.toString()).delete();
                 } else {
@@ -925,7 +927,7 @@
             }
         }
 
-        // લોડ થતાં જ રન કરવા માટે
+        // To run immediately upon loading
         setDefaultDates();
         initFirebase();
     </script>

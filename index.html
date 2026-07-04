@@ -21,8 +21,6 @@
     <!-- jsPDF Library for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <!-- QR Code Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
     <!-- Firebase Environment Config -->
     <script src="assets/js/env.js"></script>
     <script>
@@ -500,10 +498,11 @@
                             </p>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Balance
-                            Due</span>
-                        <span id="selected-party-due" class="font-black text-xl text-slate-800 block mt-0.5">₹0</span>
+                    <div class="text-right flex items-center gap-3">
+                        <div>
+                            <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Balance Due</span>
+                            <span id="selected-party-due" class="font-black text-xl text-slate-800 block mt-0.5">₹0</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1254,11 +1253,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- CUT LINE -->
-                <div class="cut-line border-t border-dashed border-slate-400 text-center text-[10px] text-slate-400 no-print my-1">
-                    ✂️ Cut here after printing (Cutting Line) ✂️
                 </div>
 
                 <!-- COPY 2: OFFICE -->

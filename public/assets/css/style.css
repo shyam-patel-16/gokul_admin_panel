@@ -50,11 +50,15 @@
             #challan-modal > div {
                 border-radius: 0 !important;
                 padding: 0 !important;
-                margin: 0 !important;
+                margin: 0 auto !important;
                 max-width: 100% !important;
                 width: 100% !important;
                 box-shadow: none !important;
                 background: transparent !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                min-height: 275mm !important;
             }
 
             /* Double copy printing wrap */
@@ -184,9 +188,27 @@
             }
 
             /* Bottom footer signatures */
-            #challan-modal .flex.justify-between.items-end.pt-4 {
+            #challan-modal .challan-copy > div.flex.justify-between.items-end {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: flex-end !important;
                 padding-top: 1.5mm !important;
                 margin-top: auto !important;
+            }
+
+            /* Adjust header flex layout */
+            #challan-modal .challan-copy > div.flex.justify-between.items-start {
+                display: flex !important;
+                flex-direction: row !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+            }
+
+            /* Grid info section */
+            #challan-modal .challan-copy > div.grid.grid-cols-2 {
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
             }
 
             /* Cutting line */

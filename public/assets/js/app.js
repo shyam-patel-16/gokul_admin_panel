@@ -167,7 +167,7 @@
                         <i class="fa-solid ${icon}"></i>
                     </div>
                     <h3 class="font-black text-slate-800 text-lg">${company}</h3>
-                    <p class="text-[10px] text-slate-500 font-medium mt-1">${company} નો ડેટા જોવા માટે</p>
+                    <p class="text-[10px] text-slate-500 font-medium mt-1">To view data for ${company}</p>
                 </button>`;
 
                 // Settings Table rows
@@ -188,7 +188,7 @@
                     <td class="p-3 text-center">
                         <button onclick="deleteCompany('${company}')"
                             class="bg-red-50 hover:bg-red-100 text-red-500 p-1.5 rounded-lg transition"
-                            title="ડિલીટ કરો">
+                            title="Delete">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -217,27 +217,27 @@
         }
 
         function addNewCompany() {
-            let newCompany = prompt("નવી કંપનીનું નામ લખો:\n(ઉદા. PVC, LDPE, HDPE, LLDPE)");
+            let newCompany = prompt("Enter new company name:\n(e.g., PVC, LDPE, HDPE, LLDPE)");
             if (!newCompany || newCompany.trim() === "") return;
             // Keep alphanumeric + spaces, trim and uppercase
             newCompany = newCompany.trim().replace(/\s+/g, ' ');
-            if (newCompany.length < 2) return alert("નામ ઓછામાં ઓછા 2 અક્ષરનું હોવું જોઈએ.");
+            if (newCompany.length < 2) return alert("Name must be at least 2 characters long.");
 
             // Check duplicate (case-insensitive)
             if (companiesList.some(c => c.toLowerCase() === newCompany.toLowerCase())) {
-                return alert(`"${newCompany}" નામની કંપની પહેલેથી જ છે!`);
+                return alert(`Company "${newCompany}" already exists!`);
             }
 
             companiesList.push(newCompany);
             saveCompaniesList();
-            alert(`✅ "${newCompany}" કંપની સફળતાપૂર્વક ઉમેરવામાં આવી!\n\nહવે Business Selection Screen પર ક્લિક કરો.`);
+            alert(`✅ Company "${newCompany}" successfully added!\n\nNow click on the Business Selection Screen.`);
         }
 
 
         async function deleteCompany(companyName) {
-            if (companiesList.length <= 1) return alert("તમે બધી કંપની ડીલીટ ન કરી શકો. ઓછામાં ઓછી 1 કંપની હોવી જરૂરી છે.");
+            if (companiesList.length <= 1) return alert("You cannot delete all companies. At least 1 company is required.");
             
-            let pass = prompt(`ચેતવણી! શું તમે ખરેખર ${companyName} ડીલીટ કરવા માંગો છો?\nઆ કંપનીના બધા ઓર્ડર અને પેમેન્ટ કાયમ માટે ઉડી જશે!\n\nજો હા, તો તમારો લોગીન પાસવર્ડ દાખલ કરો:`);
+            let pass = prompt(`Warning! Do you really want to delete ${companyName}?\nAll orders and payments for this company will be permanently deleted!\n\nIf yes, enter your login password:`);
             if (!pass) return;
 
             if (isFirebaseConnected && auth && auth.currentUser) {
@@ -250,17 +250,17 @@
                     companiesList = companiesList.filter(c => c !== companyName);
                     saveCompaniesList();
                     
-                    alert(`${companyName} કંપની ડીલીટ થઈ ગઈ છે!`);
+                    alert(`Company ${companyName} has been deleted!`);
                     
                     if (activeBusiness === companyName) {
                         activeBusiness = null;
                         showBusinessSelection();
                     }
                 } catch (error) {
-                    alert("પાસવર્ડ ખોટો છે! કંપની ડીલીટ ન થઈ શકી.");
+                    alert("Incorrect password! Company could not be deleted.");
                 }
             } else {
-                alert("ઇન્ટરનેટ/ફાયરબેઝ કનેક્શન નથી. કંપની ડીલીટ કરવા ઓનલાઇન થવું જરૂરી છે.");
+                alert("No internet/Firebase connection. Online mode is required to delete a company.");
             }
         }
 
@@ -366,8 +366,8 @@
                 auth = firebase.auth();
 
                 // SESSION persistence:
-                // - Tab ખુલ્લો = Logged in (refresh ઠીક)
-                // - Tab/Browser બંધ = Logout (fresh login)
+                // - Tab open = Logged in (refresh okay)
+                // - Tab/Browser closed = Logout (fresh login)
                 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
                     .then(() => {
                         // onAuthStateChanged: login state track
@@ -469,7 +469,7 @@
                     if (match && match[1]) config[key] = match[1];
                 });
                 if (config.apiKey && config.projectId && config.appId) return config;
-                throw new Error("કોન્ફિગરેશન JSON અથવા ઑબ્જેક્ટનું ફોર્મેટ અયોગ્ય છે.");
+                throw new Error("Invalid Configuration JSON or object format.");
             }
         }
 
@@ -480,9 +480,9 @@
 
         // Migrate local storage records to Firebase Firestore cloud database
         async function migrateLocalDataToFirebase() {
-            if (!isFirebaseConnected || !firestoreDb) return alert("કૃપા કરીને પહેલા સેટિંગ્સમાંથી ફાયરબેઝ લિંક કરો!");
+            if (!isFirebaseConnected || !firestoreDb) return alert("Please link Firebase from settings first!");
             let localDb = JSON.parse(localStorage.getItem(`biz_db_${activeBusiness}`)) || { orders: [], payments: [] };
-            if (confirm(`શું તમે બધો જ લોકલ સ્ટોરેજનો ડેટા ઓનલાઇન ફાયરબેઝ સર્વર પર અપલોડ કરવા માંગો છો?`)) {
+            if (confirm(`Are you sure you want to upload all local storage data to the online Firebase server?`)) {
                 try {
                     let batch = firestoreDb.batch();
                     let ordersCol = activeBusiness === 'ABS' ? 'orders' : activeBusiness + '_orders';
@@ -490,9 +490,9 @@
                     localDb.orders.forEach(order => batch.set(firestoreDb.collection(ordersCol).doc(order.id.toString()), order));
                     localDb.payments.forEach(pay => batch.set(firestoreDb.collection(paymentsCol).doc(pay.id.toString()), pay));
                     await batch.commit();
-                    alert("તમામ ડેટા ફાયરબેઝ પર સફળતાપૂર્વક અપલોડ થઈ ગયો છે!");
+                    alert("All data uploaded to Firebase successfully!");
                     initFirebase();
-                } catch (err) { alert("ભૂલ: " + err.message); }
+                } catch (err) { alert("Error: " + err.message); }
             }
         }
 
@@ -516,16 +516,16 @@
                 try {
                     const importedDb = JSON.parse(e.target.result);
                     if (importedDb.orders && importedDb.payments) {
-                        if (confirm("શું તમે ખરેખર આ બેકઅપ ફાઈલ લોડ કરવા માંગો છો? તમારા બ્રાઉઝરમાં સાચવેલો જૂનો ડેટા રદ થઈ જશે.")) {
+                        if (confirm("Are you sure you want to load this backup file? Existing data in your browser will be overwritten.")) {
                             db = importedDb;
                             saveData();
-                            alert("ડેટા સફળતાપૂર્વક ઈમ્પોર્ટ થઈ ગયો છે!");
+                            alert("Data imported successfully!");
                         }
                     } else {
-                        alert("અમાન્ય બેકઅપ ફાઈલ ફોર્મેટ! આમાં ઓર્ડર અને પેમેન્ટની માહિતી હોવી જરૂરી છે.");
+                        alert("Invalid backup file format! It must contain order and payment data.");
                     }
                 } catch (err) {
-                    alert("ફાઈલ વાંચવામાં કંઈક ભૂલ થઈ: " + err.message);
+                    alert("Error reading file: " + err.message);
                 }
             };
             reader.readAsText(file);
@@ -549,7 +549,7 @@
                 tbody.innerHTML = `
                     <tr>
                         <td colspan="6" class="p-6 text-center text-slate-400 font-semibold bg-white">
-                            કોઈ આઇટમ ઉમેરેલી નથી (No items added yet)
+                            No items added yet
                         </td>
                     </tr>
                 `;
@@ -616,17 +616,17 @@
             }
 
             if (!name) {
-                alert("કૃપા કરીને આઇટમનું નામ લખો (Please enter Item Name)");
+                alert("Please enter Item Name");
                 nameInput.focus();
                 return;
             }
             if (isNaN(qty) || qty <= 0) {
-                alert("કૃપા કરીને સાચી ક્વોન્ટિટી લખો (Please enter valid Quantity)");
+                alert("Please enter valid Quantity");
                 qtyInput.focus();
                 return;
             }
             if (isNaN(price) || price < 0) {
-                alert("કૃપા કરીને સાચો ભાવ લખો (Please enter valid Price)");
+                alert("Please enter valid Price");
                 priceInput.focus();
                 return;
             }
@@ -655,7 +655,7 @@
 
             const text = importTextarea.value.trim();
             if (!text) {
-                alert("કૃપા કરીને પેલા ખાનામાં આઇટમની વિગત પેસ્ટ કરો (Please paste some items first)");
+                alert("Please paste some items first");
                 return;
             }
 
@@ -685,9 +685,9 @@
                 renderOrderItemsList();
                 importTextarea.value = "";
                 document.getElementById('import-container').classList.add('hidden');
-                alert(`${importedCount} આઇટમ સફળતાપૂર્વક આયાત કરવામાં આવી! (Successfully imported ${importedCount} items!)`);
+                alert(`Successfully imported ${importedCount} items!`);
             } else {
-                alert("કોઈ પણ સાચી આઇટમ મળી નથી. કૃપા કરીને ફોર્મેટ ચેક કરો. (No valid items found. Please check format)");
+                alert("No valid items found. Please check the format.");
             }
         }
 
@@ -845,7 +845,7 @@
             }
 
             if (currentOrderItems.length === 0) {
-                alert("કૃપા કરીને ઓછામાં ઓછી એક આઇટમ ઓર્ડર લિસ્ટમાં ઉમેરો (Please add at least one item to the order items list)");
+                alert("Please add at least one item to the order items list");
                 return;
             }
 
@@ -1020,7 +1020,7 @@
             const formatDate = (date) => date.toISOString().split('T')[0];
             
             if (period === 'weekly') {
-                document.getElementById('chart-subtitle').innerText = "છેલ્લા 7 દિવસ — Sales, Buying, Received, Paid";
+                document.getElementById('chart-subtitle').innerText = "Last 7 Days — Sales, Buying, Received, Paid";
                 for (let i = 6; i >= 0; i--) {
                     let d = new Date();
                     d.setDate(now.getDate() - i);
@@ -1033,7 +1033,7 @@
                     paidData.push(db.payments.filter(p => p.type === 'Paid' && p.date === dateStr).reduce((sum, p) => sum + p.amount, 0));
                 }
             } else if (period === 'monthly') {
-                document.getElementById('chart-subtitle').innerText = "છેલ્લા 4 અઠવાડિયા — Sales, Buying, Received, Paid";
+                document.getElementById('chart-subtitle').innerText = "Last 4 Weeks — Sales, Buying, Received, Paid";
                 for (let i = 3; i >= 0; i--) {
                     labels.push(`Week ${4-i}`);
                     let startD = new Date();
@@ -1059,7 +1059,7 @@
                     salesData.push(s); buyingData.push(b); receivedData.push(r); paidData.push(p);
                 }
             } else if (period === 'yearly') {
-                document.getElementById('chart-subtitle').innerText = "છેલ્લા 6 મહિના — Sales, Buying, Received, Paid";
+                document.getElementById('chart-subtitle').innerText = "Last 6 Months — Sales, Buying, Received, Paid";
                 for (let i = 5; i >= 0; i--) {
                     let d = new Date();
                     d.setMonth(now.getMonth() - i);
@@ -1125,7 +1125,7 @@
                     let activeClass = (party === activeParty) ? 'bg-indigo-50 border-accent shadow-2xs font-semibold' : 'bg-slate-50 border-transparent hover:bg-slate-100/50';
 
                     let lastOrderWithPhone = db.orders.find(o => o.party === party && o.phone);
-                    let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "નથી";
+                    let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "None";
 
                     box.innerHTML += `
                         <div onclick="showPartyDetails('${party}')" class="p-3 border rounded-xl cursor-pointer transition flex justify-between items-center ${activeClass}">
@@ -1144,7 +1144,7 @@
             });
 
             if (count === 0) {
-                box.innerHTML = `<p class="text-slate-400 text-center py-6 text-xs">કોઈ પાર્ટી મળી નથી.</p>`;
+                box.innerHTML = `<p class="text-slate-400 text-center py-6 text-xs">No party found.</p>`;
             }
         }
 
@@ -1241,21 +1241,21 @@
             dueText.className = netPartyDue >= 0 ? "font-black text-xl text-red-600 block mt-0.5" : "font-black text-xl text-emerald-600 block mt-0.5";
 
             let lastOrderWithPhone = db.orders.find(o => o.party === party && o.phone);
-            let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "નથી";
+            let currentPhone = lastOrderWithPhone ? lastOrderWithPhone.phone : "None";
             const phoneBadge = document.getElementById('selected-party-phone-badge');
             phoneBadge.classList.remove('hidden');
-            document.getElementById('party-phone-span').innerHTML = `📞 ${currentPhone} <button onclick="editPartyPhone('${party}', '${currentPhone === 'નથી' ? '' : currentPhone}')" class="text-accent hover:text-accentHover ml-1.5 font-bold hover:underline">✏️ સુધારો</button>`;
+            document.getElementById('party-phone-span').innerHTML = `📞 ${currentPhone} <button onclick="editPartyPhone('${party}', '${currentPhone === 'None' ? '' : currentPhone}')" class="text-accent hover:text-accentHover ml-1.5 font-bold hover:underline">✏️ Edit</button>`;
 
             // Orders Table
             let orderTable = document.getElementById('party-orders-table');
-            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-slate-400 text-center py-6">કોઈ ઓર્ડર એન્ટ્રી નથી.</p>` : "";
+            orderTable.innerHTML = partyOrders.length === 0 ? `<p class="text-slate-400 text-center py-6">No order entries.</p>` : "";
 
             partyOrders.forEach(o => {
                 let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
                 let actionStack = `
                     <div class="flex flex-col gap-1 items-end min-w-[70px] no-print">
-                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusClass} flex items-center justify-center gap-0.5 transition w-full" title="સ્થિતિ બદલો">${o.status} <i class="fa-solid fa-arrows-rotate text-[8px] ml-0.5"></i></button>
+                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusClass} flex items-center justify-center gap-0.5 transition w-full" title="Change Status">${o.status} <i class="fa-solid fa-arrows-rotate text-[8px] ml-0.5"></i></button>
                         ${o.status === 'Complete' ? `
                             <button onclick="generateChallan(${o.id})" class="text-[10px] bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 flex items-center justify-center gap-0.5 transition w-full" title="Print Challan"><i class="fa-solid fa-print"></i>Challan</button>
                             <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="text-[10px] bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 flex items-center justify-center gap-0.5 transition w-full" title="Share Challan"><i class="fa-solid fa-share-nodes"></i>Share</button>
@@ -1266,7 +1266,7 @@
                 orderTable.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-2xs space-y-2 relative group">
                         <div class="absolute top-2 right-2 flex space-x-1.5 opacity-40 group-hover:opacity-100 transition no-print">
-                            <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent" title="ઓર્ડર સુધારો"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent" title="Edit Order"><i class="fa-solid fa-pen-to-square"></i></button>
                             <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                         <div class="flex justify-between items-center text-[10px]">
@@ -1284,7 +1284,7 @@
 
             // Payments Table
             let paymentTable = document.getElementById('party-payments-table');
-            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-slate-400 text-center py-6">કોઈ ચૂકવણી રેકોર્ડ નથી.</p>` : "";
+            paymentTable.innerHTML = partyPayments.length === 0 ? `<p class="text-slate-400 text-center py-6">No payment records.</p>` : "";
 
             partyPayments.forEach(p => {
                 let badgeColor = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
@@ -1295,7 +1295,7 @@
                                 <span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${badgeColor}">${p.type}</span>
                                 <span class="text-slate-400 text-[10px] font-medium">${formatShortBusinessDate(p.date)}</span>
                             </div>
-                            <p class="font-bold text-slate-800 text-xs">રકમ: <span class="font-extrabold">₹${p.amount.toLocaleString('en-IN')}</span></p>
+                            <p class="font-bold text-slate-800 text-xs">Amount: <span class="font-extrabold">₹${p.amount.toLocaleString('en-IN')}</span></p>
                         </div>
                         <button onclick="deleteItem('payments', ${p.id})" class="text-slate-400 hover:text-red-500 opacity-40 group-hover:opacity-100 transition no-print p-1"><i class="fa-solid fa-trash-can text-sm"></i></button>
                     </div>
@@ -1311,12 +1311,12 @@
 
         // Edit Party Phone across all orders
         async function editPartyPhone(partyName, existingPhone) {
-            let newPhone = prompt(`"${partyName}" માટે નવો WhatsApp મોબાઈલ નંબર લખો:`, existingPhone);
+            let newPhone = prompt(`"${partyName}" for New WhatsApp Mobile Number write:`, existingPhone);
             if (newPhone === null) return;
             newPhone = newPhone.trim();
 
             if (newPhone && !/^\d{10}$/.test(newPhone)) {
-                alert("મહેરબાની કરીને સાચો ૧૦ આંકડાનો મોબાઈલ નંબર લખો.");
+                alert("Please enter a valid 10-digit mobile number.");
                 return;
             }
 
@@ -1329,9 +1329,9 @@
                         batch.update(doc.ref, { phone: newPhone });
                     });
                     await batch.commit();
-                    alert("મોબાઈલ નંબર ઓનલાઇન ફાયરબેઝ પર સફળતાપૂર્વક અપડેટ થઈ ગયો છે!");
+                    alert("Mobile number updated successfully on Firebase!");
                 } catch (err) {
-                    alert("ભૂલ: " + err.message);
+                    alert("Error: " + err.message);
                 }
             } else {
                 db.orders.forEach(o => {
@@ -1340,7 +1340,7 @@
                     }
                 });
                 saveData();
-                alert("મોબાઈલ નંબર સ્થાનિક બેકઅપમાં અપડેટ થઈ ગયો છે!");
+                alert("Mobile number updated in local backup!");
             }
         }
 
@@ -1349,23 +1349,23 @@
             let order = db.orders.find(o => o.id === orderId);
             if (!order) return;
 
-            let newItem = prompt("આઇટમ વિગત સુધારો:", order.item);
+            let newItem = prompt("Edit item details:", order.item);
             if (newItem === null) return;
 
             let calculated = calculateTotalsFromDescription(newItem);
             let defaultQty = calculated ? calculated.qty : order.qty;
             let defaultPrice = calculated ? calculated.price : order.price;
 
-            let newQtyStr = prompt("ક્વોન્ટિટી (Qty) સુધારો:", defaultQty);
+            let newQtyStr = prompt("Edit Quantity (Qty):", defaultQty);
             if (newQtyStr === null) return;
             let newQty = parseFloat(newQtyStr);
 
-            let newPriceStr = prompt("ભાવ (Price) સુધારો:", defaultPrice);
+            let newPriceStr = prompt("Edit Price:", defaultPrice);
             if (newPriceStr === null) return;
             let newPrice = parseFloat(newPriceStr);
 
             if (isNaN(newQty) || isNaN(newPrice)) {
-                alert("કૃપા કરીને સાચી કિંમત અને ક્વોન્ટિટી જ આંકડામાં લખો.");
+                alert("Please enter valid numbers for Price and Quantity.");
                 return;
             }
 
@@ -1379,12 +1379,12 @@
             if (isFirebaseConnected && firestoreDb) {
                 let ordersCol = activeBusiness === 'ABS' ? 'orders' : activeBusiness + '_orders';
                 firestoreDb.collection(ordersCol).doc(orderId.toString()).update(updatedData)
-                    .then(() => alert("ઓર્ડર વિગત ફાયરબેઝ પર અપડેટ થઈ ગઈ છે!"))
-                    .catch(err => alert("ભૂલ: " + err.message));
+                    .then(() => alert("Order details updated on Firebase!"))
+                    .catch(err => alert("Error: " + err.message));
             } else {
                 Object.assign(order, updatedData);
                 saveData();
-                alert("ઓર્ડર વિગત સ્થાનિકમાં સેવ થઈ ગઈ છે!");
+                alert("Order details have been saved locally!");
             }
         }
 
@@ -1417,7 +1417,7 @@
 
             // All orders sorted by newest
             const lastOrders = [...db.orders].sort((a, b) => b.id - a.id);
-            recentOrdersBox.innerHTML = lastOrders.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">કોઈ ઓર્ડર નથી.</p>` : "";
+            recentOrdersBox.innerHTML = lastOrders.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">No orders.</p>` : "";
             lastOrders.forEach(o => {
                 let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
                 let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700';
@@ -1441,7 +1441,7 @@
 
             // All payments sorted by newest
             const lastPayments = [...db.payments].sort((a, b) => b.id - a.id);
-            recentPaymentsBox.innerHTML = lastPayments.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">કોઈ પેમેન્ટ નથી.</p>` : "";
+            recentPaymentsBox.innerHTML = lastPayments.length === 0 ? `<p class="text-slate-400 text-center py-6 text-xs font-semibold">No payments.</p>` : "";
             lastPayments.forEach(p => {
                 let badgeColor = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100';
                 let modeIcon = p.mode === 'Cheque' ? 'fa-file-invoice' : (p.mode === 'Online' ? 'fa-mobile-screen-button' : 'fa-money-bill');
@@ -1495,12 +1495,12 @@
                 let statusBadge = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
                 let actionStack = `
                     <div class="flex flex-col gap-1 items-center w-full min-w-[70px]">
-                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge} inline-flex items-center justify-center gap-0.5 hover:shadow-xs transition w-full" title="સ્થિતિ બદલો">
+                        <button onclick="toggleStatus(${o.id})" class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${statusBadge} inline-flex items-center justify-center gap-0.5 hover:shadow-xs transition w-full" title="Change Status">
                             ${o.status} <i class="fa-solid fa-arrows-rotate text-[8px]"></i>
                         </button>
                         ${o.status === 'Complete' ? `
-                            <button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="ચલાન પ્રિન્ટ કરો"><i class="fa-solid fa-print"></i>ચલાન</button>
-                            <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="વોટ્સએપ/પીડીએફ શેર કરો"><i class="fa-solid fa-share-nodes"></i>શેર</button>
+                            <button onclick="generateChallan(${o.id})" class="bg-white border border-accent text-accent px-2 py-0.5 rounded-lg hover:bg-indigo-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="Print Challan"><i class="fa-solid fa-print"></i>Challan</button>
+                            <button id="share-order-btn-${o.id}" onclick="shareChallanDirectly(${o.id})" class="bg-white border border-emerald-600 text-emerald-600 px-2 py-0.5 rounded-lg hover:bg-emerald-50 text-[10px] font-bold flex items-center justify-center gap-0.5 transition w-full" title="Share WhatsApp/PDF"><i class="fa-solid fa-share-nodes"></i>Share</button>
                         ` : ''}
                     </div>
                 `;
@@ -1522,8 +1522,8 @@
                         <td class="p-4 text-center no-print flex justify-center items-center gap-3">
                             ${actionStack}
                             <div class="flex flex-col gap-1.5">
-                                <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent p-1" title="સુધારો"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
-                                <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                <button onclick="editOrder(${o.id})" class="text-slate-400 hover:text-accent p-1" title="Edit"><i class="fa-solid fa-pen-to-square text-xs"></i></button>
+                                <button onclick="deleteItem('orders', ${o.id})" class="text-slate-400 hover:text-red-500 p-1" title="Delete"><i class="fa-solid fa-trash-can text-xs"></i></button>
                             </div>
                         </td>
                     </tr>
@@ -1565,7 +1565,7 @@
                         <td class="p-4"><span class="px-2 py-0.5 border rounded-lg text-[9px] font-bold ${typeBadge}">${p.type}</span></td>
                         <td class="p-4 text-right font-extrabold text-slate-900">₹${p.amount.toLocaleString('en-IN')}</td>
                         <td class="p-4 text-center no-print">
-                            <button onclick="deleteItem('payments', ${p.id})" class="text-slate-400 hover:text-red-500 p-1" title="ડીલીટ"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                            <button onclick="deleteItem('payments', ${p.id})" class="text-slate-400 hover:text-red-500 p-1" title="Delete"><i class="fa-solid fa-trash-can text-xs"></i></button>
                         </td>
                     </tr>
                 `;
@@ -1583,12 +1583,12 @@
 
             if (isFirebaseConnected) {
                 statusEl.className = "font-black text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded border border-emerald-100 flex items-center gap-1.5";
-                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>લાઈવ કનેક્ટેડ 🟢`;
+                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-ping"></span>Live Connected 🟢`;
                 disconnectBtn.classList.remove('hidden');
                 migrationBox.classList.remove('hidden');
             } else {
                 statusEl.className = "font-black text-red-600 bg-red-50 px-2.5 py-0.5 rounded border border-red-100 flex items-center gap-1.5";
-                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>ઑફલાઇન (Local Mode)`;
+                statusEl.innerHTML = `<span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span>Offline (Local Mode)`;
                 disconnectBtn.classList.add('hidden');
                 migrationBox.classList.add('hidden');
             }
@@ -1597,7 +1597,7 @@
         // Generate print delivery challan
         // Generate Ledger Print Report
         function generateLedgerPrint(partyName) {
-            if (!partyName) return alert("કૃપા કરીને પહેલા પાર્ટી પસંદ કરો.");
+            if (!partyName) return alert("Please select a party first.");
 
             const partyOrders = db.orders.filter(o => o.party === partyName);
             const partyPayments = db.payments.filter(p => p.party === partyName);
@@ -1652,7 +1652,6 @@
                 totalCredit += t.credit;
 
                 const balanceColor = runningBalance >= 0 ? 'text-slate-800' : 'text-emerald-700';
-                const balType = runningBalance >= 0 ? "Dr" : "Cr";
 
                 tbody.innerHTML += `
                     <tr class="border-b border-slate-800">
@@ -1661,7 +1660,7 @@
                         <td class="p-2 border-r border-slate-800 text-center text-[10px]">${t.type}</td>
                         <td class="p-2 border-r border-slate-800 text-right">${t.debit > 0 ? '₹'+t.debit.toLocaleString('en-IN') : '-'}</td>
                         <td class="p-2 border-r border-slate-800 text-right">${t.credit > 0 ? '₹'+t.credit.toLocaleString('en-IN') : '-'}</td>
-                        <td class="p-2 text-right bg-slate-50 ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')} ${balType}</td>
+                        <td class="p-2 text-right bg-slate-50 ${balanceColor}">₹${Math.abs(runningBalance).toLocaleString('en-IN')}</td>
                     </tr>
                 `;
             });
@@ -1669,11 +1668,11 @@
             // Summary row
             document.getElementById('lp-total-debit').innerText = "₹" + totalDebit.toLocaleString('en-IN');
             document.getElementById('lp-total-credit').innerText = "₹" + totalCredit.toLocaleString('en-IN');
-            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN') + (runningBalance >= 0 ? " Dr" : " Cr");
+            document.getElementById('lp-final-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN');
 
             document.getElementById('lp-closing-balance').innerText = "₹" + Math.abs(runningBalance).toLocaleString('en-IN');
             document.getElementById('lp-closing-balance').className = runningBalance >= 0 ? "text-2xl font-black text-red-600" : "text-2xl font-black text-emerald-600";
-            document.getElementById('lp-balance-type').innerText = runningBalance >= 0 ? "Total Pending Amount (બાકી લેણાં)" : "Advance / Excess Amount (વધારે જમા)";
+            document.getElementById('lp-balance-type').innerText = runningBalance >= 0 ? "Total Pending Amount (Due)" : "Advance / Excess Amount";
 
             // Show Modal
             document.getElementById('ledger-print-modal').classList.remove('hidden');
@@ -1681,144 +1680,6 @@
 
         function closeLedgerPrint() {
             document.getElementById('ledger-print-modal').classList.add('hidden');
-        }
-
-        function getPartyLedgerQrPayload(partyName) {
-            const partyOrders = db.orders.filter(o => o.party === partyName);
-            const partyPayments = db.payments.filter(p => p.party === partyName);
-            const rows = [];
-
-            partyOrders.forEach(o => {
-                rows.push({
-                    date: o.date,
-                    timestamp: o.timestamp || o.id,
-                    type: o.type,
-                    detail: o.item ? `${o.item} ${o.qty || ''}x${o.price || ''}`.trim() : 'Order',
-                    debit: o.type === 'Sales' ? o.amount : 0,
-                    credit: o.type === 'Buying' ? o.amount : 0
-                });
-            });
-
-            partyPayments.forEach(p => {
-                rows.push({
-                    date: p.date,
-                    timestamp: p.timestamp || p.id,
-                    type: p.type,
-                    detail: `Payment ${p.mode || 'Cash'}${p.chequeNo ? ' #' + p.chequeNo : ''}`,
-                    debit: p.type === 'Paid' ? p.amount : 0,
-                    credit: p.type === 'Received' ? p.amount : 0
-                });
-            });
-
-            rows.sort(compareLedgerRecords);
-
-            let balance = 0;
-            let totalDebit = 0;
-            let totalCredit = 0;
-            const lines = [
-                'GOKUL PLASTIC',
-                `Party: ${partyName}`,
-                `Generated: ${formatShortBusinessDate(new Date().toISOString().split('T')[0])}`,
-                'Date | Type | Detail | Dr | Cr | Bal'
-            ];
-
-            rows.forEach(row => {
-                balance += row.debit - row.credit;
-                totalDebit += row.debit;
-                totalCredit += row.credit;
-                const balType = balance >= 0 ? 'Dr' : 'Cr';
-                lines.push([
-                    formatShortBusinessDate(row.date),
-                    row.type,
-                    row.detail.replace(/\s+/g, ' '),
-                    row.debit ? row.debit : '-',
-                    row.credit ? row.credit : '-',
-                    `${Math.abs(balance)} ${balType}`
-                ].join(' | '));
-            });
-
-            lines.push(`Total Dr: ${totalDebit}`);
-            lines.push(`Total Cr: ${totalCredit}`);
-            lines.push(`Closing: ${Math.abs(balance)} ${balance >= 0 ? 'Dr' : 'Cr'}`);
-
-            return { payload: lines.join('\n'), recordCount: rows.length };
-        }
-
-        function createPartyQrDataUrl(partyName) {
-            if (typeof qrcode === 'undefined') {
-                alert('QR library load નથી થઈ. Internet connection ચકાસો અને page refresh કરો.');
-                return null;
-            }
-
-            const { payload, recordCount } = getPartyLedgerQrPayload(partyName);
-
-            try {
-                const qr = qrcode(0, 'L');
-                qr.addData(payload);
-                qr.make();
-                return {
-                    dataUrl: qr.createDataURL(6, 8),
-                    payload,
-                    recordCount
-                };
-            } catch (error) {
-                alert('આ partyના records QR codeમાં સમાઈ રહ્યા નથી. Records વધારે છે, માટે PDF share કરવું વધારે સારું રહેશે.');
-                return null;
-            }
-        }
-
-        function openPartyQrModal() {
-            if (!activeParty) return alert('Please select a party first.');
-
-            const qrResult = createPartyQrDataUrl(activeParty);
-            if (!qrResult) return;
-
-            document.getElementById('party-qr-title').innerText = activeParty;
-            document.getElementById('party-qr-image').src = qrResult.dataUrl;
-            document.getElementById('party-qr-note').innerText = `${qrResult.recordCount} ledger records included for this party. Scan this QR to read the party-wise ledger text.`;
-            document.getElementById('party-qr-modal').classList.remove('hidden');
-        }
-
-        function closePartyQrModal() {
-            document.getElementById('party-qr-modal').classList.add('hidden');
-        }
-
-        async function sharePartyQrCode() {
-            if (!activeParty) return alert('Please select a party first.');
-
-            const qrResult = createPartyQrDataUrl(activeParty);
-            if (!qrResult) return;
-
-            const response = await fetch(qrResult.dataUrl);
-            const blob = await response.blob();
-            const extension = blob.type.includes('gif') ? 'gif' : 'png';
-            const fileName = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.${extension}`;
-            const file = new File([blob], fileName, { type: blob.type || 'image/gif' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    title: `${activeParty} Ledger QR`,
-                    text: `Gokul Plastic ledger QR for ${activeParty}`,
-                    files: [file]
-                });
-                return;
-            }
-
-            downloadPartyQrCode(qrResult.dataUrl);
-            alert('આ browser direct share support કરતું નથી, એટલે QR image download કરી છે.');
-        }
-
-        function downloadPartyQrCode(existingDataUrl) {
-            if (!activeParty) return alert('Please select a party first.');
-            const dataUrl = existingDataUrl || createPartyQrDataUrl(activeParty)?.dataUrl;
-            if (!dataUrl) return;
-
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = `${activeParty.replace(/[^a-z0-9]+/gi, '_')}_Ledger_QR.gif`;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
         }
 
         function numberToWords(num) {
@@ -2756,7 +2617,7 @@
                     
                     sendChallanToWhatsApp(order.phone, order.party, autoNo, order.item, totalQty, formattedTotal, transportMode);
 
-                    alert("PDF ડાઉનલોડ થઈ ગયું છે અને વોટ્સએપ વેબ ઓપન થઈ રહ્યું છે. તમે ફાઈલ વોટ્સએપ પર મેન્યુઅલી મોકલી શકો છો.");
+                    alert("PDF has been downloaded and WhatsApp Web is opening. You can send the file manually on WhatsApp.");
 
                     if (shareBtn) {
                         shareBtn.disabled = false;
@@ -2770,7 +2631,7 @@
                 }
 
                 console.error("PDF generation failed:", error);
-                alert("PDF બનાવવામાં કંઈક ભૂલ આવી!");
+                alert("Something went wrong while generating the PDF!");
                 if (shareBtn) {
                     shareBtn.disabled = false;
                     shareBtn.innerHTML = originalText;
@@ -2782,14 +2643,20 @@
 
         // Share to WhatsApp API
         function sendChallanToWhatsApp(phone, party, challanNum, item, qty, total, transport = 'Self') {
-            if (!phone || phone === "") return alert("મોબાઈલ નંબર ઉમેરેલો નથી! ખાતાવહીમાં જઈને સુધારો પર ક્લિક કરી પહેલા મોબાઈલ નંબર લખો.");
-            let message = `*નમસ્તે ${party},*\n\n` +
-                `*GOKUL PLASTIC* તરફથી તમારો માલ રવાના થયો છે:\n\n` +
-                `🔹 *ચલાન નંબર:* ${challanNum}\n` +
-                `🔹 *વસ્તુ:* ${item}\n` +
-                `🔹 *જથ્થો:* ${qty}\n` +
-                `🔹 *ટોટલ અમાઉન્ટ:* ${total}\n` +
-                `🔹 *ટ્રાન્સપોર્ટ:* ${transport}\n\n` +
+            if (!phone || phone === "") return alert("Mobile number is not added! Go to ledger, click 'Edit' and add the mobile number first.");
+            let message = `*Hello ${party},*\n\n` +
+                `*GOKUL PLASTIC* - Your goods have been dispatched:\n\n` +
+                `🔹 *Challan Number:* ${challanNum}
+` +
+                `🔹 *Item:* ${item}
+` +
+                `🔹 *Quantity:* ${qty}
+` +
+                `🔹 *Total Amount:* ${total}
+` +
+                `🔹 *Transport:* ${transport}
+
+` +
                 `🙏 *Gokul Plastic (Ahmedabad)*`;
             window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(message)}`, '_blank');
         }
@@ -2800,16 +2667,16 @@
 
         // Delete order/payment records
         function deleteItem(target, id) {
-            if (confirm("શું તમે આ એન્ટ્રી કાયમ માટે ડીલીટ કરવા માંગો છો?")) {
+            if (confirm("Are you sure you want to delete this entry permanently?")) {
                 if (isFirebaseConnected && firestoreDb) {
                     let targetCol = activeBusiness === 'ABS' ? target : activeBusiness + '_' + target;
                     firestoreDb.collection(targetCol).doc(id.toString()).delete()
-                        .then(() => alert("એન્ટ્રી ફાયરબેઝ માંથી ડીલીટ કરવામાં આવી છે!"))
-                        .catch(err => alert("ડીલીટ કરવામાં ભૂલ આવી: " + err.message));
+                        .then(() => alert("Entry has been deleted from Firebase!"))
+                        .catch(err => alert("Error deleting: " + err.message));
                 } else {
                     db[target] = db[target].filter(item => item.id !== id);
                     saveData();
-                    alert("એન્ટ્રી બ્રાઉઝર માંથી ડીલીટ થઈ ગઈ છે!");
+                    alert("Entry has been deleted from the browser!");
                 }
             }
         }
@@ -2827,19 +2694,19 @@
 
         // ─── LOGIN / LOGOUT  ───────────────────────────────────────────────
 
-        // દર વખત page load થાય ત્યારે login screen show કરો
-        // (SESSION persistence: browser/tab બંધ થતાં logout)
+        // Show login screen every time page loads
+        // (SESSION persistence: logout on browser/tab close)
         function setupAuthPersistence() {
             if (!auth) return;
             auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
                 .then(() => {
-                    // persistence set થઈ ગઈ - હવે onAuthStateChanged handle કરશે
+                    // Persistence set - now onAuthStateChanged will handle
                 })
                 .catch(() => { });
         }
 
-        // Page load પર login screen ચોક્કસ show કરો
-        // (firebase auto-login ને allow ન કરો)
+        // Make sure to show login screen on page load
+        // (Do not allow firebase auto-login)
         function showLoginScreen() {
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('login-loading-container').style.display = 'none';
@@ -2850,11 +2717,11 @@
             document.getElementById('login-screen').style.display = 'none';
         }
 
-        // Page load: onAuthStateChanged Firebase handle કરશે
-        // SESSION persistence હોવાથી:
-        // - Same tab refresh: logged in રહે
+        // Page load: Firebase will handle onAuthStateChanged
+        // With SESSION persistence:
+        // - Same tab refresh: stays logged in
         // - Tab/Browser close: logout
-        // showLoginScreen() ની જરૂર નથી - Firebase auto-handle
+        // showLoginScreen() not needed - Firebase auto-handle
 
         // Enter key: email → password focus, password → login
         document.getElementById('login-password').addEventListener('keydown', function (e) {
@@ -2872,13 +2739,13 @@
             const btn = document.getElementById('login-btn');
 
             if (!email || !password) {
-                errorEl.textContent = 'કૃપા કરી Email અને Password ભરો.';
+                errorEl.textContent = 'Please fill in Email and Password.';
                 errorEl.classList.remove('hidden');
                 return;
             }
 
             if (!auth) {
-                errorEl.textContent = 'Firebase connect નથી. Settings ચકાસો.';
+                errorEl.textContent = 'Firebase is not connected. Check Settings.';
                 errorEl.classList.remove('hidden');
                 return;
             }
@@ -2887,7 +2754,7 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Login...</span>';
 
-            // SESSION persistence: tab/window બંધ = logout, refresh = stay logged in
+            // SESSION persistence: tab/window close = logout, refresh = stay logged in
             auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
                 .then(() => {
                     return auth.signInWithEmailAndPassword(email, password);
@@ -2895,18 +2762,18 @@
                 .then(() => {
                     hideLoginScreen();
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login કરો</span>';
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login</span>';
                 })
                 .catch(error => {
                     btn.disabled = false;
-                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login કરો</span>';
-                    let msg = 'Login ભૂલ: ' + error.message;
+                    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i><span>Login</span>';
+                    let msg = 'Login Error: ' + error.message;
                     if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                        msg = '❌ Password ખોટો છે! ફરી ચકાસો.';
+                        msg = '❌ Incorrect password! Please check again.';
                     } else if (error.code === 'auth/user-not-found') {
-                        msg = '❌ Email ID મળ્યો નથી.';
+                        msg = '❌ Email ID not found.';
                     } else if (error.code === 'auth/network-request-failed') {
-                        msg = '❌ Internet connection ચકાસો.';
+                        msg = '❌ Check your internet connection.';
                     }
                     errorEl.textContent = msg;
                     errorEl.classList.remove('hidden');
@@ -2960,7 +2827,6 @@
     const pdfTotalCredit = ledgerRows.reduce((s,r)=>s+r.credit, 0);
     const pdfClosing     = pdfTotalDebit - pdfTotalCredit;
     const pdfClosingAbs  = Math.abs(pdfClosing);
-    const pdfClosingType = pdfClosing >= 0 ? 'Dr' : 'Cr';
 
     // ── PDF INIT ─────────────────────────────────────────────────────
     let doc;
@@ -3079,7 +2945,7 @@
         const cards = [
             {label:'TOTAL SALES',     val:'Rs. '+totalSales.toLocaleString('en-IN'),    col:[33,37,41]},
             {label:'TOTAL RECEIVED',  val:'Rs. '+totalReceived.toLocaleString('en-IN'), col:[25,135,84]},
-            {label:'NET DUE',         val:'Rs. '+Math.abs(netDue).toLocaleString('en-IN')+' '+(netDue>=0?'Dr':'Cr'), col: netDue>=0?[220,53,69]:[25,135,84]},
+            {label:'NET DUE',         val:'Rs. '+Math.abs(netDue).toLocaleString('en-IN'), col: netDue>=0?[220,53,69]:[25,135,84]},
             {label:'ENTRY COUNT',     val:String(entryCount), col:[33,37,41]},
         ];
         cards.forEach((c,i) => {
@@ -3247,9 +3113,8 @@
         // 6. Balanced Cumulative Running Metrics
         doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
         const bAbs  = Math.abs(r.balance);
-        const bType = r.balance >= 0 ? 'Dr' : 'Cr';
         doc.setTextColor(r.balance>=0 ? 220:25, r.balance>=0 ? 53:135, r.balance>=0 ? 69:84);
-        txt(bAbs.toLocaleString('en-IN')+' '+bType, cxR('balance')-2, ty, {align:'right'});
+        txt(bAbs.toLocaleString('en-IN'), cxR('balance')-2, ty, {align:'right'});
 
         y += rowH;
     });
@@ -3297,7 +3162,7 @@
 
     doc.setFontSize(11);
     doc.setTextColor(pdfClosing>=0 ? 220:25, pdfClosing>=0 ? 53:135, pdfClosing>=0 ? 69:84);
-    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN')+' '+pdfClosingType, boxX+4, y+12.5);
+    txt('Rs. '+pdfClosingAbs.toLocaleString('en-IN'), boxX+4, y+12.5);
 
     // ── RENDER FOOTERS ACROSS ALL DISCOVERED PAGES ───────────────────
     drawAllFooters();
