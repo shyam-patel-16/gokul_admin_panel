@@ -179,15 +179,9 @@
 
             <!-- Firebase Status Widget -->
             <div class="sidebar-status p-4 border-t border-slate-800 bg-slate-950/40">
-                <div id="firebase-status-badge"
-                    class="w-full text-center text-[11px] bg-red-950/40 border border-red-900 text-red-400 py-2 px-3 rounded-xl flex items-center justify-center gap-2 font-medium">
-                    <span class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></span>
-                    <span class="sidebar-label">Local Mode (Offline)</span>
-                </div>
-
                 <!-- Logout Button (Desktop) -->
                 <button onclick="logoutUser()" title="Logout"
-                    class="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all border border-red-500/20 shadow-sm shadow-red-900/20">
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl text-xs font-bold transition-all border border-red-500/20 shadow-sm shadow-red-900/20">
                     <i class="fa-solid fa-power-off text-sm"></i>
                     <span class="sidebar-label">Logout</span>
                 </button>
@@ -206,8 +200,6 @@
                 </select>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
-                <span id="mobile-firebase-status-dot" class="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"
-                    title="Firebase Status"></span>
                 <button onclick="logoutUser()"
                     class="text-red-400 hover:text-red-300 w-8 h-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center flex-shrink-0"
                     title="Logout">
