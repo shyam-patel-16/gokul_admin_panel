@@ -2877,20 +2877,14 @@
     }
 
     function drawFullHeader() {
-        let logoImg = document.querySelector('img[src*="logo"]') || 
-                      document.querySelector('img[src*="345"]') || 
-                      document.querySelector('img[alt*="logo"]') || 
-                      document.querySelector('img[alt*="Logo"]') ||
-                      document.querySelector('img');
-                      
         let logoLoaded = false;
-        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+        if (window.GOKUL_LOGO_BASE64) {
             logoLoaded = true;
         }
 
         if (logoLoaded) {
             try {
-                doc.addImage(logoImg, 'PNG', ML, y, 14, 14);
+                doc.addImage(window.GOKUL_LOGO_BASE64, 'PNG', ML, y, 14, 14);
                 
                 doc.setFont('helvetica','bold'); doc.setFontSize(18); doc.setTextColor(20,20,20);
                 txt('GOKUL PLASTIC', ML + 18, y+4);
@@ -2965,20 +2959,14 @@
     }
 
     function drawContinuedHeader() {
-        let logoImg = document.querySelector('img[src*="logo"]') || 
-                      document.querySelector('img[src*="345"]') || 
-                      document.querySelector('img[alt*="logo"]') || 
-                      document.querySelector('img[alt*="Logo"]') ||
-                      document.querySelector('img');
-                      
         let logoLoaded = false;
-        if (logoImg && logoImg.complete && logoImg.naturalWidth !== 0) {
+        if (window.GOKUL_LOGO_BASE64) {
             logoLoaded = true;
         }
 
         if (logoLoaded) {
             try {
-                doc.addImage(logoImg, 'PNG', ML, y, 9, 9);
+                doc.addImage(window.GOKUL_LOGO_BASE64, 'PNG', ML, y, 9, 9);
                 doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
                 txt('GOKUL PLASTIC', ML + 11, y+3);
                 doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
@@ -3185,6 +3173,68 @@
             return Math.abs(hash).toString(36);
         }
 
+        function ensureShareModalExists() {
+            if (document.getElementById('share-ledger-modal')) return;
+
+            const modalHtml = `
+                <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+                    <div class="flex justify-between items-center border-b pb-3">
+                        <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-share-nodes text-indigo-600"></i>
+                            <span>Share Ledger Statement</span>
+                        </h3>
+                        <button onclick="closeShareLedgerModal()"
+                            class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1">&times;</button>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <p class="text-xs text-slate-500 font-semibold">Share <span id="share-modal-party-name" class="text-slate-800 font-extrabold"></span>'s ledger statement via:</p>
+                        
+                        <div class="grid grid-cols-1 gap-2.5">
+                            <button onclick="shareViaWhatsApp()"
+                                class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
+                                <i class="fa-brands fa-whatsapp text-lg text-emerald-600"></i>
+                                <span class="flex-1 text-left">Send on WhatsApp</span>
+                                <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
+                            </button>
+                            
+                            <button onclick="shareViaEmail()"
+                                class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
+                                <i class="fa-solid fa-envelope text-lg text-blue-600"></i>
+                                <span class="flex-1 text-left">Share via Email</span>
+                                <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
+                            </button>
+                            
+                            <button onclick="shareViaCopyLink()"
+                                class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
+                                <i class="fa-solid fa-link text-lg text-slate-500"></i>
+                                <span class="flex-1 text-left">Copy Link to Clipboard</span>
+                                <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
+                            </button>
+
+                            <button id="share-native-btn" onclick="shareViaNative()"
+                                class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition hidden">
+                                <i class="fa-solid fa-share-from-square text-lg text-indigo-600"></i>
+                                <span class="flex-1 text-left">System Share (Native)</span>
+                                <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Generated URL</div>
+                        <p id="share-modal-url-preview" class="text-[10px] text-slate-600 font-semibold break-all select-all"></p>
+                    </div>
+                </div>
+            `;
+
+            const modalDiv = document.createElement('div');
+            modalDiv.id = 'share-ledger-modal';
+            modalDiv.className = 'hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[99999] no-print';
+            modalDiv.innerHTML = modalHtml;
+            document.body.appendChild(modalDiv);
+        }
+
         function sharePartyLedgerLink() {
             if (!activeParty) {
                 alert("Please select a party first.");
@@ -3194,6 +3244,9 @@
                 alert("Please select a business first.");
                 return;
             }
+
+            // Ensure the modal HTML structure exists in the DOM (protects against browser caching)
+            ensureShareModalExists();
 
             // Generate secure signature
             const sig = generateSignature(activeBusiness, activeParty);

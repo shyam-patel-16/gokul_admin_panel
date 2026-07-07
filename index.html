@@ -1367,67 +1367,8 @@
         </div>
     </div>
 
-    <!-- SHARE LEDGER MODAL -->
-    <div id="share-ledger-modal"
-        class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[99999] no-print">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 space-y-5 border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
-            <div class="flex justify-between items-center border-b pb-3">
-                <h3 class="text-sm font-extrabold text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-share-nodes text-accent"></i>
-                    <span>Share Ledger Statement</span>
-                </h3>
-                <button onclick="closeShareLedgerModal()"
-                    class="text-slate-400 hover:text-slate-700 text-xl font-bold p-1">&times;</button>
-            </div>
-            
-            <div class="space-y-3">
-                <p class="text-xs text-slate-500 font-semibold">Share <span id="share-modal-party-name" class="text-slate-800 font-extrabold"></span>'s ledger statement via:</p>
-                
-                <!-- Share options grid -->
-                <div class="grid grid-cols-1 gap-2.5">
-                    <!-- WhatsApp -->
-                    <button onclick="shareViaWhatsApp()"
-                        class="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
-                        <i class="fa-brands fa-whatsapp text-lg text-emerald-600"></i>
-                        <span class="flex-1 text-left">Send on WhatsApp</span>
-                        <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
-                    </button>
-                    
-                    <!-- Email -->
-                    <button onclick="shareViaEmail()"
-                        class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
-                        <i class="fa-solid fa-envelope text-lg text-blue-600"></i>
-                        <span class="flex-1 text-left">Share via Email</span>
-                        <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
-                    </button>
-                    
-                    <!-- Copy Link -->
-                    <button onclick="shareViaCopyLink()"
-                        class="w-full bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition">
-                        <i class="fa-solid fa-link text-lg text-slate-500"></i>
-                        <span class="flex-1 text-left">Copy Link to Clipboard</span>
-                        <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
-                    </button>
-
-                    <!-- Native Share (Hidden if not supported) -->
-                    <button id="share-native-btn" onclick="shareViaNative()"
-                        class="w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold py-3 px-4 rounded-xl text-xs flex items-center gap-3 transition hidden">
-                        <i class="fa-solid fa-share-from-square text-lg text-indigo-600"></i>
-                        <span class="flex-1 text-left">System Share (Native)</span>
-                        <i class="fa-solid fa-chevron-right text-[10px] opacity-40"></i>
-                    </button>
-                </div>
-            </div>
-            
-            <!-- Link Preview Box -->
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Generated URL</div>
-                <p id="share-modal-url-preview" class="text-[10px] text-slate-600 font-semibold break-all select-all"></p>
-            </div>
-        </div>
-    </div>
-
     <!-- JAVASCRIPT CODE -->
+    <script src="assets/js/logo.js"></script>
     <script src="assets/js/app.js?v=2"></script>
 </body>
 
