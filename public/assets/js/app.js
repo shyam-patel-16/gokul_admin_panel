@@ -3170,6 +3170,186 @@
     doc.save(activeParty+'_Ledger_'+new Date().toISOString().split('T')[0]+'.pdf');
 }
 
+        let currentShareUrl = "";
+        let currentShareParty = "";
+
+        function generateSignature(biz, party) {
+            const salt = "GokulPlasticLedgerSecureSalt2026!";
+            const raw = biz + ":" + party + ":" + salt;
+            let hash = 0;
+            for (let i = 0; i < raw.length; i++) {
+                const char = raw.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        function sharePartyLedgerLink() {
+            if (!activeParty) {
+                alert("Please select a party first.");
+                return;
+            }
+            if (!activeBusiness) {
+                alert("Please select a business first.");
+                return;
+            }
+
+            // Generate secure signature
+            const sig = generateSignature(activeBusiness, activeParty);
+
+            // Construct URL
+            let baseHref = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+            const partyParam = encodeURIComponent(activeParty).replace(/%20/g, '+');
+            let shareUrl = `${baseHref}share.html?biz=${encodeURIComponent(activeBusiness)}&party=${partyParam}&sig=${sig}`;
+
+            // Save for modal actions
+            currentShareUrl = shareUrl;
+            currentShareParty = activeParty;
+
+            // Set modal text
+            document.getElementById('share-modal-party-name').innerText = activeParty;
+            document.getElementById('share-modal-url-preview').innerText = shareUrl;
+
+            // Check if native share is supported
+            const nativeBtn = document.getElementById('share-native-btn');
+            if (navigator.share) {
+                nativeBtn.classList.remove('hidden');
+            } else {
+                nativeBtn.classList.add('hidden');
+            }
+
+            // Show share modal
+            document.getElementById('share-ledger-modal').classList.remove('hidden');
+        }
+
+        // Robust Clipboard Copying Function
+        function copyToClipboard(text) {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                return navigator.clipboard.writeText(text);
+            }
+            
+            // Fallback for file:// or HTTP non-secure contexts
+            return new Promise((resolve, reject) => {
+                try {
+                    const textArea = document.createElement("textarea");
+                    textArea.value = text;
+                    textArea.style.position = "fixed";
+                    textArea.style.top = "0";
+                    textArea.style.left = "0";
+                    textArea.style.opacity = "0";
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    if (successful) {
+                        resolve();
+                    } else {
+                        reject(new Error("Fallback copy failed"));
+                    }
+                } catch (err) {
+                    reject(err);
+                }
+            });
+        }
+
+        function shareViaWhatsApp() {
+            const lastOrderWithPhone = db.orders.find(o => o.party === currentShareParty && o.phone);
+            const phone = lastOrderWithPhone ? lastOrderWithPhone.phone : "";
+            const message = `Hello, please find your ledger statement here:\n${currentShareUrl}`;
+            
+            let waUrl = "";
+            if (phone && /^\d{10}$/.test(phone)) {
+                waUrl = `https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(message)}`;
+            } else {
+                waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+            }
+            window.open(waUrl, '_blank');
+            closeShareLedgerModal();
+        }
+
+        function shareViaEmail() {
+            const subject = `Ledger Statement - ${currentShareParty}`;
+            const body = `Hello,\n\nPlease find your ledger statement at the following link:\n\n${currentShareUrl}\n\nThank you,\nGokul Plastic`;
+            const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.open(mailtoUrl, '_blank');
+            closeShareLedgerModal();
+        }
+
+        function shareViaCopyLink() {
+            copyToClipboard(currentShareUrl)
+                .then(() => {
+                    showShareSuccessToast(currentShareUrl);
+                })
+                .catch(err => {
+                    console.error("Clipboard copy failed: ", err);
+                    promptCopyFallback(currentShareUrl);
+                });
+            closeShareLedgerModal();
+        }
+
+        function shareViaNative() {
+            if (navigator.share) {
+                navigator.share({
+                    title: `Ledger Statement - ${currentShareParty}`,
+                    text: `Please check the ledger statement for ${currentShareParty}`,
+                    url: currentShareUrl
+                }).catch(err => console.log('Error sharing:', err));
+            }
+            closeShareLedgerModal();
+        }
+
+        function closeShareLedgerModal() {
+            document.getElementById('share-ledger-modal').classList.add('hidden');
+        }
+
+        window.shareViaWhatsApp = shareViaWhatsApp;
+        window.shareViaEmail = shareViaEmail;
+        window.shareViaCopyLink = shareViaCopyLink;
+        window.shareViaNative = shareViaNative;
+        window.closeShareLedgerModal = closeShareLedgerModal;
+
+
+        function showShareSuccessToast(url) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 z-[99999] bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex flex-col gap-1 border border-emerald-500 max-w-sm";
+            toast.innerHTML = `
+                <div class="flex items-center gap-2 font-black text-sm">
+                    <i class="fa-solid fa-circle-check text-lg"></i>
+                    <span>Link Copied Successfully!</span>
+                </div>
+                <p class="text-[10px] text-emerald-100 font-medium break-all mt-1">${url}</p>
+                <p class="text-[9px] text-emerald-200 mt-0.5">Share this link with the customer to view their ledger.</p>
+            `;
+            document.body.appendChild(toast);
+            
+            // Add entry animation classes via js
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(20px)';
+            toast.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 50);
+
+            // Auto remove
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(20px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function promptCopyFallback(url) {
+            prompt("Copy this URL to share the ledger:", url);
+        }
+
+        window.sharePartyLedgerLink = sharePartyLedgerLink;
+
+
         // ═══════════════════════════════════════════
         // PARTY NAME AUTOCOMPLETE
         // ═══════════════════════════════════════════

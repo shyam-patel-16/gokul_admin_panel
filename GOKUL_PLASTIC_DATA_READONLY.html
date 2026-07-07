@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gokul Plastic - Read-Only Database Archive</title>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0b0f19',
+                        accent: '#6366f1',
+                        accentHover: '#4f46e5',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-card {
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col antialiased">
+
+    <!-- HEADER / HERO -->
+    <header class="bg-primary text-white py-6 px-4 md:px-8 shadow-xl relative overflow-hidden no-print">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-950/50 to-purple-950/50 opacity-50"></div>
+        <div class="relative max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 bg-white rounded-2xl flex items-center justify-center p-1.5 shadow-lg border border-slate-700/50">
+                    <img src="logo.png" alt="Gokul Plastic Logo" class="w-full h-full object-contain" onerror="this.src='https://placehold.co/100x100?text=Gokul'"/>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black tracking-wide">Gokul Plastic</h1>
+                    <p class="text-indigo-200 text-xs mt-0.5 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock text-indigo-400"></i> Secure Read-Only Ledger & Order Viewer
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-col items-end text-right">
+                <span class="text-xs text-slate-400">Archive Export Date:</span>
+                <span class="text-sm font-bold text-indigo-300">July 6, 2026</span>
+                <span class="text-[10px] bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded-full font-bold mt-1">
+                    <i class="fa-solid fa-ban"></i> Non-Editable Version
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- WARNING BANNER -->
+    <div class="bg-amber-50 border-b border-amber-200 px-4 py-2.5 text-center text-xs font-semibold text-amber-800 flex items-center justify-center gap-2 no-print">
+        <i class="fa-solid fa-triangle-exclamation text-amber-600 animate-pulse"></i>
+        <span>This is a read-only database backup. To edit records or place new orders, you must deploy and access the live portal.</span>
+    </div>
+
+    <!-- MAIN BODY CONTAINER -->
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6">
+        
+        <!-- COMPANY TABS -->
+        <div class="flex border-b border-slate-200 gap-2 no-print">
+            <button onclick="switchCompany('ABS')" id="tab-ABS" class="px-6 py-3 font-bold text-sm rounded-t-xl transition-all duration-150 border-t border-x border-slate-200 bg-white text-indigo-600 shadow-sm">
+                🏢 ABS Department
+            </button>
+            <button onclick="switchCompany('PP')" id="tab-PP" class="px-6 py-3 font-bold text-sm rounded-t-xl transition-all duration-150 text-slate-500 hover:text-slate-700 hover:bg-slate-100">
+                🏢 PP Department
+            </button>
+        </div>
+
+        <!-- DASHBOARD CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="stats-container">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- CONTROLS & FILTERS -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm grid grid-cols-1 md:grid-cols-4 gap-4 items-end no-print">
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Select Party</label>
+                <select id="filter-party" onchange="applyFilters()" class="w-full border border-slate-200 bg-slate-50 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-400/30">
+                    <!-- Dynamically populated -->
+                </select>
+            </div>
+            
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Transaction Type</label>
+                <select id="filter-type" onchange="applyFilters()" class="w-full border border-slate-200 bg-slate-50 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-700 outline-none focus:ring-2 focus:ring-indigo-400/30">
+                    <option value="ALL">All Transactions</option>
+                    <option value="Sales">Sales Only</option>
+                    <option value="Buying">Buying Only</option>
+                    <option value="Received">Payments Received</option>
+                    <option value="Paid">Payments Paid</option>
+                </select>
+            </div>
+
+            <div class="space-y-1.5 col-span-1 md:col-span-2 flex gap-4">
+                <div class="flex-1 space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Start Date</label>
+                    <input type="date" id="filter-start-date" onchange="applyFilters()" class="w-full border border-slate-200 bg-slate-50 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 outline-none">
+                </div>
+                <div class="flex-1 space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">End Date</label>
+                    <input type="date" id="filter-end-date" onchange="applyFilters()" class="w-full border border-slate-200 bg-slate-50 px-3 py-2 rounded-xl text-sm font-semibold text-slate-700 outline-none">
+                </div>
+                <button onclick="resetFilters()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2.5 rounded-xl text-sm font-bold transition flex items-center gap-2 self-end">
+                    <i class="fa-solid fa-arrow-rotate-left"></i>
+                    <span>Reset</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT PANEL -->
+        <div class="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden print-card">
+            
+            <!-- Table Header Bar -->
+            <div class="bg-slate-50 border-b border-slate-100 px-6 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-black text-slate-800" id="table-title">Combined Ledger</h2>
+                    <p class="text-xs text-slate-400" id="table-subtitle">Showing chronological list of transactions</p>
+                </div>
+                <div class="flex items-center gap-3 no-print">
+                    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-print"></i>
+                        <span>Print / Save as PDF</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="overflow-x-auto w-full">
+                <table class="w-full text-left border-collapse" id="ledger-table">
+                    <thead>
+                        <tr class="bg-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <th class="py-3.5 px-6">Date</th>
+                            <th class="py-3.5 px-6">Party Name</th>
+                            <th class="py-3.5 px-6">Particulars</th>
+                            <th class="py-3.5 px-6 text-center">Type</th>
+                            <th class="py-3.5 px-6 text-right">Debit (Dr)</th>
+                            <th class="py-3.5 px-6 text-right">Credit (Cr)</th>
+                            <th class="py-3.5 px-6 text-right">Running Bal.</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 text-sm font-semibold text-slate-700" id="ledger-tbody">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden p-12 text-center text-slate-400 space-y-3">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-300"></i>
+                <p class="text-sm font-bold">No transactions found matching the filter criteria.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 py-6 px-4 text-center text-xs mt-auto border-t border-slate-800 no-print">
+        <p class="font-medium">Gokul Plastic Order & Accounting Ledger System &copy; 2026</p>
+        <p class="text-slate-500 mt-1">This report is locally generated from database snapshot. Unauthorized editing of raw file does not sync with server.</p>
+    </footer>
+
+    <!-- EMBEDDED DATA -->
+    <script>
+        const database = {
+  "ABS": {
+    "orders": [
+      {
+        "_id": "1782880303560",
+        "_createTime": "2026-07-01T04:31:48.162610Z",
+        "_updateTime": "2026-07-01T04:31:58.558844Z",
+        "phone": "",
+        "item": "ABS GRAY",
+        "date": "2026-06-01",
+        "status": "Complete",
+        "qty": 175,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "timestamp": 1780272000000,
+        "amount": 10500,
+        "price": 60,
+        "id": 1782880303560
+      },
+      {
+        "_id": "1782880449233",
+        "_createTime": "2026-07-01T04:34:09.782604Z",
+        "_updateTime": "2026-07-01T04:42:16.032210Z",
+        "id": 1782880449233,
+        "status": "Complete",
+        "phone": "",
+        "date": "2026-06-06",
+        "item": "ABS GRAY",
+        "timestamp": 1780704000000,
+        "amount": 18000,
+        "price": 60,
+        "qty": 300,
+        "type": "Sales",
+        "party": "Pratham Plastic"
+      },
+      {
+        "_id": "1782880679886",
+        "_createTime": "2026-07-01T04:38:00.328488Z",
+        "_updateTime": "2026-07-01T04:42:14.671772Z",
+        "timestamp": 1780963200000,
+        "amount": 13500,
+        "price": 60,
+        "qty": 225,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "status": "Complete",
+        "phone": "",
+        "date": "2026-06-09",
+        "item": "ABS GRAY",
+        "id": 1782880679886
+      },
+      {
+        "_id": "1782880754999",
+        "_createTime": "2026-07-01T04:39:15.429065Z",
+        "_updateTime": "2026-07-01T04:42:13.074335Z",
+        "price": 60,
+        "timestamp": 1781481600000,
+        "amount": 7500,
+        "party": "Pratham Plastic",
+        "qty": 125,
+        "type": "Sales",
+        "status": "Complete",
+        "item": "ABS GRAY",
+        "date": "2026-06-15",
+        "phone": "",
+        "id": 1782880754999
+      },
+      {
+        "_id": "1782880823431",
+        "_createTime": "2026-07-01T04:40:23.857670Z",
+        "_updateTime": "2026-07-01T04:42:20.104918Z",
+        "id": 1782880823431,
+        "party": "Pratham Plastic",
+        "type": "Sales",
+        "qty": 300,
+        "price": 60,
+        "amount": 18000,
+        "timestamp": 1781481600000,
+        "date": "2026-06-15",
+        "item": "ABS GRAY",
+        "phone": "",
+        "status": "Complete"
+      },
+      {
+        "_id": "1782880870987",
+        "_createTime": "2026-07-01T04:41:11.303818Z",
+        "_updateTime": "2026-07-01T04:42:21.706746Z",
+        "qty": 250,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "timestamp": 1781654400000,
+        "amount": 15000,
+        "price": 60,
+        "phone": "",
+        "date": "2026-06-17",
+        "item": "ABS GRAY",
+        "status": "Complete",
+        "id": 1782880870987
+      },
+      {
+        "_id": "1782880910125",
+        "_createTime": "2026-07-01T04:41:50.456232Z",
+        "_updateTime": "2026-07-01T04:42:22.788377Z",
+        "qty": 325,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "amount": 19500,
+        "timestamp": 1782259200000,
+        "price": 60,
+        "phone": "",
+        "date": "2026-06-24",
+        "item": "ABS GRAY",
+        "status": "Complete",
+        "id": 1782880910125
+      }
+    ],
+    "payments": [
+      {
+        "_id": "1782880615760",
+        "_createTime": "2026-07-01T04:36:56.266733Z",
+        "_updateTime": "2026-07-01T04:36:56.266733Z",
+        "type": "Received",
+        "timestamp": 1782691200000,
+        "id": 1782880615760,
+        "mode": "Cash",
+        "date": "2026-06-29",
+        "party": "Pratham Plastic",
+        "amount": 36400,
+        "chequeNo": ""
+      }
+    ]
+  },
+  "PP": {
+    "orders": [
+      {
+        "_id": "1782554089133",
+        "_createTime": "2026-06-27T09:54:49.402476Z",
+        "_updateTime": "2026-07-03T19:44:28.604067Z",
+        "timestamp": 1780272000000,
+        "qty": 800,
+        "status": "Complete",
+        "id": 1782554089133,
+        "date": "2026-06-01",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 26400,
+        "item": "PP Black",
+        "price": 33,
+        "type": "Sales"
+      },
+      {
+        "_id": "1782554124841",
+        "_createTime": "2026-06-27T09:55:24.918384Z",
+        "_updateTime": "2026-07-03T19:44:33.922628Z",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 33000,
+        "price": 33,
+        "type": "Sales",
+        "qty": 1000,
+        "status": "Complete",
+        "timestamp": 1780358400000,
+        "date": "2026-06-02",
+        "id": 1782554124841
+      },
+      {
+        "_id": "1782554145830",
+        "_createTime": "2026-06-27T09:55:45.904380Z",
+        "_updateTime": "2026-07-03T19:44:38.224265Z",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 33000,
+        "item": "PP Black",
+        "price": 33,
+        "type": "Sales",
+        "timestamp": 1780444800000,
+        "qty": 1000,
+        "status": "Complete",
+        "id": 1782554145830,
+        "date": "2026-06-03"
+      },
+      {
+        "_id": "1782554173833",
+        "_createTime": "2026-06-27T09:56:13.916533Z",
+        "_updateTime": "2026-07-03T21:45:36.265069Z",
+        "id": 1782554173833,
+        "date": "2026-06-04",
+        "timestamp": 1780531200000,
+        "status": "Complete",
+        "qty": 500,
+        "price": 33,
+        "type": "Sales",
+        "amount": 16500,
+        "phone": "9879724454",
+        "party": "Pratham Plastic",
+        "item": "PP Black"
+      },
+      {
+        "_id": "1782554195385",
+        "_createTime": "2026-06-27T09:56:35.454869Z",
+        "_updateTime": "2026-07-03T19:44:45.938625Z",
+        "timestamp": 1780704000000,
+        "status": "Complete",
+        "qty": 450,
+        "id": 1782554195385,
+        "date": "2026-06-06",
+        "phone": "9879724454",
+        "amount": 14850,
+        "party": "Pratham Plastic",
+        "item": "PP Black",
+        "type": "Sales",
+        "price": 33
+      },
+      {
+        "_id": "1782554210549",
+        "_createTime": "2026-06-27T09:56:50.620237Z",
+        "_updateTime": "2026-07-03T19:44:50.284856Z",
+        "qty": 625,
+        "status": "Complete",
+        "timestamp": 1780790400000,
+        "date": "2026-06-07",
+        "id": 1782554210549,
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 20625,
+        "price": 33,
+        "type": "Sales"
+      },
+      {
+        "_id": "1782554222321",
+        "_createTime": "2026-06-27T09:57:02.396418Z",
+        "_updateTime": "2026-07-03T19:44:53.821667Z",
+        "price": 33,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 16500,
+        "item": "PP Black",
+        "id": 1782554222321,
+        "date": "2026-06-08",
+        "timestamp": 1780876800000,
+        "qty": 500,
+        "status": "Complete"
+      },
+      {
+        "_id": "1782554235941",
+        "_createTime": "2026-06-27T09:57:16.029915Z",
+        "_updateTime": "2026-07-03T19:44:58.300990Z",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 24750,
+        "price": 33,
+        "type": "Sales",
+        "qty": 750,
+        "status": "Complete",
+        "timestamp": 1780963200000,
+        "date": "2026-06-09",
+        "id": 1782554235941
+      },
+      {
+        "_id": "1782554295781",
+        "_createTime": "2026-06-27T09:58:15.853145Z",
+        "_updateTime": "2026-07-03T19:45:02.123247Z",
+        "price": 33,
+        "type": "Sales",
+        "phone": "9879724454",
+        "amount": 23925,
+        "party": "Pratham Plastic",
+        "item": "PP Black",
+        "id": 1782554295781,
+        "date": "2026-06-10",
+        "timestamp": 1781049600000,
+        "status": "Complete",
+        "qty": 725
+      },
+      {
+        "_id": "1782554325929",
+        "_createTime": "2026-06-27T09:58:46.031644Z",
+        "_updateTime": "2026-07-03T19:45:35.872148Z",
+        "date": "2026-06-11",
+        "id": 1782554325929,
+        "qty": 575,
+        "status": "Complete",
+        "timestamp": 1781136000000,
+        "price": 33,
+        "type": "Sales",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "amount": 18975,
+        "phone": "9879724454"
+      },
+      {
+        "_id": "1782554337885",
+        "_createTime": "2026-06-27T09:58:57.978366Z",
+        "_updateTime": "2026-07-03T19:45:30.759160Z",
+        "amount": 24750,
+        "phone": "9879724454",
+        "party": "Pratham Plastic",
+        "item": "PP Black",
+        "type": "Sales",
+        "price": 33,
+        "timestamp": 1781222400000,
+        "status": "Complete",
+        "qty": 750,
+        "id": 1782554337885,
+        "date": "2026-06-12"
+      },
+      {
+        "_id": "1782554357557",
+        "_createTime": "2026-06-27T09:59:17.660579Z",
+        "_updateTime": "2026-07-03T19:45:27.191489Z",
+        "date": "2026-06-13",
+        "id": 1782554357557,
+        "status": "Complete",
+        "qty": 375,
+        "timestamp": 1781308800000,
+        "type": "Sales",
+        "price": 33,
+        "item": "PP Black",
+        "amount": 12375,
+        "phone": "9879724454",
+        "party": "Pratham Plastic"
+      },
+      {
+        "_id": "1782554370733",
+        "_createTime": "2026-06-27T09:59:30.838606Z",
+        "_updateTime": "2026-07-03T19:45:22.996836Z",
+        "id": 1782554370733,
+        "date": "2026-06-14",
+        "timestamp": 1781395200000,
+        "status": "Complete",
+        "qty": 625,
+        "price": 33,
+        "type": "Sales",
+        "amount": 20625,
+        "phone": "9879724454",
+        "party": "Pratham Plastic",
+        "item": "PP Black"
+      },
+      {
+        "_id": "1782554385913",
+        "_createTime": "2026-06-27T09:59:46.012649Z",
+        "_updateTime": "2026-07-03T19:45:17.607730Z",
+        "status": "Complete",
+        "qty": 1175,
+        "timestamp": 1781481600000,
+        "date": "2026-06-15",
+        "id": 1782554385913,
+        "item": "PP Black",
+        "phone": "9879724454",
+        "amount": 38775,
+        "party": "Pratham Plastic",
+        "price": 33,
+        "type": "Sales"
+      },
+      {
+        "_id": "1782554401881",
+        "_createTime": "2026-06-27T10:00:01.992485Z",
+        "_updateTime": "2026-07-03T19:45:13.864563Z",
+        "item": "PP Black",
+        "amount": 20625,
+        "phone": "9879724454",
+        "party": "Pratham Plastic",
+        "price": 33,
+        "type": "Sales",
+        "status": "Complete",
+        "qty": 625,
+        "timestamp": 1781481600000,
+        "date": "2026-06-15",
+        "id": 1782554401881
+      },
+      {
+        "_id": "1782554421461",
+        "_createTime": "2026-06-27T10:00:21.586430Z",
+        "_updateTime": "2026-07-03T19:45:08.190613Z",
+        "timestamp": 1781568000000,
+        "qty": 550,
+        "status": "Complete",
+        "id": 1782554421461,
+        "date": "2026-06-16",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 18150,
+        "item": "PP Black",
+        "price": 33,
+        "type": "Sales"
+      },
+      {
+        "_id": "1782554434109",
+        "_createTime": "2026-06-27T10:00:34.222574Z",
+        "_updateTime": "2026-07-03T19:44:17.098786Z",
+        "date": "2026-06-17",
+        "id": 1782554434109,
+        "status": "Complete",
+        "qty": 500,
+        "timestamp": 1781654400000,
+        "price": 33,
+        "type": "Sales",
+        "item": "PP Black",
+        "amount": 16500,
+        "phone": "9879724454",
+        "party": "Pratham Plastic"
+      },
+      {
+        "_id": "1782554451469",
+        "_createTime": "2026-06-27T10:00:51.574923Z",
+        "_updateTime": "2026-07-03T19:44:09.394373Z",
+        "date": "2026-06-17",
+        "id": 1782554451469,
+        "qty": 625,
+        "status": "Complete",
+        "timestamp": 1781654400000,
+        "price": 33,
+        "type": "Sales",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 20625
+      },
+      {
+        "_id": "1782554465293",
+        "_createTime": "2026-06-27T10:01:05.426856Z",
+        "_updateTime": "2026-07-03T19:44:03.617187Z",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 16500,
+        "price": 33,
+        "type": "Sales",
+        "qty": 500,
+        "status": "Complete",
+        "timestamp": 1781740800000,
+        "date": "2026-06-18",
+        "id": 1782554465293
+      },
+      {
+        "_id": "1782554481009",
+        "_createTime": "2026-06-27T10:01:21.135693Z",
+        "_updateTime": "2026-07-03T19:43:55.762487Z",
+        "id": 1782554481009,
+        "date": "2026-06-20",
+        "timestamp": 1781913600000,
+        "qty": 750,
+        "status": "Complete",
+        "price": 33,
+        "type": "Sales",
+        "party": "Pratham Plastic",
+        "amount": 24750,
+        "phone": "9879724454",
+        "item": "PP Black"
+      },
+      {
+        "_id": "1782554496533",
+        "_createTime": "2026-06-27T10:01:36.656622Z",
+        "_updateTime": "2026-07-03T19:43:49.659766Z",
+        "qty": 875,
+        "status": "Complete",
+        "timestamp": 1782000000000,
+        "date": "2026-06-21",
+        "id": 1782554496533,
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "amount": 28875,
+        "phone": "9879724454",
+        "type": "Sales",
+        "price": 33
+      },
+      {
+        "_id": "1782554510361",
+        "_createTime": "2026-06-27T10:01:50.502792Z",
+        "_updateTime": "2026-07-03T19:43:44.187629Z",
+        "timestamp": 1782086400000,
+        "qty": 550,
+        "status": "Complete",
+        "id": 1782554510361,
+        "date": "2026-06-22",
+        "party": "Pratham Plastic",
+        "amount": 18150,
+        "phone": "9879724454",
+        "item": "PP Black",
+        "type": "Sales",
+        "price": 33
+      },
+      {
+        "_id": "1782554525245",
+        "_createTime": "2026-06-27T10:02:05.398224Z",
+        "_updateTime": "2026-07-03T19:43:36.206860Z",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 16500,
+        "item": "PP Black",
+        "price": 33,
+        "type": "Sales",
+        "timestamp": 1782172800000,
+        "qty": 500,
+        "status": "Complete",
+        "id": 1782554525245,
+        "date": "2026-06-23"
+      },
+      {
+        "_id": "1782554538018",
+        "_createTime": "2026-06-27T10:02:18.203824Z",
+        "_updateTime": "2026-07-03T19:43:15.855634Z",
+        "date": "2026-06-24",
+        "id": 1782554538018,
+        "status": "Complete",
+        "qty": 750,
+        "timestamp": 1782259200000,
+        "type": "Sales",
+        "price": 33,
+        "item": "PP Black",
+        "phone": "9879724454",
+        "amount": 24750,
+        "party": "Pratham Plastic"
+      },
+      {
+        "_id": "1782554552405",
+        "_createTime": "2026-06-27T10:02:32.569366Z",
+        "_updateTime": "2026-07-03T19:43:27.986184Z",
+        "id": 1782554552405,
+        "date": "2026-06-27",
+        "timestamp": 1782518400000,
+        "qty": 600,
+        "status": "Complete",
+        "type": "Sales",
+        "price": 33,
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 19800,
+        "item": "PP Black"
+      },
+      {
+        "_id": "1782626026381",
+        "_createTime": "2026-06-28T05:53:46.784001Z",
+        "_updateTime": "2026-07-03T22:00:33.240053Z",
+        "timestamp": 1782604800000,
+        "status": "Complete",
+        "qty": 1000,
+        "id": 1782626026381,
+        "date": "2026-06-28",
+        "amount": 33000,
+        "phone": "9879724454",
+        "party": "Pratham Plastic",
+        "item": "PP Black",
+        "type": "Sales",
+        "price": 33
+      },
+      {
+        "_id": "1782885161189",
+        "_createTime": "2026-07-01T05:52:42.871902Z",
+        "_updateTime": "2026-07-03T19:42:43.434361Z",
+        "party": "Pratham Plastic",
+        "phone": "9879724454",
+        "amount": 16500,
+        "item": "PP Black",
+        "price": 33,
+        "type": "Sales",
+        "timestamp": 1782691200000,
+        "qty": 500,
+        "status": "Complete",
+        "id": 1782885161189,
+        "date": "2026-06-29"
+      },
+      {
+        "_id": "1782885224584",
+        "_createTime": "2026-07-01T05:53:46.091237Z",
+        "_updateTime": "2026-07-03T10:45:50.362175Z",
+        "date": "2026-06-30",
+        "id": 1782885224584,
+        "qty": 750,
+        "status": "Complete",
+        "timestamp": 1782777600000,
+        "price": 33,
+        "type": "Sales",
+        "item": "PP Black",
+        "party": "Pratham Plastic",
+        "amount": 24750,
+        "phone": "9879724454"
+      }
+    ],
+    "payments": [
+      {
+        "_id": "1782553442249",
+        "_createTime": "2026-06-27T09:44:02.498100Z",
+        "_updateTime": "2026-06-27T09:44:02.498100Z",
+        "date": "2026-06-10",
+        "chequeNo": "",
+        "id": 1782553442249,
+        "timestamp": 1781049600000,
+        "mode": "Cash",
+        "type": "Received",
+        "party": "Pratham Plastic",
+        "amount": 10000
+      },
+      {
+        "_id": "1782553461667",
+        "_createTime": "2026-06-27T09:44:21.739114Z",
+        "_updateTime": "2026-06-27T09:44:21.739114Z",
+        "id": 1782553461667,
+        "date": "2026-06-10",
+        "chequeNo": "",
+        "timestamp": 1781049600000,
+        "mode": "Cash",
+        "type": "Received",
+        "party": "Pratham Plastic",
+        "amount": 12300
+      },
+      {
+        "_id": "1782553485749",
+        "_createTime": "2026-06-27T09:44:45.795923Z",
+        "_updateTime": "2026-06-27T09:44:45.795923Z",
+        "type": "Received",
+        "party": "Pratham Plastic",
+        "amount": 15000,
+        "chequeNo": "",
+        "date": "2026-06-10",
+        "id": 1782553485749,
+        "timestamp": 1781049600000,
+        "mode": "Cash"
+      },
+      {
+        "_id": "1782553508694",
+        "_createTime": "2026-06-27T09:45:08.736106Z",
+        "_updateTime": "2026-06-27T09:45:08.736106Z",
+        "date": "2026-06-17",
+        "chequeNo": "",
+        "id": 1782553508694,
+        "timestamp": 1781654400000,
+        "mode": "Cash",
+        "type": "Received",
+        "amount": 25000,
+        "party": "Pratham Plastic"
+      },
+      {
+        "_id": "1782553519693",
+        "_createTime": "2026-06-27T09:45:19.739386Z",
+        "_updateTime": "2026-06-27T09:45:19.739386Z",
+        "id": 1782553519693,
+        "date": "2026-06-17",
+        "chequeNo": "",
+        "timestamp": 1781654400000,
+        "mode": "Cash",
+        "type": "Received",
+        "party": "Pratham Plastic",
+        "amount": 25000
+      },
+      {
+        "_id": "1782553536097",
+        "_createTime": "2026-06-27T09:45:36.179138Z",
+        "_updateTime": "2026-06-27T09:45:36.179138Z",
+        "type": "Received",
+        "amount": 10082,
+        "party": "Pratham Plastic",
+        "date": "2026-06-19",
+        "chequeNo": "",
+        "id": 1782553536097,
+        "timestamp": 1781827200000,
+        "mode": "Cash"
+      },
+      {
+        "_id": "1782553550429",
+        "_createTime": "2026-06-27T09:45:50.489549Z",
+        "_updateTime": "2026-06-27T09:45:50.489549Z",
+        "type": "Received",
+        "party": "Pratham Plastic",
+        "amount": 10000,
+        "date": "2026-06-20",
+        "chequeNo": "",
+        "id": 1782553550429,
+        "timestamp": 1781913600000,
+        "mode": "Cash"
+      },
+      {
+        "_id": "1782553583397",
+        "_createTime": "2026-06-27T09:46:23.456988Z",
+        "_updateTime": "2026-06-27T09:46:23.456988Z",
+        "timestamp": 1782086400000,
+        "mode": "Cash",
+        "id": 1782553583397,
+        "chequeNo": "",
+        "date": "2026-06-22",
+        "party": "Pratham Plastic",
+        "amount": 99600,
+        "type": "Received"
+      },
+      {
+        "_id": "1782553600449",
+        "_createTime": "2026-06-27T09:46:40.508460Z",
+        "_updateTime": "2026-06-27T09:46:40.508460Z",
+        "type": "Received",
+        "amount": 15000,
+        "party": "Pratham Plastic",
+        "date": "2026-06-22",
+        "chequeNo": "",
+        "id": 1782553600449,
+        "timestamp": 1782086400000,
+        "mode": "Cash"
+      },
+      {
+        "_id": "1782553614684",
+        "_createTime": "2026-06-27T09:46:54.749551Z",
+        "_updateTime": "2026-06-27T09:46:54.749551Z",
+        "amount": 34000,
+        "party": "Pratham Plastic",
+        "type": "Received",
+        "timestamp": 1782172800000,
+        "mode": "Cash",
+        "date": "2026-06-23",
+        "chequeNo": "",
+        "id": 1782553614684
+      },
+      {
+        "_id": "1782554978976",
+        "_createTime": "2026-06-27T10:09:39.148447Z",
+        "_updateTime": "2026-06-27T10:09:39.148447Z",
+        "amount": 1580942,
+        "party": "Pratham Plastic",
+        "type": "Paid",
+        "timestamp": 1780185600000,
+        "mode": "Cash",
+        "date": "2026-05-31",
+        "chequeNo": "",
+        "id": 1782554978976
+      }
+    ]
+  }
+};
+        let activeCompany = 'ABS';
+
+        // Helpers
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            const date = new Date(parts[0], parts[1] - 1, parts[2]);
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function formatCurrency(amount) {
+            return '₹' + Number(amount).toLocaleString('en-IN');
+        }
+
+        // Switch ABS / PP tab
+        function switchCompany(company) {
+            activeCompany = company;
+            
+            // Tab active styling
+            ['ABS', 'PP'].forEach(c => {
+                const btn = document.getElementById('tab-' + c);
+                if (c === company) {
+                    btn.className = "px-6 py-3 font-bold text-sm rounded-t-xl transition-all duration-150 border-t border-x border-slate-200 bg-white text-indigo-600 shadow-sm";
+                } else {
+                    btn.className = "px-6 py-3 font-bold text-sm rounded-t-xl transition-all duration-150 text-slate-500 hover:text-slate-700 hover:bg-slate-100";
+                }
+            });
+
+            // Rebuild Party Selector dropdown
+            populatePartiesDropdown();
+            
+            // Reset filters on company change
+            resetFilters(false);
+            
+            // Re-render dashboard statistics & ledger
+            renderDashboard();
+        }
+
+        function populatePartiesDropdown() {
+            const selectEl = document.getElementById('filter-party');
+            selectEl.innerHTML = '<option value="ALL">All Parties</option>';
+            
+            const companyData = database[activeCompany];
+            const partiesSet = new Set();
+            companyData.orders.forEach(o => { if (o.party) partiesSet.add(o.party); });
+            companyData.payments.forEach(p => { if (p.party) partiesSet.add(p.party); });
+            
+            Array.from(partiesSet).sort().forEach(party => {
+                const opt = document.createElement('option');
+                opt.value = party;
+                opt.textContent = party;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function resetFilters(shouldRender = true) {
+            document.getElementById('filter-party').value = 'ALL';
+            document.getElementById('filter-type').value = 'ALL';
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            if (shouldRender) {
+                renderDashboard();
+            }
+        }
+
+        function applyFilters() {
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const companyData = database[activeCompany];
+            const selectedParty = document.getElementById('filter-party').value;
+            const selectedType = document.getElementById('filter-type').value;
+            const startDate = document.getElementById('filter-start-date').value;
+            const endDate = document.getElementById('filter-end-date').value;
+
+            // Step 1: Combine into transactions list
+            let transactions = [];
+            
+            companyData.orders.forEach(o => {
+                transactions.push({
+                    date: o.date,
+                    timestamp: o.timestamp || new Date(o.date).getTime() || 0,
+                    party: o.party || 'Unknown',
+                    particulars: o.item + (o.qty ? ` (${o.qty} x ${o.price})` : ""),
+                    type: o.type, // 'Sales' or 'Buying'
+                    debit: o.type === 'Sales' ? o.amount : 0,
+                    credit: o.type === 'Buying' ? o.amount : 0
+                });
+            });
+
+            companyData.payments.forEach(p => {
+                transactions.push({
+                    date: p.date,
+                    timestamp: p.timestamp || new Date(p.date).getTime() || 0,
+                    party: p.party || 'Unknown',
+                    particulars: `Payment - ${p.mode || 'Cash'}${p.chequeNo ? ' (No. '+p.chequeNo+')' : ''}`,
+                    type: p.type, // 'Received' or 'Paid'
+                    debit: p.type === 'Paid' ? p.amount : 0,
+                    credit: p.type === 'Received' ? p.amount : 0
+                });
+            });
+
+            // Sort chronologically by date, then by timestamp/id
+            transactions.sort((a, b) => {
+                const diff = new Date(a.date).getTime() - new Date(b.date).getTime();
+                if (diff !== 0) return diff;
+                return a.timestamp - b.timestamp;
+            });
+
+            // Filter transactions
+            let filteredTransactions = transactions.filter(t => {
+                if (selectedParty !== 'ALL' && t.party !== selectedParty) return false;
+                if (startDate && t.date < startDate) return false;
+                if (endDate && t.date > endDate) return false;
+                
+                if (selectedType !== 'ALL') {
+                    if (t.type !== selectedType) return false;
+                }
+                return true;
+            });
+
+            // Calculate stats
+            let totalSales = 0;
+            let totalBuying = 0;
+            let totalReceived = 0;
+            let totalPaid = 0;
+            let orderCount = 0;
+            let paymentCount = 0;
+
+            filteredTransactions.forEach(t => {
+                if (t.type === 'Sales') {
+                    totalSales += t.debit;
+                    orderCount++;
+                } else if (t.type === 'Buying') {
+                    totalBuying += t.credit;
+                    orderCount++;
+                } else if (t.type === 'Received') {
+                    totalReceived += t.credit;
+                    paymentCount++;
+                } else if (t.type === 'Paid') {
+                    totalPaid += t.debit;
+                    paymentCount++;
+                }
+            });
+
+            const netDebit = totalSales + totalPaid;
+            const netCredit = totalBuying + totalReceived;
+            const netBalance = netDebit - netCredit;
+
+            // Render stats cards
+            const statsContainer = document.getElementById('stats-container');
+            
+            let balanceLabel = "Pending Balance (Due)";
+            let balanceBadgeColor = "text-red-600 bg-red-50 border-red-100";
+            if (netBalance < 0) {
+                balanceLabel = "Advance / Excess (Credit)";
+                balanceBadgeColor = "text-emerald-700 bg-emerald-50 border-emerald-100";
+            } else if (netBalance === 0) {
+                balanceLabel = "Settle Balance";
+                balanceBadgeColor = "text-slate-600 bg-slate-50 border-slate-100";
+            }
+
+            statsContainer.innerHTML = `
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Sales</p>
+                    <p class="text-2xl font-black text-slate-800 mt-1">${formatCurrency(totalSales)}</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-semibold">${orderCount} billing records</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Payments Received</p>
+                    <p class="text-2xl font-black text-emerald-600 mt-1">${formatCurrency(totalReceived)}</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-semibold">${paymentCount} payment receipts</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Buying (Purchases)</p>
+                    <p class="text-2xl font-black text-slate-800 mt-1">${formatCurrency(totalBuying)}</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-semibold">Goods purchased</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-100 border-l-4 border-l-indigo-500 shadow-sm ${balanceBadgeColor.split(' ')[1]}">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider">${balanceLabel}</p>
+                    <p class="text-2xl font-black mt-1 ${balanceBadgeColor.split(' ')[0]}">${formatCurrency(Math.abs(netBalance))}</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-semibold">Debit: ${formatCurrency(netDebit)} | Credit: ${formatCurrency(netCredit)}</p>
+                </div>
+            `;
+
+            // Render table records
+            const tbody = document.getElementById('ledger-tbody');
+            const emptyState = document.getElementById('empty-state');
+            tbody.innerHTML = '';
+
+            if (filteredTransactions.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('ledger-table').classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            document.getElementById('ledger-table').classList.remove('hidden');
+
+            const titleEl = document.getElementById('table-title');
+            const subtitleEl = document.getElementById('table-subtitle');
+            titleEl.textContent = selectedParty === 'ALL' ? 'Combined Ledger (All Parties)' : `Ledger for ${selectedParty}`;
+            subtitleEl.textContent = `Showing ${filteredTransactions.length} transactions for ${activeCompany} Department`;
+
+            let runningBalance = 0;
+            filteredTransactions.forEach(t => {
+                runningBalance += (t.debit - t.credit);
+                const balanceColor = runningBalance >= 0 ? 'text-slate-800' : 'text-emerald-700';
+                
+                let typeBadge = '';
+                if (t.type === 'Sales') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">Sales</span>';
+                } else if (t.type === 'Buying') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">Buying</span>';
+                } else if (t.type === 'Received') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">Received</span>';
+                } else if (t.type === 'Paid') {
+                    typeBadge = '<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">Paid</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/80 transition-colors border-b border-slate-100">
+                        <td class="py-3 px-6 text-slate-500 whitespace-nowrap">${formatDate(t.date)}</td>
+                        <td class="py-3 px-6 text-slate-900 font-bold">${t.party}</td>
+                        <td class="py-3 px-6 text-slate-600 font-normal">${t.particulars}</td>
+                        <td class="py-3 px-6 text-center whitespace-nowrap">${typeBadge}</td>
+                        <td class="py-3 px-6 text-right font-mono font-bold text-slate-900">${t.debit > 0 ? formatCurrency(t.debit) : '-'}</td>
+                        <td class="py-3 px-6 text-right font-mono font-bold text-slate-900">${t.credit > 0 ? formatCurrency(t.credit) : '-'}</td>
+                        <td class="py-3 px-6 text-right font-mono font-bold ${balanceColor}">${formatCurrency(runningBalance)}</td>
+                    </tr>
+                `;
+            });
+
+            // Summary row at the bottom
+            tbody.innerHTML += `
+                <tr class="bg-slate-50/50 font-black border-t border-slate-200">
+                    <td class="py-4 px-6 text-slate-500" colspan="4">TOTAL SUMMARY</td>
+                    <td class="py-4 px-6 text-right text-slate-900 font-mono">${formatCurrency(netDebit)}</td>
+                    <td class="py-4 px-6 text-right text-slate-900 font-mono">${formatCurrency(netCredit)}</td>
+                    <td class="py-4 px-6 text-right font-mono ${netBalance >= 0 ? 'text-slate-900' : 'text-emerald-700'}">${formatCurrency(netBalance)}</td>
+                </tr>
+            `;
+        }
+
+        // Initial Load
+        window.onload = function() {
+            switchCompany('ABS');
+        };
+    </script>
+</body>
+</html>

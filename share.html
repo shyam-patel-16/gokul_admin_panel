@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gokul Plastic - Secure Party Ledger</title>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <!-- Firebase Legacy Compatibility SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <!-- jsPDF and html2pdf CDNs -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Firebase Environment Config -->
+    <script src="assets/js/env.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#0b0f19',      // Deep cool Slate/Navy
+                        accent: '#6366f1',       // Cool Indigo
+                        accentHover: '#4f46e5',  // Indigo Hover
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+            .print-container {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .print-border {
+                border: 1px solid #e2e8f0 !important;
+                border-radius: 12px !important;
+            }
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 min-h-screen text-slate-800 flex flex-col antialiased">
+
+    <!-- INITIAL LOADING SPINNER -->
+    <div id="loading-screen" class="fixed inset-0 z-[9999] flex items-center justify-center"
+        style="background: linear-gradient(135deg, #0b0f19 0%, #1e1b4b 100%);">
+        <div class="flex flex-col items-center justify-center text-white space-y-4">
+            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-400"></i>
+            <h2 class="text-xl font-bold tracking-widest text-indigo-200" id="loading-title">Gokul Plastic</h2>
+            <p class="text-xs text-indigo-300" id="loading-subtitle">Loading secure ledger data...</p>
+        </div>
+    </div>
+
+    <!-- ERROR SCREEN (HIDDEN BY DEFAULT) -->
+    <div id="error-screen" class="hidden fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900 px-4">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center space-y-5">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-black text-slate-900" id="error-title">Access Restricted</h3>
+            <p class="text-xs text-slate-500 leading-relaxed" id="error-desc">
+                This share link is invalid or has expired. Please check the URL and try again.
+            </p>
+        </div>
+    </div>
+
+    <!-- HEADER / BRAND BAR -->
+    <header class="bg-primary text-white py-5 px-4 md:px-8 shadow-md relative overflow-hidden no-print">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-950/40 to-purple-950/40 opacity-40"></div>
+        <div class="relative max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center p-1 shadow-lg">
+                    <img src="logo.png" alt="Gokul Plastic Logo" class="w-full h-full object-contain"
+                        onerror="this.src='https://placehold.co/100x100?text=Gokul'" />
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide">Gokul Plastic</h1>
+                    <p class="text-[10px] text-indigo-200 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-shield-halved text-indigo-400"></i> Secure Customer Ledger Statement
+                    </p>
+                </div>
+            </div>
+            <div class="text-right sm:text-right text-center flex flex-col items-center sm:items-end">
+                <span class="text-[9px] uppercase tracking-wider text-slate-400 font-bold">Statement Live Date</span>
+                <span id="header-current-date" class="text-xs font-bold text-indigo-300">-</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="flex-1 w-full max-w-7xl mx-auto p-4 md:p-8 space-y-6 print-container" id="ledger-print-area">
+        
+        <!-- CUSTOMER OVERVIEW CARD -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 print-border">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-wider">
+                    <i class="fa-solid fa-building text-indigo-500"></i>
+                    <span id="biz-label">-</span>
+                </div>
+                <h2 id="party-name-title" class="text-2xl font-black text-slate-900 flex items-center gap-2">
+                    -
+                </h2>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 font-medium">
+                    <span id="party-phone-label"><i class="fa-solid fa-phone text-slate-400"></i> -</span>
+                    <span class="hidden md:inline text-slate-300">|</span>
+                    <span id="period-label"><i class="fa-solid fa-calendar-days text-slate-400"></i> Period: All Data</span>
+                </div>
+            </div>
+
+            <!-- Balance Indicator -->
+            <div class="bg-slate-50 rounded-2xl p-4 md:px-6 md:py-4 border border-slate-100 flex items-center justify-between md:justify-end gap-6 md:text-right min-w-[200px]">
+                <div>
+                    <span class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Outstanding Balance</span>
+                    <span id="net-due-amount" class="text-2xl font-black text-slate-900 mt-0.5 block">₹0</span>
+                </div>
+                <div id="balance-status-badge" class="px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border">
+                    -
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER MODULE -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4 no-print">
+            <h3 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider flex items-center gap-2 pb-1 border-b border-slate-100">
+                <i class="fa-solid fa-filter text-accent"></i>
+                <span>Filter Statement Records</span>
+            </h3>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Starting Date</label>
+                    <input type="date" id="filter-start-date" onchange="renderFilteredData()"
+                        class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">End Date</label>
+                    <input type="date" id="filter-end-date" onchange="renderFilteredData()"
+                        class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-accent/20">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Transaction Type</label>
+                    <select id="filter-type" onchange="renderFilteredData()"
+                        class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-accent/20 font-semibold text-slate-600 bg-white">
+                        <option value="All">All Transactions</option>
+                        <option value="Sales">Sales Only</option>
+                        <option value="Buying">Buying Only</option>
+                        <option value="Received">Received Only</option>
+                        <option value="Paid">Paid Only</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Order Status</label>
+                    <select id="filter-status" onchange="renderFilteredData()"
+                        class="w-full p-2.5 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-accent/20 font-semibold text-slate-600 bg-white">
+                        <option value="All">All Statuses</option>
+                        <option value="Pending">Pending Only</option>
+                        <option value="Complete">Complete Only</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex flex-wrap gap-3 pt-2">
+                <button onclick="resetFilters()"
+                    class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset Filters</span>
+                </button>
+                <button onclick="downloadLedgerPDF()"
+                    class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md shadow-red-500/10 flex items-center justify-center gap-2 transition ml-auto">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Download PDF Statement</span>
+                </button>
+                <button onclick="window.print()"
+                    class="bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-4 rounded-xl text-xs shadow-md flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print Statement</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- TABLES MODULE -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            
+            <!-- Orders History -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col print-border">
+                <h4 class="font-extrabold text-accent text-sm border-b pb-3 flex items-center gap-2 border-slate-100">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Order History (Sales / Purchases)</span>
+                </h4>
+                <div id="orders-table" class="space-y-3 overflow-y-auto max-h-[60vh] pr-1">
+                    <!-- Dynamic orders content -->
+                </div>
+            </div>
+
+            <!-- Payment entries -->
+            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 space-y-4 flex flex-col print-border">
+                <h4 class="font-extrabold text-emerald-700 text-sm border-b pb-3 flex items-center gap-2 border-slate-100">
+                    <i class="fa-solid fa-receipt"></i>
+                    <span>Payment & Receipt History</span>
+                </h4>
+                <div id="payments-table" class="space-y-2.5 overflow-y-auto max-h-[60vh] pr-1">
+                    <!-- Dynamic payments content -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- FOOTER STATEMENT -->
+    <footer class="bg-slate-900 text-slate-400 py-6 text-center text-xs border-t border-slate-850 mt-12 no-print">
+        <p class="font-semibold">Gokul Plastic Order & Accounting Ledger System &copy; 2026</p>
+        <p class="text-[10px] text-slate-500 mt-1">This is an automatically generated secure read-only document. Page details are fetched directly from the cloud database.</p>
+    </footer>
+
+    <!-- LOGIC SCRIPT -->
+    <script>
+        // Global error logging for diagnostics
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error("Global JS Error: ", message, " at ", source, ":", lineno, ":", colno);
+            showError("System Error", "An error occurred while running the page scripts: " + message + " (Line " + lineno + ")");
+            return false;
+        };
+
+        // Data states
+        let db = { orders: [], payments: [] };
+        let filteredDb = { orders: [], payments: [] };
+        let activeBusiness = "";
+        let activeParty = "";
+        let firestoreDb = null;
+
+        // Date formatter utility
+        function formatBusinessDate(dateValue) {
+            if (!dateValue) return '';
+            const parts = String(dateValue).split('-');
+            if (parts.length !== 3) return dateValue;
+            const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            if (Number.isNaN(date.getTime())) return dateValue;
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        function formatShortBusinessDate(dateValue) {
+            if (!dateValue) return '';
+            const parts = String(dateValue).split('-');
+            if (parts.length !== 3) return dateValue;
+            const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            if (Number.isNaN(date.getTime())) return dateValue;
+            return date.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function generateSignature(biz, party) {
+            const salt = "GokulPlasticLedgerSecureSalt2026!";
+            const raw = biz + ":" + party + ":" + salt;
+            let hash = 0;
+            for (let i = 0; i < raw.length; i++) {
+                const char = raw.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash).toString(36);
+        }
+
+        // Initialize Page
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('header-current-date').innerText = formatBusinessDate(new Date().toISOString().split('T')[0]);
+            
+            // Parse query string parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            activeBusiness = (urlParams.get('biz') || '').trim();
+            activeParty = (urlParams.get('party') || '').replace(/\+/g, ' ').trim();
+            const sig = (urlParams.get('sig') || '').trim();
+
+            if (!activeBusiness || !activeParty || !sig) {
+                showError("Access Denied", "The ledger link is incomplete or invalid. Please check the URL parameters.");
+                return;
+            }
+
+            // Verify security signature to prevent URL tampering
+            const expectedSig = generateSignature(activeBusiness, activeParty);
+            if (sig !== expectedSig) {
+                showError("Access Denied", "Security verification failed. This ledger link is invalid or has been modified.");
+                return;
+            }
+
+            // Set labels
+            document.getElementById('biz-label').innerText = activeBusiness.toUpperCase() + " DEPARTMENT";
+            document.getElementById('party-name-title').innerHTML = `<i class="fa-solid fa-user-tie text-accent"></i> ${activeParty}`;
+
+            // Initialize Firebase connection
+            initFirebaseConnection();
+        });
+
+        function showError(title, message) {
+            document.getElementById('loading-screen').classList.add('hidden');
+            const errScreen = document.getElementById('error-screen');
+            document.getElementById('error-title').innerText = title;
+            document.getElementById('error-desc').innerText = message;
+            errScreen.classList.remove('hidden');
+        }
+
+        function initFirebaseConnection() {
+            if (typeof ENV_FIREBASE_CONFIG === 'undefined') {
+                showError("SDK Config Missing", "Firebase configuration settings were not found. Please contact the administrator.");
+                return;
+            }
+
+            try {
+                let app;
+                if (!firebase.apps.length) {
+                    app = firebase.initializeApp(ENV_FIREBASE_CONFIG);
+                } else {
+                    app = firebase.app();
+                }
+
+                firestoreDb = app.firestore();
+                
+                // Sign in anonymously to satisfy request.auth rule (if needed)
+                firebase.auth().signInAnonymously()
+                    .then(() => {
+                        console.log("Authenticated anonymously successfully");
+                        fetchLedgerData();
+                    })
+                    .catch(authErr => {
+                        console.warn("Anonymous authentication failed, attempting unauthenticated fetch:", authErr);
+                        // Fallback: try fetching without auth anyway in case public read is open
+                        fetchLedgerData();
+                    });
+            } catch (err) {
+                console.error("Firebase connection error: ", err);
+                showError("Database Connection Failed", "Unable to establish a connection with the database: " + err.message);
+            }
+        }
+
+        // Fetch secure data for the specified party ONLY
+        function fetchLedgerData() {
+            const businessUpper = activeBusiness.toUpperCase();
+            const ordersCol = businessUpper === 'ABS' ? 'orders' : businessUpper + '_orders';
+            const paymentsCol = businessUpper === 'ABS' ? 'payments' : businessUpper + '_payments';
+
+            const ordersPromise = firestoreDb.collection(ordersCol)
+                .where('party', '==', activeParty)
+                .get()
+                .then(snapshot => {
+                    let orders = [];
+                    snapshot.forEach(doc => orders.push(doc.data()));
+                    // Sort locally
+                    db.orders = orders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0) || b.id - a.id);
+                })
+                .catch(err => {
+                    console.error("Orders collection fetch failed: ", err);
+                    throw new Error("Unable to fetch orders database (" + err.message + ")");
+                });
+
+            const paymentsPromise = firestoreDb.collection(paymentsCol)
+                .where('party', '==', activeParty)
+                .get()
+                .then(snapshot => {
+                    let payments = [];
+                    snapshot.forEach(doc => payments.push(doc.data()));
+                    // Sort locally
+                    db.payments = payments.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0) || b.id - a.id);
+                })
+                .catch(err => {
+                    console.error("Payments collection fetch failed: ", err);
+                    throw new Error("Unable to fetch payments database (" + err.message + ")");
+                });
+
+            Promise.all([ordersPromise, paymentsPromise])
+                .then(() => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    
+                    // Retrieve phone if present in latest order
+                    const lastOrderWithPhone = db.orders.find(o => o.phone);
+                    const phone = lastOrderWithPhone ? lastOrderWithPhone.phone : "None";
+                    document.getElementById('party-phone-label').innerHTML = `<i class="fa-solid fa-phone text-slate-400"></i> ${phone}`;
+
+                    renderFilteredData();
+                })
+                .catch(err => {
+                    console.error("Error fetching documents: ", err);
+                    showError("Access Denied", "Your connection request was rejected. Details: " + err.message);
+                });
+        }
+
+        // Filter and Render Data
+        function renderFilteredData() {
+            let startDate = document.getElementById('filter-start-date').value;
+            let endDate = document.getElementById('filter-end-date').value;
+            let filterType = document.getElementById('filter-type').value;
+            let filterStatus = document.getElementById('filter-status').value;
+
+            // Date Range Text Update
+            let periodText = "Period: All Data";
+            if (startDate && endDate) {
+                periodText = `Period: ${formatShortBusinessDate(startDate)} to ${formatShortBusinessDate(endDate)}`;
+            } else if (startDate) {
+                periodText = `Period: From ${formatShortBusinessDate(startDate)}`;
+            } else if (endDate) {
+                periodText = `Period: Up to ${formatShortBusinessDate(endDate)}`;
+            }
+            document.getElementById('period-label').innerHTML = `<i class="fa-solid fa-calendar-days text-slate-400"></i> ${periodText}`;
+
+            // 1. Filter Orders
+            let oFiltered = [...db.orders];
+            if (startDate) oFiltered = oFiltered.filter(o => o.date >= startDate);
+            if (endDate) oFiltered = oFiltered.filter(o => o.date <= endDate);
+            if (filterType !== 'All') oFiltered = oFiltered.filter(o => o.type === filterType);
+            if (filterStatus !== 'All') oFiltered = oFiltered.filter(o => o.status === filterStatus);
+
+            // 2. Filter Payments
+            let pFiltered = [...db.payments];
+            if (startDate) pFiltered = pFiltered.filter(p => p.date >= startDate);
+            if (endDate) pFiltered = pFiltered.filter(p => p.date <= endDate);
+            if (filterType !== 'All') pFiltered = pFiltered.filter(p => p.type === filterType);
+            if (filterStatus !== 'All') pFiltered = []; // payments don't have status, hide if filtering by order status
+
+            filteredDb.orders = oFiltered;
+            filteredDb.payments = pFiltered;
+
+            // Calculate overall net balance
+            let pSales = db.orders.filter(o => o.type === 'Sales').reduce((sum, o) => sum + o.amount, 0);
+            let pBuying = db.orders.filter(o => o.type === 'Buying').reduce((sum, o) => sum + o.amount, 0);
+            let pRec = db.payments.filter(p => p.type === 'Received').reduce((sum, p) => sum + p.amount, 0);
+            let pPaid = db.payments.filter(p => p.type === 'Paid').reduce((sum, p) => sum + p.amount, 0);
+            let netPartyDue = (pSales - pRec) - (pBuying - pPaid);
+
+            // Display Balance
+            const dueEl = document.getElementById('net-due-amount');
+            dueEl.innerText = "₹" + netPartyDue.toLocaleString('en-IN');
+            
+            const badgeEl = document.getElementById('balance-status-badge');
+            if (netPartyDue > 0) {
+                dueEl.className = "text-2xl font-black text-red-600 mt-0.5 block";
+                badgeEl.innerText = "Receivable Due";
+                badgeEl.className = "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border bg-red-50 text-red-700 border-red-100";
+            } else if (netPartyDue < 0) {
+                dueEl.className = "text-2xl font-black text-emerald-600 mt-0.5 block";
+                badgeEl.innerText = "Advance Received";
+                badgeEl.className = "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border bg-emerald-50 text-emerald-700 border-emerald-100";
+            } else {
+                dueEl.className = "text-2xl font-black text-slate-800 mt-0.5 block";
+                badgeEl.innerText = "Settle / Cleared";
+                badgeEl.className = "px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border bg-slate-50 text-slate-700 border-slate-100";
+            }
+
+            // Render Tables
+            renderTables();
+        }
+
+        function renderTables() {
+            // Render Orders
+            const oTable = document.getElementById('orders-table');
+            oTable.innerHTML = filteredDb.orders.length === 0 ? `<p class="text-slate-400 text-center py-8 text-xs font-semibold">No order entries matching filter.</p>` : "";
+            
+            filteredDb.orders.forEach(o => {
+                let badgeColor = o.type === 'Sales' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-orange-50 text-orange-700 border-orange-100';
+                let statusClass = o.status === 'Complete' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-amber-50 text-amber-700 border-amber-100';
+                
+                oTable.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-2xs space-y-2 relative">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-bold">${formatBusinessDate(o.date)}</span>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="px-2 py-0.5 text-[9px] font-black border rounded-md uppercase ${badgeColor}">${o.type}</span>
+                                    <span class="px-2 py-0.5 text-[9px] font-black border rounded-md uppercase ${statusClass}">${o.status}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-400 font-bold block">Amount</span>
+                                <span class="text-sm font-black text-slate-800">₹${Number(o.amount).toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-2">
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Item Details</div>
+                            <p class="text-slate-700 whitespace-pre-line text-xs font-semibold leading-relaxed">${o.item}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Render Payments
+            const pTable = document.getElementById('payments-table');
+            pTable.innerHTML = filteredDb.payments.length === 0 ? `<p class="text-slate-400 text-center py-8 text-xs font-semibold">No payment entries matching filter.</p>` : "";
+
+            filteredDb.payments.forEach(p => {
+                let badgeColor = p.type === 'Received' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100';
+                let modeText = p.mode;
+                if (p.mode === 'Cheque' && p.chequeNo) modeText += ` (${p.chequeNo})`;
+
+                pTable.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl border border-slate-100 shadow-2xs relative">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-bold block">${formatBusinessDate(p.date)}</span>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <span class="px-2 py-0.5 text-[9px] font-black border rounded-md uppercase ${badgeColor}">${p.type}</span>
+                                    <span class="text-[10px] text-slate-500 font-bold"><i class="fa-solid fa-credit-card text-[9px] text-slate-400 mr-0.5"></i> ${modeText}</span>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-[9px] text-slate-400 font-bold block">Paid/Recv</span>
+                                <span class="text-sm font-black text-slate-800">₹${Number(p.amount).toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-start-date').value = '';
+            document.getElementById('filter-end-date').value = '';
+            document.getElementById('filter-type').value = 'All';
+            document.getElementById('filter-status').value = 'All';
+            renderFilteredData();
+        }
+
+        // jsPDF implementation for sharing statement downloading
+        function downloadLedgerPDF() {
+            // Sort database entries oldest first for ledger calculation
+            let pOrders = [...db.orders];
+            let pPayments = [...db.payments];
+
+            // Apply active filters
+            let startDate = document.getElementById('filter-start-date').value;
+            let endDate = document.getElementById('filter-end-date').value;
+            let filterType = document.getElementById('filter-type').value;
+            let filterStatus = document.getElementById('filter-status').value;
+
+            if (startDate) {
+                pOrders = pOrders.filter(o => o.date >= startDate);
+                pPayments = pPayments.filter(p => p.date >= startDate);
+            }
+            if (endDate) {
+                pOrders = pOrders.filter(o => o.date <= endDate);
+                pPayments = pPayments.filter(p => p.date <= endDate);
+            }
+            if (filterType !== 'All') {
+                pOrders = pOrders.filter(o => o.type === filterType);
+                pPayments = pPayments.filter(p => p.type === filterType);
+            }
+            if (filterStatus !== 'All') {
+                pOrders = pOrders.filter(o => o.status === filterStatus);
+                pPayments = [];
+            }
+
+            pOrders.sort((a,b) => (a.timestamp||a.id)-(b.timestamp||b.id));
+            pPayments.sort((a,b) => (a.timestamp||a.id)-(b.timestamp||b.id));
+
+            const totalSales = pOrders.filter(o=>o.type==='Sales').reduce((s,o)=>s+o.amount,0);
+            const totalBuying = pOrders.filter(o=>o.type==='Buying').reduce((s,o)=>s+o.amount,0);
+            const totalReceived = pPayments.filter(p=>p.type==='Received').reduce((s,p)=>s+p.amount,0);
+            const totalPaid = pPayments.filter(p=>p.type==='Paid').reduce((s,p)=>s+p.amount,0);
+            const netDue = (totalSales - totalReceived) - (totalBuying - totalPaid);
+
+            let rows = [];
+            pOrders.forEach(o => rows.push({...o, timestamp: o.timestamp||o.id}));
+            pPayments.forEach(p => rows.push({...p, timestamp: p.timestamp||p.id}));
+            
+            // Compare utility function
+            rows.sort((a,b) => a.timestamp - b.timestamp || a.id - b.id);
+
+            let runBal = 0;
+            const ledgerRows = rows.map(r => {
+                const debit  = (r.type==='Sales'  || r.type==='Paid') ? r.amount : 0;
+                const credit = (r.type==='Buying' || r.type==='Received') ? r.amount : 0;
+                runBal += (debit - credit);
+                return {...r, debit, credit, balance: runBal};
+            });
+
+            let doc;
+            try { doc = new jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4'}); }
+            catch(e) { doc = new window.jspdf.jsPDF('portrait','mm','a4'); }
+
+            const PW = doc.internal.pageSize.getWidth();   
+            const PH = doc.internal.pageSize.getHeight();  
+            const BO  = 12;                     
+            const BW  = PW - BO*2;             
+            const BH  = PH - BO*2;             
+            const PAD = 5;
+            const ML  = BO + PAD;              
+            const MT  = BO + PAD;              
+            const CW  = BW - PAD*2;            
+            const FOOTER_H = 10;
+            const BOTTOM   = PH - BO - PAD - FOOTER_H;   
+
+            const COL = {
+                date:        {x: 0,   w: 24},
+                particulars: {x: 24,  w: 62},
+                type:        {x: 86,  w: 18},
+                debit:       {x: 104, w: 24},
+                credit:      {x: 128, w: 24},
+                balance:     {x: 152, w: 24},
+            };
+
+            const cx  = (colName) => ML + COL[colName].x;
+            const cxR = (colName) => ML + COL[colName].x + COL[colName].w;
+            const txt = (text, x, y, opts={}) => doc.text(String(text), x, y, opts);
+            
+            function hline(x1, x2, y, w=0.2, r=200, g=200, b=200) {
+                doc.setDrawColor(r,g,b); doc.setLineWidth(w);
+                doc.line(x1, y, x2, y);
+            }
+
+            function border() {
+                doc.setDrawColor(200,200,200); doc.setFillColor(255,255,255); doc.setLineWidth(0.3);
+                doc.rect(BO, BO, BW, BH, 'S');
+            }
+
+            let y = MT;
+            
+            function drawFullHeader() {
+                doc.setFillColor(11,15,25);
+                doc.rect(ML, y, CW, 25, 'F');
+
+                doc.setTextColor(255,255,255);
+                doc.setFont('helvetica','bold'); doc.setFontSize(14);
+                txt('GOKUL PLASTIC', ML + 6, y + 10);
+                
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+                doc.setTextColor(190,200,225);
+                txt('Secure Ledger & Statement System', ML + 6, y + 15);
+                txt('Live Online Database Backup', ML + 6, y + 19);
+
+                doc.setTextColor(255,255,255);
+                doc.setFont('helvetica','bold'); doc.setFontSize(9);
+                txt('STATEMENT', ML + CW - 6, y + 10, {align:'right'});
+                doc.setFont('helvetica','normal'); doc.setFontSize(7);
+                doc.setTextColor(190,200,225);
+                txt('Generated: ' + formatBusinessDate(new Date().toISOString().split('T')[0]), ML + CW - 6, y + 15, {align:'right'});
+                txt(activeBusiness + ' Dept', ML + CW - 6, y + 19, {align:'right'});
+
+                y += 31;
+
+                // Party Info Card
+                doc.setFillColor(248,250,252);
+                doc.setDrawColor(226,232,240);
+                doc.setLineWidth(0.25);
+                doc.rect(ML, y, CW, 18, 'FD');
+
+                doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(15,23,42);
+                txt(activeParty, ML + 5, y + 6);
+                
+                const lastOrderPhone = db.orders.find(o=>o.phone);
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
+                txt('Phone: ' + (lastOrderPhone ? lastOrderPhone.phone : 'None'), ML + 5, y + 12);
+
+                const filterRange = startDate && endDate ? `${formatShortBusinessDate(startDate)} to ${formatShortBusinessDate(endDate)}` : 'All Data';
+                txt('Period: ' + filterRange, ML + CW - 5, y + 10, {align:'right'});
+
+                y += 24;
+            }
+
+            function drawContinuedHeader() {
+                doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(33,37,41);
+                txt('GOKUL PLASTIC', ML, y+4);
+                doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(100,100,100);
+                txt(activeParty+' — Party Ledger (Continued)', ML, y+8.5);
+                doc.setFontSize(7);
+                txt('Generated: '+ formatBusinessDate(new Date().toISOString().split('T')[0]), ML+CW, y+4, {align:'right'});
+                y += 12;
+                hline(ML, ML+CW, y, 0.4, 60, 60, 60);
+                y += 4;
+            }
+
+            function drawTableHeader() {
+                doc.setFillColor(33,37,41);
+                doc.rect(ML, y, CW, 7.5, 'F');
+                doc.setTextColor(255,255,255);
+                doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+
+                txt('DATE',          cx('date')+2,        y+5);
+                txt('PARTICULARS',   cx('particulars')+2, y+5);
+                txt('TYPE',          cx('type')+COL.type.w/2, y+5, {align:'center'});
+                txt('DEBIT (Rs.)',   cxR('debit')-2,      y+5, {align:'right'});
+                txt('CREDIT (Rs.)',  cxR('credit')-2,     y+5, {align:'right'});
+                txt('BALANCE',       cxR('balance')-2,    y+5, {align:'right'});
+                y += 7.5;
+            }
+
+            function drawAllFooters() {
+                const total = doc.internal.getNumberOfPages();
+                for(let i=1;i<=total;i++) {
+                    doc.setPage(i);
+                    const fy = PH - BO - 4;
+                    hline(ML, ML+CW, fy-3, 0.2, 220, 220, 220);
+                    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(140,140,140);
+                    txt('Gokul Plastic — Private & Confidential',  ML,    fy);
+                    txt('Page '+i+' of '+total,           ML+CW, fy, {align:'right'});
+                }
+            }
+
+            function newPage(full) {
+                doc.addPage();
+                y = MT;
+                border();
+                if(full) drawFullHeader(); else drawContinuedHeader();
+                drawTableHeader();
+            }
+
+            border();
+            drawFullHeader();
+
+            doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(33,37,41);
+            txt('TRANSACTION HISTORY', ML, y);
+            y += 4.5;
+            drawTableHeader();
+
+            if(ledgerRows.length === 0) {
+                doc.setFont('helvetica','italic'); doc.setFontSize(8.5); doc.setTextColor(150,150,150);
+                txt('No transactions recorded within this timeframe.', ML+CW/2, y+10, {align:'center'});
+                y += 18;
+            }
+
+            const ROW_PAD = 2.5;
+            ledgerRows.forEach((r, idx) => {
+                let particular = r.item
+                    ? r.item + ' (' + r.qty + ' x Rs. ' + Number(r.price||0).toLocaleString('en-IN') + ')'
+                    : 'Payment' + (r.mode ? ' via ' + r.mode : '');
+
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+                const wrapW = COL.particulars.w - 4;
+                let lines   = doc.splitTextToSize(particular, wrapW);
+                const textHeight = lines.length * 4.2;
+                const rowH = textHeight + (ROW_PAD * 2);
+
+                if(y + rowH > BOTTOM) {
+                    newPage(false);
+                }
+
+                if(idx % 2 === 1) {
+                    doc.setFillColor(248,249,250);
+                    doc.rect(ML, y, CW, rowH, 'F');
+                }
+
+                hline(ML, ML+CW, y+rowH, 0.15, 230, 230, 230);
+
+                const ty = y + ROW_PAD + 3.2; 
+
+                doc.setFont('helvetica','normal'); doc.setTextColor(40,40,40);
+                txt(formatShortBusinessDate(r.date), cx('date')+2, ty);
+
+                doc.setTextColor(33,37,41);
+                lines.forEach((ln, li) => txt(ln, cx('particulars')+2, ty + (li * 4.2)));
+
+                doc.setFont('helvetica','bold'); doc.setFontSize(7);
+                const isDebitType = (r.type==='Sales' || r.type==='Paid');
+                doc.setTextColor(isDebitType ? 220:25, isDebitType ? 53:135, isDebitType ? 69:84);
+                txt(r.type.toUpperCase(), cx('type')+COL.type.w/2, ty, {align:'center'});
+
+                doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
+                if(r.debit > 0) {
+                    doc.setTextColor(33,37,41);
+                    txt(r.debit.toLocaleString('en-IN'), cxR('debit')-2, ty, {align:'right'});
+                } else {
+                    doc.setTextColor(200,200,200); txt('-', cxR('debit')-2, ty, {align:'right'});
+                }
+
+                if(r.credit > 0) {
+                    doc.setTextColor(33,37,41);
+                    txt(r.credit.toLocaleString('en-IN'), cxR('credit')-2, ty, {align:'right'});
+                } else {
+                    doc.setTextColor(200,200,200); txt('-', cxR('credit')-2, ty, {align:'right'});
+                }
+
+                doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+                const bAbs  = Math.abs(r.balance);
+                doc.setTextColor(r.balance>=0 ? 220:25, r.balance>=0 ? 53:135, r.balance>=0 ? 69:84);
+                txt(bAbs.toLocaleString('en-IN'), cxR('balance')-2, ty, {align:'right'});
+
+                y += rowH;
+            });
+
+            const SUMMARY_H = 40; 
+            if(y + SUMMARY_H > BOTTOM) { 
+                newPage(false); 
+                y += 4; 
+            } else { 
+                y += 6; 
+            }
+
+            const sRight   = ML + CW - 2;
+            const sLabelX  = ML + CW - 66;
+
+            doc.setDrawColor(0,0,0);
+            hline(sLabelX - 2, sRight, y, 0.9, 0, 0, 0);
+            y += 5;
+
+            doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(75,75,75);
+            txt('Total Debit :', sLabelX,  y, {align:'right'});
+            doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+            txt('Rs. '+totalSales.toLocaleString('en-IN'), sRight, y, {align:'right'});
+            y += 6;
+
+            doc.setFont('helvetica','normal'); doc.setTextColor(75,75,75);
+            txt('Total Credit :', sLabelX, y, {align:'right'});
+            doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0);
+            txt('Rs. '+totalReceived.toLocaleString('en-IN'), sRight, y, {align:'right'});
+            y += 9;
+
+            const boxW = 86;
+            const boxH = 18;
+            const boxX = ML + CW - boxW;
+
+            doc.setDrawColor(0,0,0);
+            doc.setLineWidth(0.3);
+            doc.rect(boxX, y, boxW, boxH, 'S');
+            doc.setFillColor(netDue>=0 ? 255:244, netDue>=0 ? 243:245, netDue>=0 ? 243:244);
+            doc.rect(boxX, y, boxW, boxH, 'F');
+
+            doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(100,100,100);
+            txt('CLOSING BALANCE', boxX+4, y+5);
+
+            doc.setFontSize(11);
+            doc.setTextColor(netDue>=0 ? 220:25, netDue>=0 ? 53:135, netDue>=0 ? 69:84);
+            txt('Rs. '+Math.abs(netDue).toLocaleString('en-IN'), boxX+4, y+12.5);
+
+            drawAllFooters();
+            doc.save(activeParty+'_Ledger_'+new Date().toISOString().split('T')[0]+'.pdf');
+        }
+    </script>
+</body>
+
+</html>

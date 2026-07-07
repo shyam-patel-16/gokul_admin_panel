@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Firestore</title>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="assets/js/env.js"></script>
+</head>
+<body>
+    <h1>Testing Firestore Connection</h1>
+    <div id="status" style="padding: 10px; border: 1px solid black; margin: 10px; font-family: monospace; white-space: pre-wrap;">Initializing...</div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+        let accumulatedLogs = "";
+        function log(msg) {
+            statusDiv.innerHTML += msg + "\n";
+            accumulatedLogs += msg + "\n";
+            console.log(msg);
+        }
+
+        setTimeout(() => {
+            // Send accumulated logs to log server after 5 seconds
+            fetch('http://localhost:4567/log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: 'test_result', message: accumulatedLogs })
+            }).catch(() => {});
+        }, 5000);
+
+        try {
+            log("Firebase config loaded: " + JSON.stringify(ENV_FIREBASE_CONFIG));
+            firebase.initializeApp(ENV_FIREBASE_CONFIG);
+            log("Firebase initialized");
+
+            const db = firebase.firestore();
+            log("Firestore initialized");
+
+            // Query without auth
+            log("Querying PP_orders for Pratham Plastic...");
+            db.collection("PP_orders")
+              .where("party", "==", "Pratham Plastic")
+              .onSnapshot(snapshot => {
+                  log("SUCCESS: PP_orders snapshot received!");
+                  log("Documents count: " + snapshot.size);
+                  snapshot.forEach(doc => {
+                      log("Doc ID: " + doc.id + " -> " + JSON.stringify(doc.data()));
+                  });
+              }, err => {
+                  log("ERROR: PP_orders snapshot failed: " + err.message);
+                  log("Stack: " + err.stack);
+              });
+
+            // Also check auth state
+            const auth = firebase.auth();
+            log("Auth initialized. Current user: " + (auth.currentUser ? auth.currentUser.uid : "null"));
+            
+            log("Attempting anonymous sign-in...");
+            auth.signInAnonymously()
+                .then(userCred => {
+                    log("SUCCESS: Anonymous sign-in: " + userCred.user.uid);
+                })
+                .catch(err => {
+                    log("ERROR: Anonymous sign-in failed: " + err.message);
+                });
+
+        } catch (e) {
+            log("CRITICAL ERROR: " + e.message + "\n" + e.stack);
+        }
+    </script>
+</body>
+</html>
